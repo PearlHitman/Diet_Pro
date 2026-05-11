@@ -10,7 +10,7 @@ import { T, SCREEN_PAD_TOP } from '../tokens';
 import { ArrowLeft, ChefHat, Globe, Home, Package, Clock, Heart, User, Settings } from './Icons';
 import { useApp } from '../lib/app-state';
 
-const TAB_ROUTES = ['/', '/pantry', '/history', '/favorites', '/profile', '/settings'];
+const TAB_ROUTES = ['/', '/pantry', '/history', '/favorites', '/profile'];
 
 export function Screen({ children, bg, style }: { children: React.ReactNode; bg?: string; style?: React.CSSProperties }) {
   const location = useLocation();
@@ -32,6 +32,7 @@ export function Screen({ children, bg, style }: { children: React.ReactNode; bg?
 
 export function AppHeader({ dense = false, right }: { dense?: boolean; right?: React.ReactNode }) {
   const { profile, t } = useApp();
+  const navigate = useNavigate();
   return (
     <div style={{
       display: 'flex', alignItems: 'center', justifyContent: 'space-between',
@@ -50,7 +51,25 @@ export function AppHeader({ dense = false, right }: { dense?: boolean; right?: R
           {t('appName')}
         </div>
       </div>
-      {right ?? <LangPill lang={profile.language} />}
+      {right ?? (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <LangPill lang={profile.language} />
+          <button
+            aria-label={t('settings')}
+            onClick={() => navigate('/settings')}
+            style={{
+              width: 32, height: 32, borderRadius: 8,
+              border: `1px solid ${T.border}`,
+              background: T.surface,
+              color: T.text2,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              cursor: 'pointer', padding: 0,
+            }}
+          >
+            <Settings size={16} />
+          </button>
+        </div>
+      )}
     </div>
   );
 }
@@ -123,7 +142,6 @@ export function TabBar() {
     { path: '/history',   icon: Clock,    label: t('history') },
     { path: '/favorites', icon: Heart,    label: t('favorites') },
     { path: '/profile',   icon: User,     label: t('profile') },
-    { path: '/settings',  icon: Settings, label: t('settings') },
   ] as const;
 
   return (
