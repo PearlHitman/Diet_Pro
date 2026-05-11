@@ -1,13 +1,14 @@
-// Pantry — list of ingredients grouped by category, expiry-aware coloring.
-// Tapping an item navigates to /pantry/edit/:id (we route Add/Edit through
-// the same form page).
+// Pantry — ingredient list grouped by category.
+// Header "+ " button opens a dropdown menu (write / photo / receipt).
+// File inputs are triggered synchronously from the menu so iOS grants
+// camera permission correctly.
 
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Screen, SubHeader } from '../components/Chrome';
-import { CameraImport } from '../components/CameraImport';
+import { CameraImport, type CameraMode } from '../components/CameraImport';
 import { T } from '../tokens';
-import { Plus, Trash } from '../components/Icons';
+import { Package, Plus, Trash } from '../components/Icons';
 import { useApp } from '../lib/app-state';
 import type { Category, Ingredient } from '../lib/types';
 
@@ -24,7 +25,11 @@ export function PantryPage() {
   const { pantry, removeIngredient, t } = useApp();
   const navigate = useNavigate();
   const [confirming, setConfirming] = useState<string | null>(null);
-  const [cameraOpen, setCameraOpen] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [captured, setCaptured] = useState<{ file: File; mode: CameraMode } | null>(null);
+
+  const photoRef = useRef<HTMLInputElement>(null);
+  const receiptRef = useRef<HTMLInputElement>(null);
 
   const grouped = useMemo(() => {
     const out: Record<Category, Ingredient[]> = {
@@ -35,41 +40,102 @@ export function PantryPage() {
   }, [pantry]);
 
   const catLabel: Record<Category, ReturnType<typeof t>> = {
-    produce: t('cat_produce'),
-    protein: t('cat_protein'),
-    dairy:   t('cat_dairy'),
-    grains:  t('cat_grains'),
-    pantry:  t('cat_pantry'),
-    other:   t('cat_other'),
+    produce: t('cat_produce'), protein: t('cat_protein'),
+    dairy: t('cat_dairy'), grains: t('cat_grains'),
+    pantry: t('cat_pantry'), other: t('cat_other'),
   };
+
+  function handleMenuOption(option: 'manual' | 'photo' | 'receipt') {
+    setMenuOpen(false);
+    if (option === 'manual') { navigate('/pantry/add'); return; }
+    if (option === 'photo') photoRef.current?.click();
+    if (option === 'receipt') receiptRef.current?.click();
+  }
 
   return (
     <Screen>
       <SubHeader
         title={t('pantry')}
         right={
-          <div style={{ display: 'flex', gap: 8 }}>
-            <button
-              aria-label={t('addFromCamera')}
-              onClick={() => setCameraOpen(true)}
-              style={{
-                width: 32, height: 32, borderRadius: 8,
-                border: 'none', background: T.surface, color: T.text2, cursor: 'pointer',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                fontSize: 16,
-              }}
-            >📷</button>
+          <div style={{ position: 'relative' }}>
             <button
               aria-label="Add"
-              onClick={() => navigate('/pantry/add')}
+              onClick={() => setMenuOpen(v => !v)}
               style={{
                 width: 32, height: 32, borderRadius: 8,
                 border: 'none', background: T.accentTint, color: T.accent, cursor: 'pointer',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
               }}
-            ><Plus size={18} /></button>
+            >
+              <Plus size={18} />
+            </button>
+
+            {menuOpen && (
+              <>
+                {/* Transparent overlay to close on outside tap */}
+                <div
+                  onClick={() => setMenuOpen(false)}
+                  style={{ position: 'fixed', inset: 0, zIndex: 10 }}
+                />
+                <div style={{
+                  position: 'absolute', top: 38, right: 0, zIndex: 11,
+                  background: T.surface2,
+                  border: `1px solid ${T.borderHi}`,
+                  borderRadius: 14,
+                  boxShadow: '0 8px 32px rgba(0,0,0,0.5)',
+                  minWidth: 200,
+                  overflow: 'hidden',
+                }}>
+                  {([
+                    { key: 'manual',  emoji: '✏️', label: t('addIngredient') },
+                    { key: 'photo',   emoji: '📷', label: t('photographProduct') },
+                    { key: 'receipt', emoji: '🧾', label: t('scanReceipt') },
+                  ] as const).map((item, idx, arr) => (
+                    <button
+                      key={item.key}
+                      onClick={() => handleMenuOption(item.key)}
+                      style={{
+                        display: 'flex', alignItems: 'center', gap: 10,
+                        width: '100%', padding: '13px 16px',
+                        background: 'transparent',
+                        border: 'none',
+                        borderBottom: idx < arr.length - 1 ? `1px solid ${T.border}` : 'none',
+                        color: T.text, cursor: 'pointer',
+                        fontSize: 14, fontWeight: 500, fontFamily: T.font,
+                        textAlign: 'left',
+                      }}
+                    >
+                      <span style={{ fontSize: 18 }}>{item.emoji}</span>
+                      {item.label}
+                    </button>
+                  ))}
+                </div>
+              </>
+            )}
           </div>
         }
+      />
+
+      {/* Hidden file inputs — triggered directly from menu so iOS allows camera */}
+      <input
+        ref={photoRef}
+        type="file" accept="image/*" capture="environment"
+        style={{ display: 'none' }}
+        onChange={e => {
+          const f = e.target.files?.[0];
+          if (f) setCaptured({ file: f, mode: 'photo' });
+          e.target.value = '';
+        }}
+      />
+      <input
+        ref={receiptRef}
+        type="file" accept="image/*" capture="environment"
+        style={{ display: 'none' }}
+        onChange={e => {
+          const f = e.target.files?.[0];
+          if (f) setCaptured({ file: f, mode: 'receipt' });
+          e.target.value = '';
+        }}
       />
 
       {pantry.length === 0 ? (
@@ -98,9 +164,14 @@ export function PantryPage() {
         </div>
       )}
 
-      {cameraOpen && <CameraImport onClose={() => setCameraOpen(false)} />}
+      {captured && (
+        <CameraImport
+          file={captured.file}
+          mode={captured.mode}
+          onClose={() => setCaptured(null)}
+        />
+      )}
 
-      {/* Delete confirmation overlay */}
       {confirming && (
         <DeleteConfirm
           onCancel={() => setConfirming(null)}
@@ -214,10 +285,12 @@ function EmptyState() {
       <div style={{
         width: 64, height: 64, borderRadius: 18,
         background: T.surface, border: `1px solid ${T.border}`,
-        color: T.muted,
+        color: T.mute2,
         display: 'flex', alignItems: 'center', justifyContent: 'center',
         margin: '0 auto 16px',
-      }}><Plus size={26} /></div>
+      }}>
+        <Package size={28} />
+      </div>
       <div style={{ fontSize: 15, fontWeight: 600, color: T.text2, marginBottom: 6 }}>
         {t('pantryEmpty')}
       </div>
