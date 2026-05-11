@@ -38,7 +38,9 @@ export function ResultsPage() {
         display: 'flex', flexDirection: 'column', gap: 14,
       }}>
         {shown.map((r, i) => (
-          <RecipeCard key={r.id} recipe={r} expanded={i === 0} />
+          <div key={r.id} className="fade-up" style={{ animationDelay: `${i * 30}ms` }}>
+            <RecipeCard recipe={r} expanded={i === 0} />
+          </div>
         ))}
 
         <GhostButton

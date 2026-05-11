@@ -1,7 +1,7 @@
 // Top-level app shell + routes.
 
 import React from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AppProvider, useApp } from './lib/app-state';
 import { T } from './tokens';
 
@@ -65,6 +65,7 @@ import { TabBar } from './components/Chrome';
 
 function Routed() {
   const { ready } = useApp();
+  const location = useLocation();
   if (!ready) {
     return (
       <div style={{
@@ -76,6 +77,7 @@ function Routed() {
   }
   return (
     <>
+      <div key={location.pathname} className="page-enter">
       <Routes>
         <Route path="/" element={<HomePage />} />
 
@@ -97,6 +99,7 @@ function Routed() {
         {/* Fallback */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
+      </div>
       <TabBar />
     </>
   );

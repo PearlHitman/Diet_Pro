@@ -1,0 +1,127 @@
+/* ──────────────────────────────────────────────────────────────
+   Animations & motion utility classes.
+   ─────────────────────────────────────────────────────────────
+   Add a className to a component to opt into a behavior. Inline
+   styles still own all visual properties. This file owns nothing
+   except motion behavior.
+   ────────────────────────────────────────────────────────────── */
+
+/* === Press feedback ====================================================
+   Apply to anything tappable: buttons, cards, list rows, tiles.
+   Scales down 3% on press, snaps back. Slight opacity dip on hover for
+   desktop. Uses transform only (compositor-only, no layout). */
+
+.press {
+  transition: transform 0.12s ease, opacity 0.15s ease, filter 0.15s ease;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+.press:active {
+  transform: scale(0.97);
+}
+@media (hover: hover) {
+  .press:hover {
+    filter: brightness(1.06);
+  }
+}
+
+/* Variant for large primary buttons — slightly less aggressive scale
+   because they're physically larger. */
+.press-soft {
+  transition: transform 0.14s ease, filter 0.15s ease;
+}
+.press-soft:active {
+  transform: scale(0.985);
+  filter: brightness(0.92);
+}
+
+/* === List mount stagger ================================================
+   Apply to each item in a list. Pair with style={{ animationDelay: ... }}
+   for staggered effect. The list container should NOT have this class. */
+
+.fade-up {
+  animation: fadeUp 0.32s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+
+@keyframes fadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* === Page transitions ==================================================
+   Wrap <Routes> output in a div with class="page-enter" keyed off
+   location.pathname so React unmounts and remounts on every nav. */
+
+.page-enter {
+  animation: pageEnter 0.22s ease-out both;
+}
+
+@keyframes pageEnter {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* === Loading & pulse ===================================================
+   Generic infinite pulse. Used by the AI-cooking loader. */
+
+.pulse {
+  animation: pulse 1.6s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 0.6; transform: scale(1); }
+  50%      { opacity: 1;   transform: scale(1.06); }
+}
+
+/* === Shimmer skeleton ===================================================
+   For loading placeholders. Apply with bg gradient via inline style. */
+
+.shimmer {
+  background: linear-gradient(
+    90deg,
+    rgba(255,255,255,0.02) 0%,
+    rgba(255,255,255,0.06) 50%,
+    rgba(255,255,255,0.02) 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.4s linear infinite;
+}
+
+@keyframes shimmer {
+  from { background-position: 200% 0; }
+  to   { background-position: -200% 0; }
+}
+
+/* === Heart pop =========================================================
+   For the favorites star/heart toggle. Apply briefly via class toggle. */
+
+.heart-pop {
+  animation: heartPop 0.38s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+@keyframes heartPop {
+  0%   { transform: scale(1); }
+  35%  { transform: scale(1.35); }
+  70%  { transform: scale(0.92); }
+  100% { transform: scale(1); }
+}
+
+/* === Reduced motion override ============================================
+   Strip everything down to ~instant for users who need it. */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

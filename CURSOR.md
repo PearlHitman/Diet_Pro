@@ -135,3 +135,80 @@ If you want to iterate on prompts without burning tokens:
 
 The cheapest model is `claude-haiku-4-5` — switch to it in Settings
 while iterating, switch back to Sonnet when done.
+
+# CURSOR.md addendum — Animations & motion
+
+**Status:** Approved by the architect. Append this section to CURSOR.md
+under "Style conventions", or replace the equivalent ambiguous parts.
+
+## Animations are encouraged, not banned
+
+The "no CSS framework" rule means **no Tailwind, no styled-components,
+no Emotion**. It does NOT mean "no animations" or "no `<style>` tags".
+
+The pattern we want for motion:
+
+1. **Keyframes and utility classes live in `src/animations.css`.**
+   Imported once in `src/main.tsx`. No component-level CSS files.
+
+2. **Components add behavior via `className=`, not new styles.**
+   ```tsx
+   <button
+     className="press"
+     style={{ ...allTheRealStyling }}
+   >…</button>
+   ```
+   The `className` attaches transitions / `:active` / animations.
+   The `style` attribute still owns colors, layout, typography —
+   everything that uses the `T` token.
+
+3. **Use `T` durations/easings if we add them.** If a new motion needs
+   timing that should be reused (e.g. `T.dur.snap = '0.12s'`), add it
+   to `tokens.ts` first, then reference. Otherwise keep timings inline
+   inside `animations.css`.
+
+## What's allowed without asking
+
+- `:active { transform: scale(0.97) }` style press feedback
+- `transition: transform | opacity | filter` on interactive elements
+- `@keyframes` for loaders, pulses, fades
+- Staggered list mount via `style={{ animationDelay: \`\${i * 30}ms\` }}`
+- Cross-fade between routes via a wrapper around `<Routes>` keyed on
+  `location.pathname`
+- `prefers-reduced-motion` media query to opt out of motion for users
+  who need it (REQUIRED — see below)
+
+## What needs explicit approval first
+
+- Adding **framer-motion**, **react-spring**, **motion-one**, or any
+  motion library. These are real architectural decisions — discuss with
+  the architect (in chat, not by just installing).
+- Shared-element / FLIP transitions between routes.
+- WebGL / canvas animations.
+- Anything that runs continuously while the user isn't interacting
+  (battery drain on PWA).
+
+## Accessibility — required
+
+Every animation must respect:
+
+```css
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+```
+
+Put this once in `animations.css`. Don't repeat per-rule.
+
+## Performance rules
+
+- Animate only `transform`, `opacity`, `filter`. **Never** animate
+  `width`/`height`/`top`/`left` — they trigger layout.
+- Mobile-first: keep durations short (≤200ms for interactive feedback,
+  ≤350ms for entrances). Long animations feel slow on phones.
+- No animations on initial paint if the user is already on the page —
+  only on mount/transitions.

@@ -21,7 +21,11 @@ export function HistoryPage() {
         />
       ) : (
         <div style={{ padding: '14px 16px 28px', display: 'flex', flexDirection: 'column', gap: 10 }}>
-          {recipes.map(r => <RecipeCard key={r.id} recipe={r} />)}
+          {recipes.map((r, i) => (
+            <div key={r.id} className="fade-up" style={{ animationDelay: `${i * 30}ms` }}>
+              <RecipeCard recipe={r} />
+            </div>
+          ))}
         </div>
       )}
     </Screen>
@@ -46,7 +50,11 @@ export function FavoritesPage() {
             {t('savedRecipes')}
           </div>
           <div style={{ padding: '14px 16px 28px', display: 'flex', flexDirection: 'column', gap: 10 }}>
-            {stars.map(r => <RecipeCard key={r.id} recipe={r} />)}
+            {stars.map((r, i) => (
+              <div key={r.id} className="fade-up" style={{ animationDelay: `${i * 30}ms` }}>
+                <RecipeCard recipe={r} />
+              </div>
+            ))}
           </div>
         </>
       )}

@@ -39,6 +39,13 @@ export function PantryPage() {
     return out;
   }, [pantry]);
 
+  const fadeIndex = useMemo(() => {
+    const map: Record<string, number> = {};
+    let idx = 0;
+    for (const cat of CATEGORY_ORDER) for (const it of grouped[cat]) map[it.id] = idx++;
+    return map;
+  }, [grouped]);
+
   const catLabel: Record<Category, ReturnType<typeof t>> = {
     produce: t('cat_produce'), protein: t('cat_protein'),
     dairy: t('cat_dairy'), grains: t('cat_grains'),
@@ -156,6 +163,7 @@ export function PantryPage() {
                     item={it}
                     onEdit={() => navigate(`/pantry/edit/${it.id}`)}
                     onDelete={() => setConfirming(it.id)}
+                    fadeIdx={fadeIndex[it.id]}
                   />
                 ))}
               </div>
@@ -186,8 +194,8 @@ export function PantryPage() {
 }
 
 function IngredientRow({
-  item, onEdit, onDelete,
-}: { item: Ingredient; onEdit: () => void; onDelete: () => void }) {
+  item, onEdit, onDelete, fadeIdx = 0,
+}: { item: Ingredient; onEdit: () => void; onDelete: () => void; fadeIdx?: number }) {
   const { t } = useApp();
   const d = daysUntil(item.expiresOn);
 
@@ -201,12 +209,16 @@ function IngredientRow({
   }
 
   return (
-    <div style={{
-      display: 'flex', alignItems: 'center', gap: 12,
-      padding: '12px 14px',
-      background: T.surface, border: `1px solid ${T.border}`,
-      borderRadius: 12,
-    }}>
+    <div
+      className="fade-up"
+      style={{
+        animationDelay: `${fadeIdx * 30}ms`,
+        display: 'flex', alignItems: 'center', gap: 12,
+        padding: '12px 14px',
+        background: T.surface, border: `1px solid ${T.border}`,
+        borderRadius: 12,
+      }}
+    >
       <div style={{ width: 8, height: 8, borderRadius: 999, background: dotColor }} />
       <button
         type="button"

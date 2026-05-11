@@ -106,13 +106,15 @@ export function LoadingPage() {
         display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
         padding: '40px 32px', textAlign: 'center',
       }}>
-        <div style={{
-          width: 64, height: 64, borderRadius: 18,
-          background: T.accentTint, border: `1px solid ${T.borderAcc}`,
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          margin: '0 auto 22px',
-          animation: 'pulse 1.6s ease-in-out infinite',
-        }}><Sparkles size={28} color={T.accent} /></div>
+        <div
+          className="pulse"
+          style={{
+            width: 64, height: 64, borderRadius: 18,
+            background: T.accentTint, border: `1px solid ${T.borderAcc}`,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            margin: '0 auto 22px',
+          }}
+        ><Sparkles size={28} color={T.accent} /></div>
 
         <div style={{ fontSize: 17, fontWeight: 700, color: T.text, marginBottom: 8 }}>
           {t('generating')}
@@ -120,13 +122,6 @@ export function LoadingPage() {
         <div style={{ fontSize: 13, color: T.muted }}>
           {t('generatingHint')}
         </div>
-
-        <style>{`
-          @keyframes pulse {
-            0%, 100% { opacity: 0.6; transform: scale(1); }
-            50%      { opacity: 1;   transform: scale(1.05); }
-          }
-        `}</style>
       </div>
     </Screen>
   );
