@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AppProvider, useApp } from './lib/app-state';
+import { subscribeToUpdate } from './lib/pwa';
 import { T } from './tokens';
 
 // ─── Error boundary ───────────────────────────────────────────
@@ -150,11 +151,46 @@ function Routed() {
   );
 }
 
+function UpdateBanner({ onUpdate }: { onUpdate: () => void }) {
+  return (
+    <div style={{
+      position: 'fixed', top: 0, left: 0, right: 0, zIndex: 999,
+      background: T.accent, color: '#1a1208',
+      display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+      padding: '10px 16px',
+      fontFamily: T.font, fontSize: 13, fontWeight: 600,
+      boxShadow: '0 2px 12px rgba(0,0,0,0.4)',
+    }}>
+      <span>A new version is available</span>
+      <button
+        onClick={onUpdate}
+        className="press"
+        style={{
+          padding: '6px 14px', borderRadius: 999,
+          background: 'rgba(0,0,0,0.18)', color: '#1a1208',
+          border: '1px solid rgba(0,0,0,0.15)',
+          cursor: 'pointer', fontSize: 12, fontWeight: 700,
+          fontFamily: T.font,
+        }}
+      >
+        Update now
+      </button>
+    </div>
+  );
+}
+
 export function App() {
+  const [updateFn, setUpdateFn] = useState<(() => void) | null>(null);
+
+  useEffect(() => {
+    subscribeToUpdate(fn => setUpdateFn(() => fn));
+  }, []);
+
   return (
     <ErrorBoundary>
       <AppProvider>
         <BrowserRouter>
+          {updateFn && <UpdateBanner onUpdate={updateFn} />}
           <Routed />
         </BrowserRouter>
       </AppProvider>
