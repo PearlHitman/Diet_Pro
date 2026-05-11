@@ -8,6 +8,7 @@ const EN = {
   appName: 'Kitchen Assistant',
 
   // Nav / common
+  home: 'Home',
   back: 'Back',
   save: 'Save',
   saved: 'Saved',
@@ -153,6 +154,7 @@ type Keys = keyof typeof EN;
 
 const EL: Record<Keys, string> = {
   appName: 'Βοηθός Κουζίνας',
+  home: 'Αρχική',
   back: 'Πίσω',
   save: 'Αποθήκευση',
   saved: 'Αποθηκεύτηκε',

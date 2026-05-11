@@ -5,19 +5,25 @@
 //  • Header back-button uses react-router navigate
 
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { T, SCREEN_PAD_TOP } from '../tokens';
-import { ArrowLeft, ChefHat, Globe } from './Icons';
+import { ArrowLeft, ChefHat, Globe, Home, Package, Clock, Heart, User, Settings } from './Icons';
 import { useApp } from '../lib/app-state';
 
+const TAB_ROUTES = ['/', '/pantry', '/history', '/favorites', '/profile', '/settings'];
+
 export function Screen({ children, bg, style }: { children: React.ReactNode; bg?: string; style?: React.CSSProperties }) {
+  const location = useLocation();
+  const hasTabBar = TAB_ROUTES.includes(location.pathname);
   return (
     <div style={{
       width: '100%', minHeight: '100vh',
       background: bg ?? T.bg,
       color: T.text, fontFamily: T.font,
       paddingTop: SCREEN_PAD_TOP,
-      paddingBottom: 'env(safe-area-inset-bottom)',
+      paddingBottom: hasTabBar
+        ? 'calc(56px + env(safe-area-inset-bottom))'
+        : 'env(safe-area-inset-bottom)',
       boxSizing: 'border-box',
       ...style,
     }}>{children}</div>
@@ -101,5 +107,63 @@ export function SectionLabel({ children, color }: { children: React.ReactNode; c
       textTransform: 'uppercase', color: color ?? T.accent,
       marginBottom: 10,
     }}>{children}</div>
+  );
+}
+
+export function TabBar() {
+  const location = useLocation();
+  const navigate = useNavigate();
+  const { t } = useApp();
+
+  if (!TAB_ROUTES.includes(location.pathname)) return null;
+
+  const tabs = [
+    { path: '/',          icon: Home,     label: t('home') },
+    { path: '/pantry',    icon: Package,  label: t('pantry') },
+    { path: '/history',   icon: Clock,    label: t('history') },
+    { path: '/favorites', icon: Heart,    label: t('favorites') },
+    { path: '/profile',   icon: User,     label: t('profile') },
+    { path: '/settings',  icon: Settings, label: t('settings') },
+  ] as const;
+
+  return (
+    <div style={{
+      position: 'fixed', bottom: 0, left: 0, right: 0,
+      display: 'flex',
+      background: 'rgba(10,10,15,0.88)',
+      backdropFilter: 'blur(18px) saturate(180%)',
+      WebkitBackdropFilter: 'blur(18px) saturate(180%)',
+      borderTop: `1px solid ${T.border}`,
+      paddingBottom: 'env(safe-area-inset-bottom)',
+      zIndex: 100,
+    }}>
+      {tabs.map(({ path, icon: Icon, label }) => {
+        const active = location.pathname === path;
+        return (
+          <button
+            key={path}
+            onClick={() => navigate(path)}
+            aria-label={label}
+            style={{
+              flex: 1,
+              display: 'flex', flexDirection: 'column',
+              alignItems: 'center', justifyContent: 'center',
+              gap: 4,
+              padding: '10px 0',
+              border: 'none', background: 'transparent',
+              cursor: 'pointer',
+              color: active ? T.accent : T.muted,
+              fontFamily: T.font,
+              fontSize: 10,
+              fontWeight: active ? 600 : 400,
+              transition: 'color 0.15s',
+            }}
+          >
+            <Icon size={20} />
+            <span>{label}</span>
+          </button>
+        );
+      })}
+    </div>
   );
 }

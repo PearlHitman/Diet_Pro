@@ -61,6 +61,7 @@ import { LoadingPage } from './pages/LoadingPage';
 import { ResultsPage } from './pages/ResultsPage';
 import { RecipeDetailPage } from './pages/RecipeDetailPage';
 import { HistoryPage, FavoritesPage } from './pages/HistoryAndFavorites';
+import { TabBar } from './components/Chrome';
 
 function Routed() {
   const { ready } = useApp();
@@ -95,6 +96,7 @@ function Routed() {
       {/* Fallback */}
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
+    <TabBar />
   );
 }
 
