@@ -50,12 +50,26 @@ export interface PromptInput {
   mealType: MealType;
 }
 
+// System prompt sets the creative persona. Kept separate so claude.ts
+// can pass it as the `system` parameter for stronger persona anchoring.
+export const RECIPE_SYSTEM_PROMPT = `You are a creative chef with deep knowledge of world cuisines and a strong aversion to generic, forgettable food. You think like a restaurant professional: every dish has a specific identity, a dominant flavour strategy, and at least one technique worth learning.
+
+You refuse to produce:
+- Vague titles like "Chicken Stir-Fry", "Pasta with Sauce", "Vegetable Rice Bowl", "Egg Scramble"
+- Steps written as bare instructions with no flavour or technique context ("cook the chicken")
+- Three recipes that are structurally the same (e.g. three protein + grain + sauce combos)
+
+You always produce:
+- Specific, evocative names that hint at cuisine and technique ("Harissa-Braised Chickpeas with Whipped Feta" not "Chickpea Dish")
+- Steps that explain the *why* alongside the *what* ("sear skin-side down without moving it so the fat renders and the skin crisps, ~6 min")
+- Recipes the user will actually remember and want to repeat`;
+
 export function buildRecipePrompt({ pantry, profile, mealType }: PromptInput): string {
   const langInstruction = profile.language === 'EL'
     ? 'CRITICAL: Generate ALL text content in Greek (Ελληνικά). Recipe names, ingredient names, and cooking steps must be in Greek. Numbers and units stay as-is.'
     : 'Generate all content in English.';
 
-  return `You are an expert kitchen assistant. Generate EXACTLY 3 distinct recipes using the user's pantry and profile.
+  return `Generate EXACTLY 3 distinct recipes using the user's pantry and profile below.
 
 ═══ PANTRY ═══
 ${formatPantry(pantry)}
@@ -85,8 +99,10 @@ ${MEAL_DESC[mealType]}
    - "Health": balanced, vegetable-forward
    - "None": no constraint
 6. Servings per recipe must equal ${profile.servings}.
-7. Make the 3 recipes meaningfully different (different proteins, techniques, or styles).
-8. ${langInstruction}
+7. Make the 3 recipes meaningfully different — different protein, different cuisine region, different dominant technique.
+8. Recipe names must be specific and evocative. Include the cuisine, hero ingredient, or technique that defines the dish. Banned words in isolation: "bowl", "stir-fry", "pasta", "rice", "salad", "soup" — always qualify them (e.g. "Miso-Glazed Aubergine Over Soba" is fine; "Pasta Dish" is not).
+9. Each step must include a brief sensory or technique cue — colour, texture, sound, timing — not just a bare action.
+10. ${langInstruction}
 
 ═══ OUTPUT FORMAT ═══
 Respond with ONLY valid JSON. No prose, no markdown, no code fences. Schema:
@@ -94,14 +110,14 @@ Respond with ONLY valid JSON. No prose, no markdown, no code fences. Schema:
 {
   "recipes": [
     {
-      "name": "string — descriptive recipe title",
+      "name": "string — specific, evocative recipe title",
       "cookTime": number — total minutes from start to plating,
       "difficulty": "Beginner" | "Intermediate" | "Expert",
       "calories": number — estimated kcal per serving,
       "ingredients": [
         { "name": "string", "amount": "string e.g. '200g' or '2 cloves'", "missing": boolean }
       ],
-      "steps": ["string — one step per array element, imperative voice"]
+      "steps": ["string — one step per array element, imperative voice, with technique/sensory detail"]
     }
   ]
 }

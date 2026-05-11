@@ -8,7 +8,7 @@
 
 import Anthropic from '@anthropic-ai/sdk';
 import type { AIResponse, Category, Ingredient, Language, MealType, Profile, Recipe, Settings } from './types';
-import { buildProductPhotoPrompt, buildReceiptPrompt, buildRecipePrompt } from './prompts';
+import { buildProductPhotoPrompt, buildReceiptPrompt, buildRecipePrompt, RECIPE_SYSTEM_PROMPT } from './prompts';
 
 // Model token strings — keep in sync with src/lib/types.ts ClaudeModel.
 // The actual API model ID may have a date suffix; we use the canonical
@@ -56,6 +56,7 @@ export async function generateRecipes(input: GenerateInput): Promise<Recipe[]> {
     response = await client.messages.create({
       model: MODEL_ID[settings.model],
       max_tokens: 4096,
+      system: RECIPE_SYSTEM_PROMPT,
       messages: [{ role: 'user', content: prompt }],
     });
   } catch (e: any) {

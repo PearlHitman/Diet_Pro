@@ -146,7 +146,7 @@ export function PantryPage() {
       />
 
       {pantry.length === 0 ? (
-        <EmptyState />
+        <EmptyState onAdd={() => setMenuOpen(true)} />
       ) : (
         <div style={{ padding: '14px 16px 28px' }}>
           {CATEGORY_ORDER.map(cat => grouped[cat].length === 0 ? null : (
@@ -289,9 +289,8 @@ function DeleteConfirm({ onCancel, onConfirm }: { onCancel: () => void; onConfir
   );
 }
 
-function EmptyState() {
+function EmptyState({ onAdd }: { onAdd: () => void }) {
   const { t } = useApp();
-  const navigate = useNavigate();
   return (
     <div style={{ padding: '80px 32px', textAlign: 'center' }}>
       <div style={{
@@ -309,7 +308,7 @@ function EmptyState() {
       <div style={{ fontSize: 13, color: T.muted, lineHeight: 1.5, marginBottom: 22 }}>
         {t('pantryEmptyHint')}
       </div>
-      <button onClick={() => navigate('/pantry/add')} style={{
+      <button onClick={onAdd} style={{
         padding: '12px 22px', borderRadius: 12,
         background: T.accentGrad, color: '#1a1208',
         border: 'none', cursor: 'pointer',
