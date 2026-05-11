@@ -9,9 +9,9 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.ico', 'apple-touch-icon.png'],
       manifest: {
-        name: 'Kitchen Assistant',
-        short_name: 'Kitchen',
-        description: 'AI-powered recipe generator from your pantry',
+        name: 'Mise',
+        short_name: 'Mise',
+        description: 'Your AI sous chef. Pantry-aware recipes powered by Claude.',
         theme_color: '#0a0a0f',
         background_color: '#0a0a0f',
         display: 'standalone',

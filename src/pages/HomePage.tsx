@@ -7,6 +7,7 @@ import { Screen, AppHeader } from '../components/Chrome';
 import { ArrowRight, BookOpen, Heart, Settings, User, AlertCircle } from '../components/Icons';
 import { T } from '../tokens';
 import { useApp } from '../lib/app-state';
+import { getTimeOfDay, TIME_EMOJI, greeting, cuisineFlag } from '../lib/personalization';
 import type { Ingredient } from '../lib/types';
 
 function daysUntil(iso: string | null): number | null {
@@ -33,6 +34,17 @@ export function HomePage() {
   const needsKey = !settings.apiKey;
   const canGenerate = pantry.length > 0 && !!settings.apiKey;
 
+  const tod = getTimeOfDay();
+  const todEmoji = TIME_EMOJI[tod];
+  const { line: greetLine, subtitle: greetSub } = greeting(profile.name, profile.language, tod);
+
+  const flag = cuisineFlag(profile.cuisine);
+
+  const expiringToday = expiring.filter(it => {
+    const d = daysUntil(it.expiresOn);
+    return d !== null && d <= 0;
+  }).length;
+
   return (
     <Screen>
       <AppHeader />
@@ -41,14 +53,37 @@ export function HomePage() {
         {/* Greeting */}
         <div style={{ marginTop: 8 }}>
           <div style={{
-            fontSize: 22, fontWeight: 700, color: T.text, letterSpacing: -0.5, lineHeight: 1.15,
+            fontSize: 22, fontWeight: 700, color: T.text, letterSpacing: -0.5, lineHeight: 1.2,
           }}>
-            {t('welcomeBack')}{profile.name ? `, ${profile.name}` : ''}.
+            {greetLine}{todEmoji ? ` ${todEmoji}` : ''}
           </div>
-          <div style={{ fontSize: 13, color: T.text2, marginTop: 4 }}>
-            {t('youHave')} <strong style={{ color: T.text, fontWeight: 600 }}>{pantry.length} {t('ingredients')}</strong>.
+          <div style={{ fontSize: 13, color: T.text2, marginTop: 6 }}>
+            {greetSub}
           </div>
         </div>
+
+        {(profile.cuisine || pantry.length > 0) && (
+          <div style={{
+            marginTop: 14,
+            display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap',
+            fontSize: 12, color: T.muted,
+          }}>
+            {profile.cuisine && (
+              <span style={{
+                display: 'inline-flex', alignItems: 'center', gap: 5,
+                padding: '4px 10px',
+                background: T.surface, border: `1px solid ${T.border}`,
+                borderRadius: 999, color: T.text2,
+              }}>
+                <span style={{ fontSize: 13 }}>{flag}</span>
+                <span style={{ fontWeight: 500 }}>{profile.cuisine}</span>
+              </span>
+            )}
+            {pantry.length > 0 && (
+              <span>{t('youHave')} <strong style={{ color: T.text, fontWeight: 600 }}>{pantry.length}</strong> {t('ingredients')}</span>
+            )}
+          </div>
+        )}
 
         {/* API key warning */}
         {needsKey && (
@@ -68,7 +103,17 @@ export function HomePage() {
         )}
 
         {/* Expiring */}
-        {expiring.length > 0 && (
+        {expiring.length === 0 ? (
+          <div style={{
+            marginTop: 18,
+            display: 'inline-flex', alignItems: 'center', gap: 7,
+            padding: '10px 14px', borderRadius: 11,
+            background: T.successTint, border: `1px solid ${T.successBord}`,
+            color: T.success, fontSize: 12.5, fontWeight: 600,
+          }}>
+            ✓ {t('allFresh')}
+          </div>
+        ) : (
           <div style={{
             marginTop: 22, padding: '14px 14px 12px',
             background: T.surface, border: `1px solid ${T.border}`,
@@ -76,8 +121,15 @@ export function HomePage() {
           }}>
             <div style={{
               fontSize: 11, fontWeight: 600, letterSpacing: 0.6,
-              textTransform: 'uppercase', color: T.warning, marginBottom: 10,
-            }}>{t('expiringSoon')}</div>
+              textTransform: 'uppercase', marginBottom: 10,
+              color: expiringToday >= 1 ? T.danger : T.warning,
+            }}>
+              {expiringToday >= 1
+                ? (expiringToday === 1
+                    ? t('oneUsingToday')
+                    : t('nUsingToday', { n: expiringToday }))
+                : t('nUsingSoon', { n: expiring.length })}
+            </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
               {expiring.map(it => {
                 const d = daysUntil(it.expiresOn);

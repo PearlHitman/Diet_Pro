@@ -8,6 +8,7 @@
 
 import { get, set, del } from 'idb-keyval';
 import type { Ingredient, Profile, Recipe, Settings } from './types';
+import { resetOnboarded } from './onboarding-state';
 
 // ─── Defaults ────────────────────────────────────────────────
 
@@ -90,5 +91,5 @@ export async function saveSettings(settings: Settings): Promise<void> {
 // ─── Reset (debug helper, useful during dev) ─────────────────
 
 export async function resetAll(): Promise<void> {
-  await Promise.all([del(K.pantry), del(K.profile), del(K.recipes), del(K.settings)]);
+  await Promise.all([del(K.pantry), del(K.profile), del(K.recipes), del(K.settings), resetOnboarded()]);
 }

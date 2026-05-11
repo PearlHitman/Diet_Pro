@@ -5,7 +5,8 @@ import type { Language } from './types';
 
 const EN = {
   // App
-  appName: 'Kitchen Assistant',
+  appName: 'Mise',
+  appTagline: 'Everything in its place.',
 
   // Nav / common
   home: 'Home',
@@ -25,6 +26,10 @@ const EN = {
   youHave: 'You have',
   ingredients: 'ingredients',
   expiringSoon: 'Expiring soon',
+  allFresh: 'Everything is fresh',
+  nUsingSoon: '{n} expire soon — let\'s use them',
+  oneUsingToday: '1 ingredient expires today',
+  nUsingToday: '{n} ingredients expire today',
   generateRecipe: 'Generate recipe',
   threeOptionsNote: 'Three options · ~30 seconds',
   pantry: 'Pantry',
@@ -34,8 +39,8 @@ const EN = {
   settings: 'Settings',
 
   // Pantry
-  pantryEmpty: 'Your pantry is empty',
-  pantryEmptyHint: 'Add ingredients to start generating recipes.',
+  pantryEmpty: 'Empty pantry 🍽️',
+  pantryEmptyHint: "Let's fill it up — add what you have to start cooking with Mise.",
   addIngredient: 'Add ingredient',
   expiresIn: 'Expires in',
   expiresToday: 'Expires today',
@@ -101,9 +106,9 @@ const EN = {
   ingredientsLabel: 'Ingredients',
   stepsLabel: 'Steps',
   noRecipesYet: 'No recipes yet',
-  noRecipesHint: "Generate your first recipe and it'll show up here.",
+  noRecipesHint: 'Your first creation will appear here. The pantry awaits.',
   noFavoritesYet: 'No favorites yet',
-  noFavoritesHint: 'Star a recipe to keep it here.',
+  noFavoritesHint: 'Star a recipe you love and it lives here.',
   savedRecipes: 'saved recipes',
 
   // Settings
@@ -153,7 +158,8 @@ const EN = {
 type Keys = keyof typeof EN;
 
 const EL: Record<Keys, string> = {
-  appName: 'Βοηθός Κουζίνας',
+  appName: 'Mise',
+  appTagline: 'Όλα στη θέση τους.',
   home: 'Αρχική',
   back: 'Πίσω',
   save: 'Αποθήκευση',
@@ -170,6 +176,10 @@ const EL: Record<Keys, string> = {
   youHave: 'Έχεις',
   ingredients: 'υλικά',
   expiringSoon: 'Λήγουν σύντομα',
+  allFresh: 'Όλα είναι φρέσκα',
+  nUsingSoon: '{n} λήγουν σύντομα — ας τα αξιοποιήσουμε',
+  oneUsingToday: '1 υλικό λήγει σήμερα',
+  nUsingToday: '{n} υλικά λήγουν σήμερα',
   generateRecipe: 'Δημιουργία συνταγής',
   threeOptionsNote: 'Τρεις προτάσεις · ~30 δευτ.',
   pantry: 'Ντουλάπι',
@@ -178,8 +188,8 @@ const EL: Record<Keys, string> = {
   profile: 'Προφίλ',
   settings: 'Ρυθμίσεις',
 
-  pantryEmpty: 'Το ντουλάπι σου είναι άδειο',
-  pantryEmptyHint: 'Πρόσθεσε υλικά για να αρχίσεις.',
+  pantryEmpty: 'Άδειο ντουλάπι 🍽️',
+  pantryEmptyHint: 'Ας το γεμίσουμε — πρόσθεσε ό,τι έχεις και ξεκινάμε.',
   addIngredient: 'Προσθήκη υλικού',
   expiresIn: 'Λήγει σε',
   expiresToday: 'Λήγει σήμερα',
@@ -239,10 +249,10 @@ const EL: Record<Keys, string> = {
   missingHint: 'τα υπόλοιπα είναι στο ντουλάπι σου.',
   ingredientsLabel: 'Υλικά',
   stepsLabel: 'Βήματα',
-  noRecipesYet: 'Δεν υπάρχουν συνταγές',
-  noRecipesHint: 'Δημιούργησε την πρώτη σου και θα φανεί εδώ.',
-  noFavoritesYet: 'Δεν υπάρχουν αγαπημένα',
-  noFavoritesHint: 'Πάτησε αστέρι σε μια συνταγή για να την κρατήσεις.',
+  noRecipesYet: 'Καμία συνταγή ακόμα',
+  noRecipesHint: 'Η πρώτη σου δημιουργία θα εμφανιστεί εδώ. Το ντουλάπι περιμένει.',
+  noFavoritesYet: 'Καμία αγαπημένη ακόμα',
+  noFavoritesHint: 'Πάτησε αστέρι σε ό,τι λατρέψεις και θα ζει εδώ.',
   savedRecipes: 'αποθηκευμένες συνταγές',
 
   apiKey: 'Κλειδί API',

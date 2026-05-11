@@ -1,6 +1,6 @@
 // Top-level app shell + routes.
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AppProvider, useApp } from './lib/app-state';
 import { T } from './tokens';
@@ -62,18 +62,63 @@ import { ResultsPage } from './pages/ResultsPage';
 import { RecipeDetailPage } from './pages/RecipeDetailPage';
 import { HistoryPage, FavoritesPage } from './pages/HistoryAndFavorites';
 import { TabBar } from './components/Chrome';
+import { ChefHat } from './components/Icons';
+import { isOnboarded } from './lib/onboarding-state';
+import { OnboardingPage } from './pages/OnboardingPage';
+
+function BrandedLoader() {
+  const [visible, setVisible] = useState(false);
+  useEffect(() => {
+    const t = setTimeout(() => setVisible(true), 200);
+    return () => clearTimeout(t);
+  }, []);
+  if (!visible) {
+    return <div style={{ minHeight: '100vh', background: T.bg }} />;
+  }
+  return (
+    <div style={{
+      minHeight: '100vh', background: T.bg,
+      display: 'flex', flexDirection: 'column',
+      alignItems: 'center', justifyContent: 'center',
+      fontFamily: T.font, gap: 16,
+    }}>
+      <div
+        className="mise-pulse"
+        style={{
+          width: 72, height: 72, borderRadius: 20,
+          background: T.accentTint, border: `1px solid ${T.borderAcc}`,
+          color: T.accent,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+        }}
+      >
+        <ChefHat size={32} />
+      </div>
+      <div style={{ fontSize: 22, fontWeight: 700, color: T.text, letterSpacing: -0.4 }}>Mise</div>
+      <div style={{ fontSize: 12, color: T.muted }}>Loading…</div>
+      <style>{`
+        @keyframes misePulse {
+          0%, 100% { opacity: 0.6; transform: scale(1); }
+          50%       { opacity: 1;   transform: scale(1.05); }
+        }
+        .mise-pulse { animation: misePulse 1.6s ease-in-out infinite; }
+      `}</style>
+    </div>
+  );
+}
 
 function Routed() {
   const { ready } = useApp();
   const location = useLocation();
-  if (!ready) {
-    return (
-      <div style={{
-        minHeight: '100vh', background: T.bg,
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        color: T.muted, fontFamily: T.font, fontSize: 14,
-      }}>…</div>
-    );
+  const [onboardChecked, setOnboardChecked] = useState(false);
+  const [onboarded, setOnboarded] = useState(false);
+  useEffect(() => {
+    isOnboarded().then(v => { setOnboarded(v); setOnboardChecked(true); });
+  }, []);
+  if (!ready || !onboardChecked) {
+    return <BrandedLoader />;
+  }
+  if (!onboarded) {
+    return <OnboardingPage onComplete={() => setOnboarded(true)} />;
   }
   return (
     <>
