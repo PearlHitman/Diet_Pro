@@ -2,7 +2,7 @@
 // Edit here when you want to tune the AI's behavior — don't scatter
 // prompts across the codebase.
 
-import type { Ingredient, Profile, MealType, Language } from './types';
+import type { Ingredient, Language, MealType, Profile } from './types';
 
 // ─── Meal type descriptions (used in prompt) ─────────────────
 
@@ -107,4 +107,56 @@ Respond with ONLY valid JSON. No prose, no markdown, no code fences. Schema:
 }
 
 Generate the 3 recipes now.`;
+}
+
+// ─── Vision: single product photo ────────────────────────────
+
+export function buildProductPhotoPrompt(language: Language): string {
+  const langInstruction = language === 'EL'
+    ? 'Return the ingredient name in Greek (Ελληνικά).'
+    : 'Return the ingredient name in English.';
+
+  return `You are identifying a food item from a photo to add to a kitchen pantry.
+${langInstruction}
+
+Return ONLY a valid JSON object with this exact shape:
+{"name":"string","amount":"string","category":"produce|protein|dairy|grains|pantry|other"}
+
+Rules:
+- name: the common ingredient name, NOT the brand name (e.g. "chicken breast" not "Drobiex filet z kurczaka")
+- amount: quantity if clearly visible on packaging (e.g. "500g", "1L"), otherwise omit the field
+- category: choose the single best fit:
+    produce  = fresh/frozen fruit and vegetables
+    protein  = meat, fish, eggs, tofu
+    dairy    = milk, cheese, yogurt, butter
+    grains   = pasta, rice, bread, flour, cereals, legumes
+    pantry   = oils, canned goods, sauces, spices, condiments, snacks
+    other    = anything that doesn't fit above
+
+No explanation, no markdown, no code fences. Just the JSON object.`;
+}
+
+// ─── Vision: receipt photo ────────────────────────────────────
+
+export function buildReceiptPrompt(language: Language): string {
+  const langInstruction = language === 'EL'
+    ? 'Return all ingredient names in Greek (Ελληνικά).'
+    : 'Return all ingredient names in English.';
+
+  return `You are parsing a supermarket receipt (possibly in Polish or another language) to extract food ingredients for a kitchen pantry.
+${langInstruction}
+
+Return ONLY valid JSON with this exact shape:
+{"ingredients":[{"name":"string","amount":"string","category":"produce|protein|dairy|grains|pantry|other"}]}
+
+Rules:
+- name: common ingredient name, NOT brand name (e.g. "pasta" not "Barilla Spaghetti N.5")
+- amount: quantity from the receipt if readable (e.g. "1kg", "2×"), otherwise omit the field
+- category: same values as above (produce/protein/dairy/grains/pantry/other)
+- SKIP non-food items: cleaning products, cosmetics, bags, household items, alcohol if unsure
+- SKIP duplicates: merge into one entry with combined quantity
+- Maximum 30 ingredients
+- If the receipt is unreadable or has no food items, return {"ingredients":[]}
+
+No explanation, no markdown, no code fences. Just the JSON object.`;
 }

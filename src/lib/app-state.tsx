@@ -18,6 +18,7 @@ interface AppState {
 
   // Pantry mutations
   addIngredient: (item: Ingredient) => Promise<void>;
+  bulkAddIngredients: (items: Ingredient[]) => Promise<void>;
   updateIngredient: (id: string, patch: Partial<Ingredient>) => Promise<void>;
   removeIngredient: (id: string) => Promise<void>;
 
@@ -66,6 +67,12 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   const addIngredient = useCallback(async (item: Ingredient) => {
     const next = [item, ...pantry];
+    setPantry(next);
+    await db.savePantry(next);
+  }, [pantry]);
+
+  const bulkAddIngredients = useCallback(async (items: Ingredient[]) => {
+    const next = [...items, ...pantry];
     setPantry(next);
     await db.savePantry(next);
   }, [pantry]);
@@ -127,7 +134,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   const value: AppState = {
     pantry, profile, recipes, settings, ready,
-    addIngredient, updateIngredient, removeIngredient,
+    addIngredient, bulkAddIngredients, updateIngredient, removeIngredient,
     saveProfile, saveSettings,
     appendRecipes, toggleStar,
     resetAll,

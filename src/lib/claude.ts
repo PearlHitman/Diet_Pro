@@ -7,8 +7,8 @@
 // deployment, you'd want to proxy through a backend instead.
 
 import Anthropic from '@anthropic-ai/sdk';
-import type { AIResponse, Ingredient, MealType, Profile, Recipe, Settings } from './types';
-import { buildRecipePrompt } from './prompts';
+import type { AIResponse, Category, Ingredient, Language, MealType, Profile, Recipe, Settings } from './types';
+import { buildProductPhotoPrompt, buildReceiptPrompt, buildRecipePrompt } from './prompts';
 
 // Model token strings — keep in sync with src/lib/types.ts ClaudeModel.
 // The actual API model ID may have a date suffix; we use the canonical
@@ -124,6 +124,109 @@ function isValidAIResponse(x: unknown): x is AIResponse {
     Array.isArray(r?.steps) &&
     r.steps.length > 0,
   );
+}
+
+// ─── Vision helpers ───────────────────────────────────────────
+
+// Haiku is always used for vision calls — cheaper and fast enough.
+const VISION_MODEL = 'claude-haiku-4-5';
+
+const VALID_CATEGORIES = new Set<Category>(['produce','protein','dairy','grains','pantry','other']);
+
+function coerceCategory(raw: unknown): Category {
+  if (typeof raw === 'string' && VALID_CATEGORIES.has(raw as Category)) return raw as Category;
+  return 'other';
+}
+
+export interface ScannedIngredient {
+  name: string;
+  amount?: string;
+  category: Category;
+}
+
+function makeClient(settings: Settings): Anthropic {
+  if (!settings.apiKey || !settings.apiKey.startsWith('sk-ant-')) {
+    throw new ClaudeError('No API key set. Go to Settings and paste your Anthropic API key.', 'auth');
+  }
+  return new Anthropic({ apiKey: settings.apiKey, dangerouslyAllowBrowser: true });
+}
+
+async function visionCall(
+  client: Anthropic,
+  prompt: string,
+  imageBase64: string,
+  mediaType: string,
+): Promise<string> {
+  let response;
+  try {
+    response = await client.messages.create({
+      model: VISION_MODEL,
+      max_tokens: 1024,
+      messages: [{
+        role: 'user',
+        content: [
+          {
+            type: 'image',
+            source: {
+              type: 'base64',
+              media_type: mediaType as 'image/jpeg' | 'image/png' | 'image/gif' | 'image/webp',
+              data: imageBase64,
+            },
+          },
+          { type: 'text', text: prompt },
+        ],
+      }],
+    });
+  } catch (e: any) {
+    if (e?.status === 401) throw new ClaudeError('Invalid API key.', 'auth');
+    if (e?.status === 429) throw new ClaudeError('Rate limit hit. Try again in a moment.', 'rate');
+    throw new ClaudeError(e?.message ?? 'Network error', 'network');
+  }
+  const block = response.content.find(b => b.type === 'text');
+  if (!block || block.type !== 'text') throw new ClaudeError('Empty vision response.', 'parse');
+  return block.text;
+}
+
+// Single product photo → one ingredient.
+export async function scanProductPhoto(
+  imageBase64: string,
+  mediaType: string,
+  language: Language,
+  settings: Settings,
+): Promise<ScannedIngredient> {
+  const client = makeClient(settings);
+  const text = await visionCall(client, buildProductPhotoPrompt(language), imageBase64, mediaType);
+  const parsed = parseJsonLoose(text) as any;
+  if (!parsed || typeof parsed.name !== 'string' || !parsed.name.trim()) {
+    throw new ClaudeError('Could not identify ingredient from photo.', 'parse');
+  }
+  return {
+    name: parsed.name.trim(),
+    amount: typeof parsed.amount === 'string' ? parsed.amount.trim() || undefined : undefined,
+    category: coerceCategory(parsed.category),
+  };
+}
+
+// Receipt photo → list of ingredients.
+export async function scanReceipt(
+  imageBase64: string,
+  mediaType: string,
+  language: Language,
+  settings: Settings,
+): Promise<ScannedIngredient[]> {
+  const client = makeClient(settings);
+  const text = await visionCall(client, buildReceiptPrompt(language), imageBase64, mediaType);
+  const parsed = parseJsonLoose(text) as any;
+  if (!parsed || !Array.isArray(parsed.ingredients)) {
+    throw new ClaudeError('Could not parse receipt.', 'parse');
+  }
+  return (parsed.ingredients as any[])
+    .filter(i => typeof i?.name === 'string' && i.name.trim())
+    .map(i => ({
+      name: i.name.trim(),
+      amount: typeof i.amount === 'string' ? i.amount.trim() || undefined : undefined,
+      category: coerceCategory(i.category),
+    }));
 }
 
 // ─── API key validation (for Settings) ───────────────────────

@@ -5,6 +5,7 @@
 import React, { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Screen, SubHeader } from '../components/Chrome';
+import { CameraImport } from '../components/CameraImport';
 import { T } from '../tokens';
 import { Plus, Trash } from '../components/Icons';
 import { useApp } from '../lib/app-state';
@@ -23,6 +24,7 @@ export function PantryPage() {
   const { pantry, removeIngredient, t } = useApp();
   const navigate = useNavigate();
   const [confirming, setConfirming] = useState<string | null>(null);
+  const [cameraOpen, setCameraOpen] = useState(false);
 
   const grouped = useMemo(() => {
     const out: Record<Category, Ingredient[]> = {
@@ -46,15 +48,27 @@ export function PantryPage() {
       <SubHeader
         title={t('pantry')}
         right={
-          <button
-            aria-label="Add"
-            onClick={() => navigate('/pantry/add')}
-            style={{
-              width: 32, height: 32, borderRadius: 8,
-              border: 'none', background: T.accentTint, color: T.accent, cursor: 'pointer',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-            }}
-          ><Plus size={18} /></button>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button
+              aria-label={t('addFromCamera')}
+              onClick={() => setCameraOpen(true)}
+              style={{
+                width: 32, height: 32, borderRadius: 8,
+                border: 'none', background: T.surface, color: T.text2, cursor: 'pointer',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontSize: 16,
+              }}
+            >📷</button>
+            <button
+              aria-label="Add"
+              onClick={() => navigate('/pantry/add')}
+              style={{
+                width: 32, height: 32, borderRadius: 8,
+                border: 'none', background: T.accentTint, color: T.accent, cursor: 'pointer',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+              }}
+            ><Plus size={18} /></button>
+          </div>
         }
       />
 
@@ -83,6 +97,8 @@ export function PantryPage() {
           ))}
         </div>
       )}
+
+      {cameraOpen && <CameraImport onClose={() => setCameraOpen(false)} />}
 
       {/* Delete confirmation overlay */}
       {confirming && (
