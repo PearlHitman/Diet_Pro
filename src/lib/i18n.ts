@@ -1,0 +1,256 @@
+// UI translations. Keep keys flat; the type system enforces that EN
+// and EL have identical keys.
+
+import type { Language } from './types';
+
+const EN = {
+  // App
+  appName: 'Kitchen Assistant',
+
+  // Nav / common
+  back: 'Back',
+  save: 'Save',
+  saved: 'Saved',
+  cancel: 'Cancel',
+  delete: 'Delete',
+  edit: 'Edit',
+  add: 'Add',
+  done: 'Done',
+  loading: 'Loading…',
+  retry: 'Retry',
+
+  // Home
+  welcomeBack: 'Welcome back',
+  youHave: 'You have',
+  ingredients: 'ingredients',
+  expiringSoon: 'Expiring soon',
+  generateRecipe: 'Generate recipe',
+  threeOptionsNote: 'Three options · ~30 seconds',
+  pantry: 'Pantry',
+  history: 'History',
+  favorites: 'Favorites',
+  profile: 'Profile',
+  settings: 'Settings',
+
+  // Pantry
+  pantryEmpty: 'Your pantry is empty',
+  pantryEmptyHint: 'Add ingredients to start generating recipes.',
+  addIngredient: 'Add ingredient',
+  expiresIn: 'Expires in',
+  expiresToday: 'Expires today',
+  expired: 'Expired',
+  daysShort: 'd',
+  deleteConfirmTitle: 'Delete ingredient?',
+  deleteConfirmBody: 'This will remove it from your pantry.',
+
+  // Categories
+  cat_produce: 'Produce',
+  cat_protein: 'Protein',
+  cat_dairy: 'Dairy',
+  cat_grains: 'Grains',
+  cat_pantry: 'Pantry',
+  cat_other: 'Other',
+
+  // Add ingredient form
+  name: 'Name',
+  category: 'Category',
+  expiryDate: 'Expiry date',
+  expiryHint: 'Optional — helps prioritize recipes',
+  amountOpt: 'Amount (optional)',
+  amountPlaceholder: 'e.g. 500g, 2 cans',
+
+  // Profile
+  yourName: 'Your name',
+  preferredCuisine: 'Preferred cuisine',
+  preferredCuisineHint: 'The AI will lean into this.',
+  servings: 'Servings',
+  cookingLevel: 'Cooking level',
+  beginner: 'Beginner',
+  intermediate: 'Intermediate',
+  expert: 'Expert',
+  allergies: 'Allergies & avoidances',
+  allergiesHint: 'Strictly excluded from suggestions.',
+  dietGoal: 'Diet goal',
+  goalNone: 'None',
+  goalWeight: 'Weight loss',
+  goalMuscle: 'Muscle',
+  goalHealth: 'Health',
+  language: 'Language',
+  languageHint: 'UI and generated recipes',
+
+  // Generation flow
+  whatKindOfMeal: 'What kind of meal?',
+  usingNIngredients: 'Using {n} pantry ingredients.',
+  mealQuick: 'Quick',
+  mealQuickSub: 'Under 30 min',
+  mealHealthy: 'Healthy',
+  mealHealthySub: 'Light & balanced',
+  mealComfort: 'Comfort',
+  mealComfortSub: 'Hearty & warm',
+  mealFestive: 'Festive',
+  mealFestiveSub: 'For sharing',
+  generating: 'Generating recipes…',
+  generatingHint: 'Asking Claude for three ideas',
+  generateMore: 'Generate 3 more',
+
+  // Recipe
+  recipe: 'Recipe',
+  missing: 'missing',
+  missingHint: 'everything else is in your pantry.',
+  ingredientsLabel: 'Ingredients',
+  stepsLabel: 'Steps',
+  noRecipesYet: 'No recipes yet',
+  noRecipesHint: "Generate your first recipe and it'll show up here.",
+  noFavoritesYet: 'No favorites yet',
+  noFavoritesHint: 'Star a recipe to keep it here.',
+  savedRecipes: 'saved recipes',
+
+  // Settings
+  apiKey: 'API key',
+  apiKeyHint: 'Stored only in this browser. Never sent to any server except Anthropic.',
+  apiKeyPlaceholder: 'sk-ant-...',
+  apiKeyMissing: 'No API key set',
+  apiKeyValid: 'Key is valid',
+  apiKeyInvalid: 'Key is invalid',
+  validating: 'Validating…',
+  testKey: 'Test key',
+  model: 'AI model',
+  modelHint: 'Sonnet is recommended.',
+  getApiKey: 'Get a key from console.anthropic.com',
+  resetAll: 'Reset all data',
+  resetConfirm: 'This will delete your pantry, profile, recipes, and settings. Are you sure?',
+
+  // Errors
+  errorTitle: 'Something went wrong',
+  errorNoKey: 'Set your API key in Settings first.',
+  errorRate: 'Anthropic rate limit hit. Try again in a moment.',
+  errorNetwork: 'Network error. Check your connection.',
+  errorParse: 'Claude returned an unexpected response. Try again.',
+} as const;
+
+type Keys = keyof typeof EN;
+
+const EL: Record<Keys, string> = {
+  appName: 'Βοηθός Κουζίνας',
+  back: 'Πίσω',
+  save: 'Αποθήκευση',
+  saved: 'Αποθηκεύτηκε',
+  cancel: 'Άκυρο',
+  delete: 'Διαγραφή',
+  edit: 'Επεξεργασία',
+  add: 'Προσθήκη',
+  done: 'Έτοιμο',
+  loading: 'Φόρτωση…',
+  retry: 'Δοκιμή ξανά',
+
+  welcomeBack: 'Καλώς ήρθες ξανά',
+  youHave: 'Έχεις',
+  ingredients: 'υλικά',
+  expiringSoon: 'Λήγουν σύντομα',
+  generateRecipe: 'Δημιουργία συνταγής',
+  threeOptionsNote: 'Τρεις προτάσεις · ~30 δευτ.',
+  pantry: 'Ντουλάπι',
+  history: 'Ιστορικό',
+  favorites: 'Αγαπημένα',
+  profile: 'Προφίλ',
+  settings: 'Ρυθμίσεις',
+
+  pantryEmpty: 'Το ντουλάπι σου είναι άδειο',
+  pantryEmptyHint: 'Πρόσθεσε υλικά για να αρχίσεις.',
+  addIngredient: 'Προσθήκη υλικού',
+  expiresIn: 'Λήγει σε',
+  expiresToday: 'Λήγει σήμερα',
+  expired: 'Έληξε',
+  daysShort: 'μ',
+  deleteConfirmTitle: 'Διαγραφή υλικού;',
+  deleteConfirmBody: 'Θα αφαιρεθεί από το ντουλάπι σου.',
+
+  cat_produce: 'Φρούτα/Λαχανικά',
+  cat_protein: 'Πρωτεΐνη',
+  cat_dairy: 'Γαλακτοκομικά',
+  cat_grains: 'Δημητριακά',
+  cat_pantry: 'Ντουλάπι',
+  cat_other: 'Άλλο',
+
+  name: 'Όνομα',
+  category: 'Κατηγορία',
+  expiryDate: 'Ημ. λήξης',
+  expiryHint: 'Προαιρετικό — βοηθά στην προτεραιότητα.',
+  amountOpt: 'Ποσότητα (προαιρετικό)',
+  amountPlaceholder: 'π.χ. 500γρ., 2 κονσέρβες',
+
+  yourName: 'Το όνομά σου',
+  preferredCuisine: 'Αγαπημένη κουζίνα',
+  preferredCuisineHint: 'Το AI θα δίνει βάρος σε αυτή.',
+  servings: 'Μερίδες',
+  cookingLevel: 'Επίπεδο μαγειρικής',
+  beginner: 'Αρχάριος',
+  intermediate: 'Μεσαίος',
+  expert: 'Προχωρημένος',
+  allergies: 'Αλλεργίες & αποφυγές',
+  allergiesHint: 'Αποκλείονται αυστηρά.',
+  dietGoal: 'Διατροφικός στόχος',
+  goalNone: 'Κανένας',
+  goalWeight: 'Απώλεια βάρους',
+  goalMuscle: 'Μυϊκή μάζα',
+  goalHealth: 'Υγεία',
+  language: 'Γλώσσα',
+  languageHint: 'UI και συνταγές',
+
+  whatKindOfMeal: 'Τι είδους γεύμα;',
+  usingNIngredients: 'Με {n} υλικά από το ντουλάπι.',
+  mealQuick: 'Γρήγορο',
+  mealQuickSub: 'Κάτω από 30 λεπτά',
+  mealHealthy: 'Υγιεινό',
+  mealHealthySub: 'Ελαφρύ & ισορροπημένο',
+  mealComfort: 'Χορταστικό',
+  mealComfortSub: 'Ζεστό & γερό',
+  mealFestive: 'Γιορτινό',
+  mealFestiveSub: 'Για παρέα',
+  generating: 'Δημιουργία συνταγών…',
+  generatingHint: 'Ζητώ τρεις ιδέες από τον Claude',
+  generateMore: 'Άλλες 3 προτάσεις',
+
+  recipe: 'Συνταγή',
+  missing: 'λείπουν',
+  missingHint: 'τα υπόλοιπα είναι στο ντουλάπι σου.',
+  ingredientsLabel: 'Υλικά',
+  stepsLabel: 'Βήματα',
+  noRecipesYet: 'Δεν υπάρχουν συνταγές',
+  noRecipesHint: 'Δημιούργησε την πρώτη σου και θα φανεί εδώ.',
+  noFavoritesYet: 'Δεν υπάρχουν αγαπημένα',
+  noFavoritesHint: 'Πάτησε αστέρι σε μια συνταγή για να την κρατήσεις.',
+  savedRecipes: 'αποθηκευμένες συνταγές',
+
+  apiKey: 'Κλειδί API',
+  apiKeyHint: 'Αποθηκεύεται μόνο στον browser σου. Δεν στέλνεται πουθενά εκτός Anthropic.',
+  apiKeyPlaceholder: 'sk-ant-...',
+  apiKeyMissing: 'Δεν έχει οριστεί κλειδί',
+  apiKeyValid: 'Το κλειδί είναι έγκυρο',
+  apiKeyInvalid: 'Το κλειδί δεν είναι έγκυρο',
+  validating: 'Επαλήθευση…',
+  testKey: 'Δοκιμή κλειδιού',
+  model: 'Μοντέλο AI',
+  modelHint: 'Συνιστάται το Sonnet.',
+  getApiKey: 'Πάρε κλειδί από το console.anthropic.com',
+  resetAll: 'Διαγραφή όλων',
+  resetConfirm: 'Θα διαγραφούν ντουλάπι, προφίλ, συνταγές και ρυθμίσεις. Σίγουρα;',
+
+  errorTitle: 'Κάτι πήγε στραβά',
+  errorNoKey: 'Όρισε πρώτα το API κλειδί στις Ρυθμίσεις.',
+  errorRate: 'Όριο ρυθμού Anthropic. Δοκίμασε σε λίγο.',
+  errorNetwork: 'Πρόβλημα δικτύου. Έλεγξε τη σύνδεση.',
+  errorParse: 'Ο Claude επέστρεψε απρόσμενη απάντηση. Δοκίμασε ξανά.',
+};
+
+const STRINGS = { EN, EL } as const;
+
+export function t(lang: Language, key: Keys, vars?: Record<string, string | number>): string {
+  let s: string = STRINGS[lang][key];
+  if (vars) {
+    for (const [k, v] of Object.entries(vars)) {
+      s = s.replace(`{${k}}`, String(v));
+    }
+  }
+  return s;
+}
