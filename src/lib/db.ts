@@ -2,7 +2,7 @@
 // Backed by IndexedDB via idb-keyval (zero ceremony, survives reloads,
 // works offline, no quota issues for our scale).
 //
-// We use 4 keys: pantry, profile, settings, recipes.
+// We use 5 keys: pantry, profile, settings, recipes, feed.
 // Each is a single blob (small dataset, ≤50 recipes; loading all at once
 // is fine and much simpler than per-record stores).
 
@@ -34,7 +34,11 @@ const K = {
   profile:  'kitchen:profile:v1',
   recipes:  'kitchen:recipes:v1',
   settings: 'kitchen:settings:v1',
+  feed:     'kitchen:feed:v1',
 } as const;
+
+// Expose feed key so feed.ts can share the same constant.
+export const FEED_DB_KEY = K.feed;
 
 // ─── Pantry ──────────────────────────────────────────────────
 
@@ -91,5 +95,5 @@ export async function saveSettings(settings: Settings): Promise<void> {
 // ─── Reset (debug helper, useful during dev) ─────────────────
 
 export async function resetAll(): Promise<void> {
-  await Promise.all([del(K.pantry), del(K.profile), del(K.recipes), del(K.settings), resetOnboarded()]);
+  await Promise.all([del(K.pantry), del(K.profile), del(K.recipes), del(K.settings), del(K.feed), resetOnboarded()]);
 }

@@ -147,6 +147,17 @@ const EN = {
   cameraError: 'Camera error. Try uploading a photo instead.',
   nothingDetected: 'Nothing detected. Try a clearer photo.',
 
+  // Feed
+  recipeOfDay: 'Recipe of the Day',
+  viewRecipe: 'View full recipe',
+  foodFact: 'Food Fact',
+  inSeason: 'In Season',
+  refreshFeed: 'Refresh',
+  loadingFeed: 'Loading feed…',
+  noNetworkFeed: 'Offline — showing cached content',
+  tapToGenerate: 'Tap to generate',
+  seasonLabel: 'What\'s in season',
+
   // Errors
   errorTitle: 'Something went wrong',
   errorNoKey: 'Set your API key in Settings first.',
@@ -290,6 +301,17 @@ const EL: Record<Keys, string> = {
   cameraError: 'Σφάλμα κάμερας. Δοκίμασε να ανεβάσεις φωτογραφία.',
   nothingDetected: 'Δεν εντοπίστηκε τίποτα. Δοκίμασε πιο καθαρή φωτογραφία.',
 
+  // Feed
+  recipeOfDay: 'Συνταγή της Ημέρας',
+  viewRecipe: 'Δες την πλήρη συνταγή',
+  foodFact: 'Γαστρονομικό Γεγονός',
+  inSeason: 'Εποχιακά',
+  refreshFeed: 'Ανανέωση',
+  loadingFeed: 'Φόρτωση…',
+  noNetworkFeed: 'Εκτός σύνδεσης — αποθηκευμένο περιεχόμενο',
+  tapToGenerate: 'Πάτα για δημιουργία',
+  seasonLabel: 'Τι είναι σε εποχή',
+
   errorTitle: 'Κάτι πήγε στραβά',
   errorNoKey: 'Όρισε πρώτα το API κλειδί στις Ρυθμίσεις.',
   errorRate: 'Όριο ρυθμού Anthropic. Δοκίμασε σε λίγο.',
@@ -428,6 +450,17 @@ const ES: Record<Keys, string> = {
   cameraPermissionDenied: 'Acceso a la cámara denegado. Permite la cámara en los ajustes del navegador.',
   cameraError: 'Error de cámara. Intenta subir una foto.',
   nothingDetected: 'No se detectó nada. Prueba con una foto más clara.',
+
+  // Feed
+  recipeOfDay: 'Receta del Día',
+  viewRecipe: 'Ver receta completa',
+  foodFact: 'Dato Curioso',
+  inSeason: 'De Temporada',
+  refreshFeed: 'Actualizar',
+  loadingFeed: 'Cargando…',
+  noNetworkFeed: 'Sin conexión — contenido en caché',
+  tapToGenerate: 'Toca para generar',
+  seasonLabel: 'Qué está en temporada',
 
   errorTitle: 'Algo salió mal',
   errorNoKey: 'Primero configura tu clave API en Ajustes.',
