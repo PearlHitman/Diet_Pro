@@ -27,7 +27,7 @@ export interface Ingredient {
 
 export type Level = 'Beginner' | 'Intermediate' | 'Expert';
 export type DietGoal = 'None' | 'Weight loss' | 'Muscle' | 'Health';
-export type Language = 'EN' | 'EL';
+export type Language = 'EN' | 'EL' | 'ES';
 
 export interface Profile {
   name: string;

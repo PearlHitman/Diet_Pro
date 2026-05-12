@@ -117,7 +117,7 @@ export function ProfilePage() {
           <Segmented<Language>
             value={local.language}
             onChange={v => update('language', v)}
-            options={[{ value: 'EL', label: 'EL' }, { value: 'EN', label: 'EN' }]}
+            options={[{ value: 'EL', label: 'EL' }, { value: 'EN', label: 'EN' }, { value: 'ES', label: 'ES' }]}
           />
         </div>
       </div>

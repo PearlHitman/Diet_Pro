@@ -74,7 +74,7 @@ export function AppHeader({ dense = false, right }: { dense?: boolean; right?: R
   );
 }
 
-function LangPill({ lang }: { lang: 'EN' | 'EL' }) {
+function LangPill({ lang }: { lang: 'EN' | 'EL' | 'ES' }) {
   return (
     <div style={{
       display: 'inline-flex', alignItems: 'center', gap: 5,

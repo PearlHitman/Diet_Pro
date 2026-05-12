@@ -101,6 +101,47 @@ const OB = {
     continue: 'Continue',
     finish: 'Done — enter Mise',
   },
+  ES: {
+    welcomeTitle: 'Bienvenido a Mise',
+    tagline: 'Todo en su lugar.',
+    welcomeBody: 'Convierte lo que ya tienes en algo delicioso. Vamos a configurarlo — es un momento.',
+    getStarted: 'Empezar',
+    chooseLanguage: 'Elige tu idioma',
+    chooseLanguageHint: 'Puedes cambiarlo en cualquier momento desde tu perfil.',
+    connectAI: 'Conectar Claude',
+    connectAIBody: 'Mise usa Claude de Anthropic para sugerir recetas. Tu clave API se almacena solo en este navegador — nunca se envía a ningún lugar excepto Anthropic.',
+    apiKey: 'Clave API',
+    keyPlaceholder: 'sk-ant-...',
+    testKey: 'Probar clave',
+    validating: 'Validando…',
+    keyValid: 'Válida',
+    keyInvalid: 'Inválida',
+    getKey: 'Obtén una clave en console.anthropic.com',
+    aboutYou: 'Sobre ti',
+    aboutYouHint: 'Esto ayuda a Mise a adaptar las sugerencias a tu gusto. Puedes omitirlo y añadirlo más tarde.',
+    yourName: 'Tu nombre',
+    cuisine: 'Cocina preferida',
+    level: 'Nivel de cocina',
+    beginner: 'Principiante',
+    intermediate: 'Intermedio',
+    expert: 'Experto',
+    servings: 'Raciones',
+    firstIngredient: 'Tu primer ingrediente',
+    firstIngredientHint: 'Añade algo que tengas ahora en la cocina. Necesitamos al menos uno para generar recetas.',
+    name: 'Nombre',
+    category: 'Categoría',
+    expiryDate: 'Fecha de caducidad',
+    expiryHint: 'Opcional — ayuda a priorizar.',
+    cat_produce: 'Frutas/Verd.',
+    cat_protein: 'Proteína',
+    cat_dairy: 'Lácteos',
+    cat_grains: 'Cereales',
+    cat_pantry: 'Despensa',
+    cat_other: 'Otro',
+    skip: 'Omitir por ahora',
+    continue: 'Continuar',
+    finish: 'Listo — entrar a Mise',
+  },
 } as const;
 
 type Step = 0 | 1 | 2 | 3 | 4;
@@ -222,6 +263,7 @@ export function OnboardingPage({ onComplete }: { onComplete: () => void }) {
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginTop: 32 }}>
               <LangTile flag="🇬🇷" label="Ελληνικά" sub="Greek" selected={language === 'EL'} onClick={() => chooseLanguage('EL')} />
               <LangTile flag="🇬🇧" label="English" sub="English" selected={language === 'EN'} onClick={() => chooseLanguage('EN')} />
+              <LangTile flag="🇪🇸" label="Español" sub="Spanish (Spain)" selected={language === 'ES'} onClick={() => chooseLanguage('ES')} />
             </div>
             <div style={{ marginTop: 'auto', paddingTop: 32 }}>
               <PrimaryButton onClick={goNext} fullWidth icon={<ArrowRight size={16} />}>{ob.continue}</PrimaryButton>
