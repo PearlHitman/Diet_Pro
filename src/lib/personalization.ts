@@ -38,6 +38,12 @@ const GREETINGS: Record<Language, Record<TimeOfDay, string>> = {
     evening: 'Good evening',
     night:   'Late hunger?',
   },
+  ES: {
+    morning: 'Buenos días',
+    midday:  'Hola',
+    evening: 'Buenas tardes',
+    night:   '¿Hambre a estas horas?',
+  },
 };
 
 const SUBTITLES: Record<Language, Record<TimeOfDay, string>> = {
@@ -52,6 +58,12 @@ const SUBTITLES: Record<Language, Record<TimeOfDay, string>> = {
     midday:  'Lunchtime ideas?',
     evening: "What's for dinner?",
     night:   'Something light?',
+  },
+  ES: {
+    morning: '¿Qué tal un desayuno?',
+    midday:  '¿Ideas para comer?',
+    evening: '¿Qué hay para cenar?',
+    night:   '¿Algo ligero?',
   },
 };
 
