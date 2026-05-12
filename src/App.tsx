@@ -157,7 +157,10 @@ function UpdateBanner({ onUpdate }: { onUpdate: () => void }) {
       position: 'fixed', top: 0, left: 0, right: 0, zIndex: 999,
       background: T.accent, color: '#1a1208',
       display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-      padding: '10px 16px',
+      paddingTop: 'calc(env(safe-area-inset-top) + 10px)',
+      paddingBottom: '10px',
+      paddingLeft: '16px',
+      paddingRight: '16px',
       fontFamily: T.font, fontSize: 13, fontWeight: 600,
       boxShadow: '0 2px 12px rgba(0,0,0,0.4)',
     }}>
