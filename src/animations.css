@@ -111,6 +111,28 @@
   to   { background-position: -200% 0; }
 }
 
+/* === Sheet slide-up ====================================================
+   For bottom-sheet modals. Apply to the sheet container; pair with a
+   backdrop that uses .backdrop-fade for the dim/blur. */
+
+.sheet-slide-up {
+  animation: sheetSlideUp 0.28s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+
+@keyframes sheetSlideUp {
+  from { transform: translateY(100%); }
+  to   { transform: translateY(0); }
+}
+
+.backdrop-fade {
+  animation: backdropFade 0.22s ease-out both;
+}
+
+@keyframes backdropFade {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
 /* === Heart pop =========================================================
    For the favorites star/heart toggle. Apply briefly via class toggle. */
 

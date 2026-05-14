@@ -1,13 +1,15 @@
 // Meal type picker — first step of the generation flow.
 // User taps a tile → navigate to /generate/loading with the mealType
-// passed via location.state.
+// (and any per-generation customization) passed via location.state.
 
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Screen, SubHeader } from '../components/Chrome';
+import { Sliders } from '../components/Icons';
+import { CustomizationSheet } from '../components/CustomizationSheet';
 import { T } from '../tokens';
 import { useApp } from '../lib/app-state';
-import type { MealType } from '../lib/types';
+import { EMPTY_CUSTOMIZATION, type Customization, type MealType } from '../lib/types';
 
 interface Meal {
   id: MealType;
@@ -27,13 +29,41 @@ export function MealTypePage() {
   const { pantry, t } = useApp();
   const navigate = useNavigate();
 
+  const [sheetOpen, setSheetOpen] = useState(false);
+  const [customization, setCustomization] = useState<Customization>(EMPTY_CUSTOMIZATION);
+  const activeCount = customization.mustInclude.length + customization.skip.length;
+
   function pick(meal: MealType) {
-    navigate('/generate/loading', { state: { mealType: meal } });
+    navigate('/generate/loading', { state: { mealType: meal, customization } });
   }
 
   return (
     <Screen>
-      <SubHeader title={t('generateRecipe')} />
+      <SubHeader
+        title={t('generateRecipe')}
+        right={
+          <button
+            type="button"
+            onClick={() => setSheetOpen(true)}
+            className="press"
+            style={{
+              display: 'inline-flex', alignItems: 'center', gap: 6,
+              padding: '6px 12px', borderRadius: 999,
+              background: activeCount > 0 ? T.accentTint : T.surface,
+              border: `1px solid ${activeCount > 0 ? T.borderAcc : T.border}`,
+              color: activeCount > 0 ? T.accent : T.text2,
+              fontSize: 12, fontWeight: 600,
+              cursor: 'pointer', fontFamily: T.font,
+            }}
+          >
+            <Sliders size={13} />
+            {t('customize')}
+            {activeCount > 0 && (
+              <span style={{ fontVariantNumeric: 'tabular-nums' }}>({activeCount})</span>
+            )}
+          </button>
+        }
+      />
 
       <div style={{ padding: '20px 20px 28px' }}>
         <div style={{ fontSize: 20, fontWeight: 700, color: T.text, letterSpacing: -0.4 }}>
@@ -75,6 +105,14 @@ export function MealTypePage() {
           ))}
         </div>
       </div>
+
+      <CustomizationSheet
+        open={sheetOpen}
+        onClose={() => setSheetOpen(false)}
+        pantry={pantry}
+        initial={customization}
+        onApply={(next) => setCustomization(next)}
+      />
     </Screen>
   );
 }

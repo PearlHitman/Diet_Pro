@@ -36,6 +36,18 @@ export const Home = (p: Props) => <Svg {...p}><path d="M3 9l9-7 9 7v11a2 2 0 0 1
 
 export const Package = (p: Props) => <Svg {...p}><line x1="16.5" y1="9.4" x2="7.5" y2="4.21"/><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></Svg>;
 
+export const Sliders = (p: Props) => <Svg {...p}>
+  <line x1="4" y1="21" x2="4" y2="14"/>
+  <line x1="4" y1="10" x2="4" y2="3"/>
+  <line x1="12" y1="21" x2="12" y2="12"/>
+  <line x1="12" y1="8" x2="12" y2="3"/>
+  <line x1="20" y1="21" x2="20" y2="16"/>
+  <line x1="20" y1="12" x2="20" y2="3"/>
+  <line x1="1" y1="14" x2="7" y2="14"/>
+  <line x1="9" y1="8" x2="15" y2="8"/>
+  <line x1="17" y1="16" x2="23" y2="16"/>
+</Svg>;
+
 export function Star({ filled = false, size = 16 }: { filled?: boolean; size?: number }) {
   const color = filled ? '#d4a574' : '#8a8a96';
   return (
