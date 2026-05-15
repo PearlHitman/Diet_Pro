@@ -7,6 +7,7 @@
 // States: analyzing → review-single (photo) | review-bulk (receipt) | error
 
 import React, { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { T } from '../tokens';
 import { useApp } from '../lib/app-state';
 import { scanProductPhoto, scanReceipt, type ScannedIngredient } from '../lib/claude';
@@ -106,7 +107,7 @@ export function CameraImport({ file, mode, onClose }: Props) {
     onClose();
   }
 
-  return (
+  return createPortal(
     <Backdrop onClick={onClose}>
       <Sheet onClick={e => e.stopPropagation()}>
         {step.name === 'analyzing' && <AnalyzingView hint={t('analyzingPhoto')} />}
@@ -139,7 +140,8 @@ export function CameraImport({ file, mode, onClose }: Props) {
           />
         )}
       </Sheet>
-    </Backdrop>
+    </Backdrop>,
+    document.body,
   );
 }
 
