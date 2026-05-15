@@ -148,7 +148,7 @@ export function CameraImport({ file, mode, onClose }: Props) {
 function Backdrop({ onClick, children }: { onClick: () => void; children: React.ReactNode }) {
   return (
     <div onClick={onClick} style={{
-      position: 'fixed', inset: 0, zIndex: 60,
+      position: 'fixed', inset: 0, zIndex: 110,
       background: 'rgba(0,0,0,0.65)', backdropFilter: 'blur(8px)',
       display: 'flex', alignItems: 'flex-end', justifyContent: 'center',
     }}>
