@@ -59,7 +59,12 @@ export function MealTypePage() {
             <Sliders size={13} />
             {t('customize')}
             {activeCount > 0 && (
-              <span style={{ fontVariantNumeric: 'tabular-nums' }}>({activeCount})</span>
+              // 7. Badge fades+scales in the first time it appears
+              <span
+                key="active"
+                className="badge-in"
+                style={{ fontVariantNumeric: 'tabular-nums' }}
+              >({activeCount})</span>
             )}
           </button>
         }

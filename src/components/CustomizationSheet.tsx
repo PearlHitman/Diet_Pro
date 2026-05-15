@@ -73,13 +73,21 @@ function capForCategory(cat: Category): number {
 // ─── Chip ────────────────────────────────────────────────────
 
 function Chip({
-  name, state, disabled, onClick,
-}: { name: string; state: ChipState; disabled: boolean; onClick: () => void }) {
-  const base = {
+  name, state, disabled, shakeTarget, onClick,
+}: {
+  name: string;
+  state: ChipState;
+  disabled: boolean;
+  shakeTarget: string | null;
+  onClick: () => void;
+}) {
+  const isShaking = shakeTarget === name.toLowerCase();
+
+  const base: React.CSSProperties = {
     padding: '8px 13px',
     borderRadius: 999,
     fontSize: 13,
-    fontWeight: 600 as const,
+    fontWeight: 600,
     fontFamily: T.font,
     cursor: disabled ? 'not-allowed' : 'pointer',
     border: '1px solid',
@@ -88,7 +96,10 @@ function Chip({
     gap: 5,
     lineHeight: 1.1,
     opacity: disabled ? 0.45 : 1,
+    // 2. Smooth color transitions between states
+    transition: 'background 0.15s ease, border-color 0.15s ease, color 0.15s ease',
   };
+
   let styled: React.CSSProperties;
   if (state === 'must') {
     styled = { ...base, background: T.accentTint, borderColor: T.borderAcc, color: T.accent };
@@ -97,10 +108,22 @@ function Chip({
   } else {
     styled = { ...base, background: T.surface, borderColor: T.border, color: T.text2 };
   }
+
   return (
-    <button type="button" className="press" onClick={onClick} disabled={disabled} style={styled}>
-      {state === 'must' && <Check size={12} />}
-      {state === 'skip' && <X size={12} />}
+    <button
+      type="button"
+      className={`press${isShaking ? ' shake' : ''}`}
+      onClick={onClick}
+      disabled={disabled}
+      style={styled}
+    >
+      {/* 5. Icon pops in on state entry — key change causes remount → re-animation */}
+      {state === 'must' && (
+        <span key="must" className="icon-pop"><Check size={12} /></span>
+      )}
+      {state === 'skip' && (
+        <span key="skip" className="icon-pop"><X size={12} /></span>
+      )}
       <span>{name}</span>
     </button>
   );
@@ -114,14 +137,28 @@ export function CustomizationSheet({
   const { t } = useApp();
   const [draft, setDraft] = useState<Customization>(initial);
 
-  // Reset local draft to whatever the parent passed in whenever we open.
-  // Mutations only flow upward via onApply, so this is the right moment
-  // to seed.
+  // 1. Entrance / exit: rendered gates the DOM node; visible drives the
+  //    CSS transition. This lets us animate out before unmounting.
+  const [rendered, setRendered] = useState(open);
+  const [visible, setVisible] = useState(open);
+
+  useEffect(() => {
+    if (open) {
+      setRendered(true);
+      requestAnimationFrame(() => setVisible(true));
+    } else if (rendered) {
+      setVisible(false);
+      const timer = setTimeout(() => setRendered(false), 300);
+      return () => clearTimeout(timer);
+    }
+  }, [open, rendered]);
+
+  // Seed the draft from props whenever the sheet opens.
   useEffect(() => {
     if (open) setDraft(initial);
   }, [open, initial]);
 
-  // Prevent the page behind the sheet from scrolling.
+  // Prevent the page behind from scrolling while the sheet is open.
   useEffect(() => {
     if (!open) return;
     const prev = document.body.style.overflow;
@@ -129,19 +166,33 @@ export function CustomizationSheet({
     return () => { document.body.style.overflow = prev; };
   }, [open]);
 
-  if (!open) return null;
+  // 3. Cap-reached shake target
+  const [shakeTarget, setShakeTarget] = useState<string | null>(null);
+
+  if (!rendered) return null;
 
   function cycle(item: Ingredient) {
     const key = item.name.toLowerCase();
     const state = chipState(item.name, draft);
 
     if (state === 'neutral') {
-      // Cap check for the must-include transition. Already-must/skip chips
-      // bypass this because they cycle to a different state.
       const cap = capForCategory(item.category);
       const used = mustCountForCategory(item.category, draft, pantry);
-      if (used >= cap) return; // no-op; shake animation comes in a later pass
-
+      if (used >= cap) {
+        // Find the already-selected chip in this category to shake it.
+        const alreadySelected = pantry.find(
+          p => p.category === item.category && draft.mustInclude.includes(p.name.toLowerCase()),
+        );
+        if (alreadySelected) {
+          setShakeTarget(alreadySelected.name.toLowerCase());
+          setTimeout(() => setShakeTarget(null), 400);
+        }
+        // Haptic feedback on cap hit (supported on most mobile browsers).
+        if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
+          navigator.vibrate(10);
+        }
+        return;
+      }
       setDraft({ ...draft, mustInclude: [...draft.mustInclude, key] });
     } else if (state === 'must') {
       setDraft({
@@ -155,7 +206,6 @@ export function CustomizationSheet({
 
   const isEmpty = pantry.length === 0;
 
-  // Group pantry by category in the prescribed display order.
   const grouped: { cat: Category; items: Ingredient[] }[] = CATEGORY_ORDER
     .map(cat => ({ cat, items: pantry.filter(p => p.category === cat) }))
     .filter(g => g.items.length > 0);
@@ -163,11 +213,13 @@ export function CustomizationSheet({
   const mustCount = draft.mustInclude.length;
   const skipCount = draft.skip.length;
 
+  // 6. Glow the Apply button only when the draft differs from what was last applied.
+  const hasChanges = JSON.stringify(draft) !== JSON.stringify(initial);
+
   return (
     <>
-      {/* Backdrop */}
+      {/* Backdrop — opacity transition drives the fade in/out */}
       <div
-        className="backdrop-fade"
         onClick={onClose}
         style={{
           position: 'fixed', inset: 0,
@@ -175,15 +227,16 @@ export function CustomizationSheet({
           backdropFilter: 'blur(8px)',
           WebkitBackdropFilter: 'blur(8px)',
           zIndex: 50,
+          opacity: visible ? 1 : 0,
+          transition: 'opacity 0.25s ease',
         }}
       />
 
-      {/* Sheet */}
+      {/* Sheet — translateY transition drives the slide up/down */}
       <div
         role="dialog"
         aria-modal="true"
         aria-label={t('customize')}
-        className="sheet-slide-up"
         style={{
           position: 'fixed', left: 0, right: 0, bottom: 0,
           maxHeight: '88vh',
@@ -194,6 +247,8 @@ export function CustomizationSheet({
           display: 'flex', flexDirection: 'column',
           boxShadow: '0 -20px 40px rgba(0,0,0,0.4)',
           fontFamily: T.font,
+          transform: visible ? 'translateY(0)' : 'translateY(100%)',
+          transition: 'transform 0.32s cubic-bezier(0.2, 0.8, 0.2, 1)',
         }}
       >
         {/* Drag handle indicator */}
@@ -258,10 +313,16 @@ export function CustomizationSheet({
                     <span style={{ fontSize: 14 }}>{CATEGORY_EMOJI[cat]}</span>
                     {t(CATEGORY_LABEL_KEY[cat])}
                   </div>
-                  <div style={{
-                    fontSize: 11, fontWeight: 600, color: used >= cap ? T.accent : T.mute2,
-                    fontVariantNumeric: 'tabular-nums',
-                  }}>{used}/{cap}</div>
+                  {/* 4. key={used} causes remount on count change → bump animation replays */}
+                  <div
+                    key={used}
+                    className={used > 0 ? 'bump' : ''}
+                    style={{
+                      fontSize: 11, fontWeight: 600,
+                      color: used >= cap ? T.accent : T.mute2,
+                      fontVariantNumeric: 'tabular-nums',
+                    }}
+                  >{used}/{cap}</div>
                 </div>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
                   {items.map(it => {
@@ -273,6 +334,7 @@ export function CustomizationSheet({
                         name={it.name}
                         state={state}
                         disabled={atCap}
+                        shakeTarget={shakeTarget}
                         onClick={() => cycle(it)}
                       />
                     );
@@ -307,7 +369,11 @@ export function CustomizationSheet({
             ) : (
               <>
                 <GhostButton onClick={() => setDraft(EMPTY_CUSTOMIZATION)}>{t('reset')}</GhostButton>
-                <PrimaryButton onClick={() => { onApply(draft); onClose(); }}>{t('apply')}</PrimaryButton>
+                {/* 6. Glow pulse on Apply when there are uncommitted changes */}
+                <PrimaryButton
+                  className={hasChanges ? 'glow' : undefined}
+                  onClick={() => { onApply(draft); onClose(); }}
+                >{t('apply')}</PrimaryButton>
               </>
             )}
           </div>
