@@ -2,12 +2,12 @@
 // Edit here when you want to tune the AI's behavior — don't scatter
 // prompts across the codebase.
 
-import type { Ingredient, Language, MealType, Profile } from './types';
+import type { Customization, Ingredient, Language, MealType, Profile } from './types';
 
-// ─── Meal type descriptions (used in prompt) ─────────────────
+// ─── Meal type descriptions ──────────────────────────────────
 
 const MEAL_DESC: Record<MealType, string> = {
-  quick:    'Quick meal — should be ready in under 30 minutes, minimal active cooking.',
+  quick:    'Quick meal — under 30 minutes total, minimal active cooking, few steps.',
   healthy:  'Healthy & light — lean proteins, vegetables, balanced macros, lower calorie.',
   comfort:  'Comfort food — hearty, warming, satisfying. Higher calorie is fine.',
   festive:  'Festive — impressive presentation, suitable for sharing or special occasions.',
@@ -20,8 +20,7 @@ function daysUntil(isoDate: string | null): number | null {
   const expiry = new Date(isoDate + 'T00:00:00');
   const today = new Date();
   today.setHours(0, 0, 0, 0);
-  const ms = expiry.getTime() - today.getTime();
-  return Math.round(ms / 86_400_000);
+  return Math.round((expiry.getTime() - today.getTime()) / 86_400_000);
 }
 
 function formatPantry(pantry: Ingredient[]): string {
@@ -31,10 +30,9 @@ function formatPantry(pantry: Ingredient[]): string {
       const days = daysUntil(it.expiresOn);
       let suffix = '';
       if (days !== null) {
-        if (days < 0)      suffix = ` (EXPIRED ${-days}d ago)`;
-        else if (days === 0) suffix = ' (expires TODAY)';
-        else if (days <= 3)  suffix = ` (expires in ${days}d — USE SOON)`;
-        else                 suffix = ` (expires in ${days}d)`;
+        if (days < 0)        suffix = ` (EXPIRED ${-days}d ago)`;
+        else if (days === 0) suffix = ' (expires TODAY — use it!)';
+        else if (days <= 3)  suffix = ` (expires in ${days}d — prefer using)`;
       }
       const amount = it.amount ? ` [${it.amount}]` : '';
       return `- ${it.name}${amount}${suffix}`;
@@ -48,6 +46,7 @@ export interface PromptInput {
   pantry: Ingredient[];
   profile: Profile;
   mealType: MealType;
+  customization?: Customization;
 }
 
 // System prompt sets the creative persona. Kept separate so claude.ts
@@ -64,60 +63,121 @@ You always produce:
 - Steps that explain the *why* alongside the *what* ("sear skin-side down without moving it so the fat renders and the skin crisps, ~6 min")
 - Recipes the user will actually remember and want to repeat`;
 
-export function buildRecipePrompt({ pantry, profile, mealType }: PromptInput): string {
+export function buildRecipePrompt({
+  pantry, profile, mealType, customization,
+}: PromptInput): string {
   const langInstruction = profile.language === 'EL'
-    ? 'CRITICAL: Generate ALL text content in Greek (Ελληνικά). Recipe names, ingredient names, and cooking steps must be in Greek. Numbers and units stay as-is.'
-    : 'Generate all content in English.';
+    ? 'CRITICAL OUTPUT LANGUAGE: All recipe content (names, ingredients, steps) MUST be in Greek (Ελληνικά). Numbers and units stay numeric.'
+    : 'Output language: English.';
 
-  return `Generate EXACTLY 3 distinct recipes using the user's pantry and profile below.
+  // Build constraint sections only if non-empty
+  const mustInclude = customization?.mustInclude ?? [];
+  const skip = customization?.skip ?? [];
 
-═══ PANTRY ═══
+  const mustSection = mustInclude.length > 0
+    ? `\n═══ USER REQUIREMENTS — MUST INCLUDE ═══
+The user explicitly wants these ingredients featured in EVERY recipe:
+${mustInclude.map(n => `- ${n}`).join('\n')}
+
+This is non-negotiable. Each of the 3 recipes must use ALL of these
+ingredients in a meaningful way (not just as a garnish).`
+    : '';
+
+  const skipSection = skip.length > 0
+    ? `\n═══ USER REQUIREMENTS — DO NOT USE ═══
+The user has explicitly asked to skip these for this generation:
+${skip.map(n => `- ${n}`).join('\n')}
+
+NEVER include these ingredients in any recipe, even in trace amounts.`
+    : '';
+
+  return `You are an expert kitchen assistant. Your job is to suggest 3 recipes the user can actually cook with what they have.
+
+═══ HOW TO APPROACH THIS ═══
+This is a PANTRY-FIRST task. You are NOT generating recipes and checking
+if ingredients exist — you are looking at what's in the user's kitchen
+and figuring out what they can make. Treat the pantry as your starting
+canvas.
+
+Before writing the JSON output, mentally:
+1. Scan the pantry for protein sources, vegetables, starches, fats, and seasonings.
+2. Consider the meal type and find combinations that work.
+3. Each recipe should be DOMINANTLY made from pantry items.
+
+═══ PANTRY (the user's available ingredients) ═══
 ${formatPantry(pantry)}
 
 ═══ USER PROFILE ═══
 Name: ${profile.name || '(not set)'}
 Cuisine preference: ${profile.cuisine || '(open to anything)'}
 Cooking level: ${profile.level}
-Servings: ${profile.servings}
+Servings per recipe: ${profile.servings}
 Allergies & avoidances: ${profile.allergies || '(none)'}
 Diet goal: ${profile.dietGoal}
 
 ═══ MEAL TYPE ═══
 ${MEAL_DESC[mealType]}
+${mustSection}${skipSection}
 
-═══ RULES (strict) ═══
-1. PRIORITIZE ingredients marked "USE SOON" or "expires TODAY". At least 2 of the 3 recipes should feature these.
-2. NEVER include ingredients the user is allergic to. This is non-negotiable.
-3. For each recipe ingredient, set "missing": true if it is NOT in the user's pantry; false otherwise. Match loosely (e.g. "chicken breast" matches a pantry entry of "chicken"). Aim for low-missing recipes when possible, but a good recipe with 2-3 missing ingredients is better than a bad recipe with zero.
-4. Match cooking level:
-   - Beginner: ≤5 steps, basic techniques only (boil, fry, bake)
-   - Intermediate: ≤8 steps, can use techniques like reduction, marination
+═══ HARD RULES (must all be satisfied) ═══
+
+1. PANTRY DOMINANCE: In every recipe, at least 70% of the ingredients
+   listed must come from the user's pantry. Set "missing": false for
+   pantry items, "missing": true for items not in the pantry.
+
+2. MISSING MINIMAL: A recipe should have at most 2-3 missing ingredients,
+   and those should ideally be pantry staples (salt, pepper, common oils)
+   or one main ingredient max. Never propose a recipe where the user
+   would need to buy half the ingredients.
+
+3. ALLERGIES & SKIPS: Never use anything from the user's allergies list
+   or from the SKIP list above. Non-negotiable, no exceptions.
+
+4. MUST-INCLUDE: If the user listed must-include ingredients above, ALL
+   3 recipes must feature ALL of them prominently.
+
+5. EXPIRY PRIORITY: When a pantry item is marked "expires TODAY" or
+   "prefer using", weight it heavily. At least 2 of the 3 recipes should
+   feature at least one such item.
+
+6. LOOSE MATCHING: Match pantry items loosely. "chicken breast" in a
+   recipe matches "chicken" in the pantry. "garlic clove" matches "garlic".
+   Trust the user has reasonable substitutes for similar things.
+
+7. COOKING LEVEL:
+   - Beginner: ≤5 steps, basic techniques only (boil, fry, bake, mix)
+   - Intermediate: ≤8 steps, can use marination, reduction, sauté
    - Expert: up to 12 steps, advanced techniques allowed
-5. Respect diet goal:
-   - "Weight loss": ≤500 kcal/serving, lean
-   - "Muscle": high protein, ≥30g protein/serving implied
+
+8. DIET GOAL:
+   - "Weight loss": ≤500 kcal/serving
+   - "Muscle": ≥30g protein/serving implied
    - "Health": balanced, vegetable-forward
    - "None": no constraint
-6. Servings per recipe must equal ${profile.servings}.
-7. Make the 3 recipes meaningfully different — different protein, different cuisine region, different dominant technique.
-8. Recipe names must be specific and evocative. Include the cuisine, hero ingredient, or technique that defines the dish. Banned words in isolation: "bowl", "stir-fry", "pasta", "rice", "salad", "soup" — always qualify them (e.g. "Miso-Glazed Aubergine Over Soba" is fine; "Pasta Dish" is not).
-9. Each step must include a brief sensory or technique cue — colour, texture, sound, timing — not just a bare action.
-10. ${langInstruction}
+
+9. SERVINGS: Exactly ${profile.servings} per recipe.
+
+10. DIVERSITY: The 3 recipes should be meaningfully different (different
+    proteins or cooking techniques or cuisine styles), unless must-include
+    constraints force similarity.
+
+11. ${langInstruction}
 
 ═══ OUTPUT FORMAT ═══
-Respond with ONLY valid JSON. No prose, no markdown, no code fences. Schema:
+Respond with ONLY valid JSON. No prose, no markdown, no code fences.
+Strict schema:
 
 {
   "recipes": [
     {
-      "name": "string — specific, evocative recipe title",
+      "name": "string — descriptive recipe title",
       "cookTime": number — total minutes from start to plating,
       "difficulty": "Beginner" | "Intermediate" | "Expert",
       "calories": number — estimated kcal per serving,
       "ingredients": [
         { "name": "string", "amount": "string e.g. '200g' or '2 cloves'", "missing": boolean }
       ],
-      "steps": ["string — one step per array element, imperative voice, with technique/sensory detail"]
+      "steps": ["string — one step per array element, imperative voice"]
     }
   ]
 }

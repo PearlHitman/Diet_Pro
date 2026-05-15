@@ -7,7 +7,7 @@
 // deployment, you'd want to proxy through a backend instead.
 
 import Anthropic from '@anthropic-ai/sdk';
-import type { AIResponse, Category, Ingredient, Language, MealType, Profile, Recipe, Settings } from './types';
+import type { AIResponse, Category, Customization, Ingredient, Language, MealType, Profile, Recipe, Settings } from './types';
 import { buildProductPhotoPrompt, buildReceiptPrompt, buildRecipePrompt, RECIPE_SYSTEM_PROMPT } from './prompts';
 
 // Model token strings — keep in sync with src/lib/types.ts ClaudeModel.
@@ -32,6 +32,7 @@ export interface GenerateInput {
   profile: Profile;
   mealType: MealType;
   settings: Settings;
+  customization?: Customization;  // optional for back-compat
 }
 
 export async function generateRecipes(input: GenerateInput): Promise<Recipe[]> {
@@ -49,7 +50,12 @@ export async function generateRecipes(input: GenerateInput): Promise<Recipe[]> {
     dangerouslyAllowBrowser: true,
   });
 
-  const prompt = buildRecipePrompt(input);
+  const prompt = buildRecipePrompt({
+    pantry: input.pantry,
+    profile: input.profile,
+    mealType: input.mealType,
+    customization: input.customization,
+  });
 
   let response;
   try {

@@ -99,6 +99,15 @@ const EN = {
   generatingHint: 'Asking Claude for three ideas',
   generateMore: 'Generate 3 more',
 
+  // Customization sheet
+  customize: 'Customize',
+  customizeSub: 'Tell Claude what to focus on',
+  mustIncludeLabel: 'must include',
+  skipLabel: 'skip',
+  reset: 'Reset',
+  apply: 'Apply',
+  emptyPantryForCustomize: 'Add ingredients to your pantry first',
+
   // Recipe
   recipe: 'Recipe',
   missing: 'missing',
@@ -255,6 +264,14 @@ const EL: Record<Keys, string> = {
   generatingHint: 'Ζητώ τρεις ιδέες από τον Claude',
   generateMore: 'Άλλες 3 προτάσεις',
 
+  customize: 'Προσαρμογή',
+  customizeSub: 'Πες στον Claude τι να εστιάσει',
+  mustIncludeLabel: 'υποχρεωτικά',
+  skipLabel: 'αποκλείεται',
+  reset: 'Επαναφορά',
+  apply: 'Εφαρμογή',
+  emptyPantryForCustomize: 'Πρόσθεσε υλικά στο ντουλάπι σου πρώτα',
+
   recipe: 'Συνταγή',
   missing: 'λείπουν',
   missingHint: 'τα υπόλοιπα είναι στο ντουλάπι σου.',
@@ -405,6 +422,14 @@ const ES: Record<Keys, string> = {
   generating: 'Generando recetas…',
   generatingHint: 'Pidiendo tres ideas a Claude',
   generateMore: 'Generar 3 más',
+
+  customize: 'Personalizar',
+  customizeSub: 'Dile a Claude en qué centrarse',
+  mustIncludeLabel: 'incluir',
+  skipLabel: 'omitir',
+  reset: 'Restablecer',
+  apply: 'Aplicar',
+  emptyPantryForCustomize: 'Añade ingredientes a tu despensa primero',
 
   recipe: 'Receta',
   missing: 'faltan',

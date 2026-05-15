@@ -12,9 +12,12 @@ import { Sparkles, AlertCircle, ArrowLeft } from '../components/Icons';
 import { T, SCREEN_PAD_TOP } from '../tokens';
 import { useApp } from '../lib/app-state';
 import { generateRecipes, ClaudeError } from '../lib/claude';
-import type { MealType, Recipe } from '../lib/types';
+import { EMPTY_CUSTOMIZATION, type Customization, type MealType, type Recipe } from '../lib/types';
 
-interface LocationState { mealType?: MealType }
+interface LocationState {
+  mealType?: MealType;
+  customization?: Customization;
+}
 
 export function LoadingPage() {
   const location = useLocation();
@@ -23,7 +26,9 @@ export function LoadingPage() {
   const [error, setError] = useState<string | null>(null);
   const startedRef = useRef(false);
 
-  const mealType = (location.state as LocationState | null)?.mealType;
+  const state = location.state as LocationState | null;
+  const mealType = state?.mealType;
+  const customization = state?.customization ?? EMPTY_CUSTOMIZATION;
 
   useEffect(() => {
     if (startedRef.current) return;
@@ -36,7 +41,7 @@ export function LoadingPage() {
 
     (async () => {
       try {
-        const recipes = await generateRecipes({ pantry, profile, mealType, settings });
+        const recipes = await generateRecipes({ pantry, profile, mealType, settings, customization });
         await appendRecipes(recipes);
         navigate('/results', { state: { ids: recipes.map(r => r.id) }, replace: true });
       } catch (e) {

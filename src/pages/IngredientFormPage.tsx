@@ -4,7 +4,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Screen, SubHeader } from '../components/Chrome';
-import { Field, Input, Segmented } from '../components/Forms';
+import { Field, Input, PrimaryButton } from '../components/Forms';
 import { T } from '../tokens';
 import { useApp } from '../lib/app-state';
 import type { Category, Ingredient } from '../lib/types';
@@ -53,26 +53,11 @@ export function IngredientFormPage() {
   }
 
   return (
-    <Screen>
-      <SubHeader
-        title={editing ? t('edit') : t('addIngredient')}
-        right={
-          <button
-            onClick={handleSave}
-            disabled={!canSave}
-            style={{
-              padding: '6px 14px', borderRadius: 999,
-              border: 'none',
-              background: canSave ? T.accentGrad : T.surface,
-              color: canSave ? '#1a1208' : T.muted,
-              cursor: canSave ? 'pointer' : 'not-allowed',
-              fontSize: 13, fontWeight: 700, fontFamily: T.font,
-            }}
-          >{t('save')}</button>
-        }
-      />
+    <Screen style={{ display: 'flex', flexDirection: 'column' }}>
+      <SubHeader title={editing ? t('edit') : t('addIngredient')} />
 
-      <div style={{ padding: '16px 20px 28px' }}>
+      {/* Scrollable form content — grows to fill remaining height */}
+      <div style={{ flex: 1, overflowY: 'auto', padding: '16px 20px' }}>
         <Field label={t('name')}>
           <Input value={name} onChange={setName} placeholder="Chicken breast" autoFocus />
         </Field>
@@ -106,6 +91,20 @@ export function IngredientFormPage() {
         <Field label={t('amountOpt')}>
           <Input value={amount} onChange={setAmount} placeholder={t('amountPlaceholder')} />
         </Field>
+      </div>
+
+      {/* Sticky save footer — stays visible even when keyboard is open */}
+      <div style={{
+        padding: '12px 20px',
+        paddingBottom: 'max(12px, env(safe-area-inset-bottom))',
+        borderTop: `1px solid ${T.border}`,
+        background: 'rgba(10,10,15,0.92)',
+        backdropFilter: 'blur(12px)',
+        WebkitBackdropFilter: 'blur(12px)',
+      }}>
+        <PrimaryButton onClick={handleSave} disabled={!canSave} fullWidth>
+          {t('save')}
+        </PrimaryButton>
       </div>
     </Screen>
   );

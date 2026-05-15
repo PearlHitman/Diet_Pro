@@ -135,19 +135,21 @@ export function Stepper({
 }
 
 export function PrimaryButton({
-  children, onClick, disabled, fullWidth, icon,
+  children, onClick, disabled, fullWidth, icon, className,
 }: {
   children: React.ReactNode;
   onClick?: () => void;
   disabled?: boolean;
   fullWidth?: boolean;
   icon?: React.ReactNode;
+  className?: string;
 }) {
   return (
     <button
       type="button"
       onClick={onClick}
       disabled={disabled}
+      className={className}
       style={{
         width: fullWidth ? '100%' : undefined,
         padding: '14px 22px',

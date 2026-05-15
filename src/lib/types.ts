@@ -43,6 +43,17 @@ export interface Profile {
 
 export type MealType = 'quick' | 'healthy' | 'comfort' | 'festive';
 
+// ─── Customization ───────────────────────────────────────────
+// Per-generation overrides chosen by the user before tapping a meal
+// type. Names are lowercased so we can match loosely in the prompt.
+
+export interface Customization {
+  mustInclude: string[]; // ingredient names (lowercased) — max 1 protein + 3 other
+  skip: string[];        // ingredient names (lowercased) — no cap
+}
+
+export const EMPTY_CUSTOMIZATION: Customization = { mustInclude: [], skip: [] };
+
 export interface RecipeIngredient {
   name: string;
   amount: string;            // "200g", "2 cloves", "to taste"
