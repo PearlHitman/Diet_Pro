@@ -211,46 +211,50 @@ function ReviewSingleView({ item, onConfirm, onCancel, t }: {
   };
 
   return (
-    <div style={{ padding: '20px 20px 28px', overflowY: 'auto' }}>
-      <SheetHeader title={t('confirmIngredient')} onClose={onCancel} />
+    <div style={{ display: 'flex', flexDirection: 'column', maxHeight: '90dvh' }}>
+      <div style={{ padding: '20px 20px 0', overflowY: 'auto', flex: 1, minHeight: 0 }}>
+        <SheetHeader title={t('confirmIngredient')} onClose={onCancel} />
 
-      <div style={{ marginTop: 16, display: 'flex', flexDirection: 'column', gap: 14 }}>
-        <div>
-          <label style={labelStyle}>{t('name')}</label>
-          <input value={name} onChange={e => setName(e.target.value)} autoFocus style={inputStyle} />
-        </div>
-        <div>
-          <label style={labelStyle}>{t('amountOpt')}</label>
-          <input value={amount} onChange={e => setAmount(e.target.value)} placeholder={t('amountPlaceholder')} style={inputStyle} />
-        </div>
-        <div>
-          <label style={labelStyle}>{t('category')}</label>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-            {CATS.map(c => (
-              <button key={c} type="button" onClick={() => setCategory(c)} style={{
-                padding: '7px 12px', borderRadius: 999,
-                background: category === c ? T.accentTint : T.surface,
-                border: `1px solid ${category === c ? T.borderAcc : T.border}`,
-                color: category === c ? T.accent : T.text2,
-                fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: T.font,
-              }}>{catLabels[c]}</button>
-            ))}
+        <div style={{ marginTop: 16, display: 'flex', flexDirection: 'column', gap: 14, paddingBottom: 8 }}>
+          <div>
+            <label style={labelStyle}>{t('name')}</label>
+            <input value={name} onChange={e => setName(e.target.value)} autoFocus style={inputStyle} />
+          </div>
+          <div>
+            <label style={labelStyle}>{t('amountOpt')}</label>
+            <input value={amount} onChange={e => setAmount(e.target.value)} placeholder={t('amountPlaceholder')} style={inputStyle} />
+          </div>
+          <div>
+            <label style={labelStyle}>{t('category')}</label>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+              {CATS.map(c => (
+                <button key={c} type="button" onClick={() => setCategory(c)} style={{
+                  padding: '7px 12px', borderRadius: 999,
+                  background: category === c ? T.accentTint : T.surface,
+                  border: `1px solid ${category === c ? T.borderAcc : T.border}`,
+                  color: category === c ? T.accent : T.text2,
+                  fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: T.font,
+                }}>{catLabels[c]}</button>
+              ))}
+            </div>
           </div>
         </div>
       </div>
 
-      <button
-        disabled={!name.trim()}
-        onClick={() => onConfirm({ name, amount: amount || undefined, category, selected: true })}
-        style={{
-          marginTop: 22, width: '100%', padding: '14px', borderRadius: 14, border: 'none',
-          background: name.trim() ? T.accentGrad : T.surface,
-          color: name.trim() ? '#1a1208' : T.muted,
-          fontSize: 15, fontWeight: 700,
-          cursor: name.trim() ? 'pointer' : 'not-allowed',
-          fontFamily: T.font,
-        }}
-      >{t('addToPantry')}</button>
+      <div style={{ padding: '12px 20px 28px', flexShrink: 0, borderTop: `1px solid ${T.border}` }}>
+        <button
+          disabled={!name.trim()}
+          onClick={() => onConfirm({ name, amount: amount || undefined, category, selected: true })}
+          style={{
+            width: '100%', padding: '14px', borderRadius: 14, border: 'none',
+            background: name.trim() ? T.accentGrad : T.surface,
+            color: name.trim() ? '#1a1208' : T.muted,
+            fontSize: 15, fontWeight: 700,
+            cursor: name.trim() ? 'pointer' : 'not-allowed',
+            fontFamily: T.font,
+          }}
+        >{t('addToPantry')}</button>
+      </div>
     </div>
   );
 }
