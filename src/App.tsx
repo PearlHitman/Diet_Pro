@@ -68,6 +68,7 @@ import { Toaster } from './components/ui/sonner';
 import { ChefHat } from './components/Icons';
 import { isOnboarded } from './lib/onboarding-state';
 import { OnboardingPage } from './pages/OnboardingPage';
+import { DishPage } from './pages/DishPage';
 
 function BrandedLoader() {
   const [visible, setVisible] = useState(false);
@@ -140,6 +141,8 @@ function Routed() {
         <Route path="/generate/loading" element={<LoadingPage />} />
         <Route path="/results" element={<ResultsPage />} />
         <Route path="/recipe/:id" element={<RecipeDetailPage />} />
+
+        <Route path="/dish" element={<DishPage />} />
 
         <Route path="/history" element={<HistoryPage />} />
         {/* Favorites is now a tab inside History (?view=favs). Redirect old links. */}

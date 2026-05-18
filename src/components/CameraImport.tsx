@@ -8,6 +8,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
+import { Pencil } from 'lucide-react';
 import { T } from '../tokens';
 import { useApp } from '../lib/app-state';
 import { scanProductPhoto, scanReceipt, type ScannedIngredient } from '../lib/claude';
@@ -25,6 +26,9 @@ type Step =
 
 interface Draft extends ScannedIngredient {
   selected: boolean;
+  edited?: boolean;
+  /** Single-product saves only — optional expiry date (YYYY-MM-DD). */
+  expiresOn?: string | null;
 }
 
 const CATS: Category[] = ['produce', 'protein', 'dairy', 'grains', 'pantry', 'other'];
@@ -46,11 +50,14 @@ function fileToBase64(file: File): Promise<{ data: string; mediaType: string }> 
 }
 
 function makePantryItem(draft: Draft): Ingredient {
+  const ex = draft.expiresOn;
+  const expiresOn =
+    typeof ex === 'string' && ex.trim() !== '' ? ex.trim() : null;
   return {
     id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
     name: draft.name.trim(),
     category: draft.category,
-    expiresOn: null,
+    expiresOn,
     amount: draft.amount?.trim() || undefined,
     addedAt: new Date().toISOString(),
   };
@@ -204,6 +211,7 @@ function ReviewSingleView({ item, onConfirm, onCancel, t }: {
   const [name, setName] = useState(item.name);
   const [amount, setAmount] = useState(item.amount ?? '');
   const [category, setCategory] = useState<Category>(item.category);
+  const [expiresOn, setExpiresOn] = useState('');
   const { t: appT } = useApp();
 
   const catLabels: Record<Category, string> = {
@@ -227,6 +235,10 @@ function ReviewSingleView({ item, onConfirm, onCancel, t }: {
             <input value={amount} onChange={e => setAmount(e.target.value)} placeholder={t('amountPlaceholder')} style={inputStyle} />
           </div>
           <div>
+            <label style={labelStyle}>{appT('expiryOptionalHint')}</label>
+            <input type="date" value={expiresOn} onChange={e => setExpiresOn(e.target.value)} style={inputStyle} />
+          </div>
+          <div>
             <label style={labelStyle}>{t('category')}</label>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
               {CATS.map(c => (
@@ -246,7 +258,13 @@ function ReviewSingleView({ item, onConfirm, onCancel, t }: {
       <div style={{ padding: '12px 20px 28px', flexShrink: 0, borderTop: `1px solid ${T.border}` }}>
         <button
           disabled={!name.trim()}
-          onClick={() => onConfirm({ name, amount: amount || undefined, category, selected: true })}
+          onClick={() => onConfirm({
+            name,
+            amount: amount || undefined,
+            category,
+            selected: true,
+            expiresOn: expiresOn.trim() || null,
+          })}
           style={{
             width: '100%', padding: '14px', borderRadius: 14, border: 'none',
             background: name.trim() ? T.accentGrad : T.surface,
@@ -273,59 +291,225 @@ function ReviewBulkView({ items, onChange, onConfirm, onCancel, t }: {
   const selected = items.filter(i => i.selected).length;
   const allSelected = selected === items.length;
 
+  const { t: appT } = useApp();
+  const [bulkEditor, setBulkEditor] = useState<{
+    idx: number;
+    origName: string;
+    origCat: Category;
+    draftName: string;
+    draftCat: Category;
+  } | null>(null);
+
+  const catLabels: Record<Category, string> = {
+    produce: appT('cat_produce'), protein: appT('cat_protein'),
+    dairy: appT('cat_dairy'), grains: appT('cat_grains'),
+    pantry: appT('cat_pantry'), other: appT('cat_other'),
+  };
+
+  function commitBulkEditor() {
+    if (!bulkEditor) return;
+    const { idx, draftName, draftCat, origName, origCat } = bulkEditor;
+    const trimmed = draftName.trim();
+    if (!trimmed) return;
+    const changed = trimmed !== origName.trim() || draftCat !== origCat;
+    onChange(items.map((x, i) => {
+      if (i !== idx) return x;
+      return {
+        ...x,
+        name: trimmed,
+        category: draftCat,
+        edited: changed || !!x.edited,
+      };
+    }));
+    setBulkEditor(null);
+  }
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', maxHeight: '85dvh' }}>
       <div style={{ padding: '20px 20px 0', flexShrink: 0 }}>
         <SheetHeader title={t('foundNIngredients').replace('{n}', String(items.length))} onClose={onCancel} />
-        <button onClick={() => onChange(items.map(i => ({ ...i, selected: !allSelected })))} style={{
-          marginTop: 12, padding: '6px 14px', borderRadius: 999,
-          border: `1px solid ${T.border}`, background: T.surface,
-          color: T.text2, fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: T.font,
-        }}>
+        <button
+          type="button"
+          onClick={() => {
+            const nextSel = !allSelected;
+            onChange(items.map(i => ({ ...i, selected: nextSel })));
+          }}
+          style={{
+            marginTop: 12,
+            padding: '6px 14px',
+            borderRadius: 999,
+            border: `1px solid ${T.border}`,
+            background: T.surface,
+            color: T.text2,
+            fontSize: 12,
+            fontWeight: 600,
+            cursor: 'pointer',
+            fontFamily: T.font,
+          }}
+        >
           {allSelected ? t('deselectAll') : t('selectAll')}
         </button>
       </div>
 
       <div style={{ flex: 1, overflowY: 'auto', padding: '12px 20px' }}>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-          {items.map((it, idx) => (
-            <button key={idx} onClick={() => onChange(items.map((x, i) => i === idx ? { ...x, selected: !x.selected } : x))} style={{
-              display: 'flex', alignItems: 'center', gap: 12,
-              padding: '11px 14px', borderRadius: 12,
-              background: it.selected ? T.accentTint : T.surface,
-              border: `1px solid ${it.selected ? T.borderAcc : T.border}`,
-              cursor: 'pointer', textAlign: 'left', fontFamily: T.font,
-            }}>
-              <div style={{
-                width: 18, height: 18, borderRadius: 5, flexShrink: 0,
-                border: `2px solid ${it.selected ? T.accent : T.mute2}`,
-                background: it.selected ? T.accent : 'transparent',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-              }}>
-                {it.selected && <span style={{ fontSize: 11, color: '#1a1208', fontWeight: 900 }}>✓</span>}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+          {items.map((it, idx) => {
+            const expanded = bulkEditor?.idx === idx;
+            return (
+              <div
+                key={idx}
+                style={{
+                  borderRadius: 12,
+                  padding: expanded ? '12px 12px 14px' : '11px 12px',
+                  background: it.selected ? T.accentTint : T.surface,
+                  border: expanded
+                    ? `1px solid ${T.borderAcc}`
+                    : `1px solid ${it.selected ? T.borderAcc : T.border}`,
+                  borderLeft: `3px solid ${it.edited ? T.accent : 'transparent'}`,
+                  boxSizing: 'border-box',
+                  fontFamily: T.font,
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
+                  <button
+                    type="button"
+                    onClick={() => onChange(items.map((x, i) => (i === idx ? { ...x, selected: !x.selected } : x)))}
+                    style={{
+                      all: 'unset',
+                      width: 18,
+                      height: 18,
+                      borderRadius: 5,
+                      flexShrink: 0,
+                      marginTop: 3,
+                      border: `2px solid ${it.selected ? T.accent : T.mute2}`,
+                      background: it.selected ? T.accent : 'transparent',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    {it.selected && <span style={{ fontSize: 11, color: '#1a1208', fontWeight: 900 }}>✓</span>}
+                  </button>
+
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    {expanded && bulkEditor ? (
+                      <>
+                        <input
+                          value={bulkEditor.draftName}
+                          onChange={e => setBulkEditor({ ...bulkEditor, draftName: e.target.value })}
+                          style={{ ...inputStyle, marginBottom: 10 }}
+                        />
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 10 }}>
+                          {CATS.map(c => (
+                            <button
+                              key={c}
+                              type="button"
+                              onClick={() => setBulkEditor({ ...bulkEditor, draftCat: c })}
+                              style={{
+                                padding: '6px 10px',
+                                borderRadius: 999,
+                                fontSize: 11,
+                                fontWeight: 600,
+                                cursor: 'pointer',
+                                fontFamily: T.font,
+                                background: bulkEditor.draftCat === c ? T.accentTint : T.surface,
+                                border: `1px solid ${bulkEditor.draftCat === c ? T.borderAcc : T.border}`,
+                                color: bulkEditor.draftCat === c ? T.accent : T.text2,
+                              }}
+                            >
+                              {catLabels[c]}
+                            </button>
+                          ))}
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => commitBulkEditor()}
+                          disabled={!bulkEditor.draftName.trim()}
+                          style={{
+                            padding: '8px 14px',
+                            borderRadius: 10,
+                            border: 'none',
+                            fontSize: 12,
+                            fontWeight: 700,
+                            cursor: bulkEditor.draftName.trim() ? 'pointer' : 'not-allowed',
+                            fontFamily: T.font,
+                            background: bulkEditor.draftName.trim() ? T.accentGrad : T.surface,
+                            color: bulkEditor.draftName.trim() ? '#1a1208' : T.muted,
+                          }}
+                        >
+                          {appT('done')}
+                        </button>
+                      </>
+                    ) : (
+                      <>
+                        <div style={{ fontSize: 14, fontWeight: 500, color: T.text }}>{it.name}</div>
+                        {it.amount ? (
+                          <div style={{ fontSize: 11, color: T.muted, marginTop: 2 }}>{it.amount}</div>
+                        ) : null}
+                      </>
+                    )}
+                  </div>
+
+                  {!expanded ? (
+                    <button
+                      type="button"
+                      aria-label={appT('edit')}
+                      onClick={() =>
+                        setBulkEditor({
+                          idx,
+                          origName: it.name,
+                          origCat: it.category,
+                          draftName: it.name,
+                          draftCat: it.category,
+                        })
+                      }
+                      className="press"
+                      style={{
+                        all: 'unset',
+                        width: 32,
+                        height: 32,
+                        borderRadius: 8,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        color: T.text2,
+                        cursor: 'pointer',
+                        flexShrink: 0,
+                      }}
+                    >
+                      <Pencil size={17} strokeWidth={2} />
+                    </button>
+                  ) : (
+                    <div style={{ width: 32 }} />
+                  )}
+                </div>
               </div>
-              <div>
-                <div style={{ fontSize: 14, fontWeight: 500, color: T.text }}>{it.name}</div>
-                {it.amount && <div style={{ fontSize: 11, color: T.muted, marginTop: 1 }}>{it.amount}</div>}
-              </div>
-            </button>
-          ))}
+            );
+          })}
         </div>
       </div>
 
       <div style={{ padding: '12px 20px 28px', flexShrink: 0, borderTop: `1px solid ${T.border}` }}>
         <button
+          type="button"
           disabled={selected === 0}
           onClick={() => onConfirm(items)}
           style={{
-            width: '100%', padding: '14px', borderRadius: 14, border: 'none',
+            width: '100%',
+            padding: '14px',
+            borderRadius: 14,
+            border: 'none',
             background: selected > 0 ? T.accentGrad : T.surface,
             color: selected > 0 ? '#1a1208' : T.muted,
-            fontSize: 15, fontWeight: 700,
+            fontSize: 15,
+            fontWeight: 700,
             cursor: selected > 0 ? 'pointer' : 'not-allowed',
             fontFamily: T.font,
           }}
-        >{t('importNItems').replace('{n}', String(selected))}</button>
+        >
+          {t('importNItems').replace('{n}', String(selected))}
+        </button>
       </div>
     </div>
   );

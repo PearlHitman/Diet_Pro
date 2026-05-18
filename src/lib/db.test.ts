@@ -47,6 +47,8 @@ function makeRecipe(id: string, starred = false): Recipe {
     servings: 2,
     ingredients: [],
     steps: ['Cook it.'],
+    chefTips: [],
+    serving: 'Serves 2',
     mealType: 'quick',
     createdAt: new Date().toISOString(),
     starred,
@@ -134,9 +136,9 @@ describe('settings storage', () => {
     expect(s.model).toBe('claude-sonnet-4-5');
   });
 
-  it('round-trips saved settings', async () => {
-    await saveSettings({ apiKey: 'sk-ant-test', model: 'claude-opus-4-7' });
-    expect(await loadSettings()).toEqual({ apiKey: 'sk-ant-test', model: 'claude-opus-4-7' });
+  it('round-trips saved settings and migrates invalid Opus id', async () => {
+    await saveSettings({ apiKey: 'sk-ant-test', model: 'claude-opus-4-7' as any });
+    expect(await loadSettings()).toEqual({ apiKey: 'sk-ant-test', model: 'claude-opus-4-5' });
   });
 });
 

@@ -10,21 +10,28 @@ import type { Recipe } from '../lib/types';
 
 export function MetaRow({ recipe }: { recipe: Recipe }) {
   return (
-    <div style={{
-      display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap',
-      fontSize: 12.5, color: T.text2, fontWeight: 500,
-    }}>
-      <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}>
-        <Clock size={13} color={T.muted} />{recipe.cookTime} min
-      </span>
-      <span style={{ color: T.mute2 }}>·</span>
-      <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}>
-        <TrendingUp size={13} color={T.muted} />{recipe.difficulty}
-      </span>
-      <span style={{ color: T.mute2 }}>·</span>
-      <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}>
-        <Flame size={13} color={T.muted} />~{recipe.calories} kcal
-      </span>
+    <div>
+      <div style={{
+        display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap',
+        fontSize: 12.5, color: T.text2, fontWeight: 500,
+      }}>
+        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}>
+          <Clock size={13} color={T.muted} />{recipe.cookTime} min
+        </span>
+        <span style={{ color: T.mute2 }}>·</span>
+        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}>
+          <TrendingUp size={13} color={T.muted} />{recipe.difficulty}
+        </span>
+        <span style={{ color: T.mute2 }}>·</span>
+        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}>
+          <Flame size={13} color={T.muted} />~{recipe.calories} kcal
+        </span>
+      </div>
+      {recipe.serving ? (
+        <div style={{ marginTop: 6, fontSize: 12, color: T.muted, fontWeight: 600 }}>
+          {recipe.serving}
+        </div>
+      ) : null}
     </div>
   );
 }
@@ -134,6 +141,25 @@ export function RecipeCard({
               ))}
             </ol>
           </div>
+
+          {recipe.chefTips.length > 0 && (
+            <div>
+              <SectionLabel>{t('chefTipsLabel')}</SectionLabel>
+              <ul style={{
+                margin: '8px 0 0',
+                paddingLeft: 18,
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 8,
+              }}>
+                {recipe.chefTips.map((tip, i) => (
+                  <li key={i} style={{ fontSize: 13.5, color: T.text2, lineHeight: 1.5 }}>
+                    {tip}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
         </>
       )}
     </div>

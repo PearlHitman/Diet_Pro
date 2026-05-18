@@ -8,6 +8,7 @@ import { useNavigate } from 'react-router-dom';
 import { Plus, Search, Trash2, Pencil, Camera, Receipt, Package } from 'lucide-react';
 import { Screen } from '../components/Chrome';
 import { CameraImport, type CameraMode } from '../components/CameraImport';
+import { PantryIngredientDrawer } from '../components/PantryIngredientDrawer';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -73,6 +74,7 @@ export function PantryPage() {
   const [confirming, setConfirming] = useState<string | null>(null);
   const [query, setQuery] = useState('');
   const [captured, setCaptured] = useState<{ file: File; mode: CameraMode } | null>(null);
+  const [sheetId, setSheetId] = useState<string | null>(null);
 
   const photoRef = useRef<HTMLInputElement>(null);
   const receiptRef = useRef<HTMLInputElement>(null);
@@ -97,6 +99,8 @@ export function PantryPage() {
     for (const cat of CATEGORY_ORDER) for (const it of grouped[cat]) map[it.id] = idx++;
     return map;
   }, [grouped]);
+
+  const sheetItem = sheetId ? pantry.find(p => p.id === sheetId) ?? null : null;
 
   const catLabel: Record<Category, string> = {
     produce: t('cat_produce'),
@@ -251,7 +255,7 @@ export function PantryPage() {
                       <IngredientRow
                         key={it.id}
                         item={it}
-                        onEdit={() => navigate(`/pantry/edit/${it.id}`)}
+                        onEdit={() => setSheetId(it.id)}
                         onDelete={() => setConfirming(it.id)}
                         fadeIdx={fadeIndex[it.id]}
                       />
@@ -298,11 +302,18 @@ export function PantryPage() {
         />
       )}
 
+      <PantryIngredientDrawer
+        item={sheetItem}
+        open={sheetItem !== null}
+        onOpenChange={open => { if (!open) setSheetId(null); }}
+      />
+
       <DeleteConfirmDialog
         open={confirming !== null}
         onOpenChange={open => { if (!open) setConfirming(null); }}
         onConfirm={async () => {
           if (confirming) {
+            if (sheetId === confirming) setSheetId(null);
             await removeIngredient(confirming);
             setConfirming(null);
           }
@@ -535,10 +546,11 @@ function EmptyState({ onAdd }: { onAdd: () => void }) {
 }
 
 function NoResults({ query, onClear }: { query: string; onClear: () => void }) {
+  const { t } = useApp();
   return (
     <div style={{ padding: '40px 20px', textAlign: 'center' }}>
       <div style={{ fontSize: 15, color: 'var(--mise-text-secondary)', marginBottom: 16 }}>
-        No ingredients match “{query}”.
+        {t('pantrySearchNoMatch', { q: query })}
       </div>
       <button
         onClick={onClear}
@@ -556,7 +568,7 @@ function NoResults({ query, onClear }: { query: string; onClear: () => void }) {
           fontFamily: 'var(--mise-font-text)',
         }}
       >
-        Clear search
+        {t('pantrySearchClear')}
       </button>
     </div>
   );

@@ -60,6 +60,8 @@ export interface RecipeIngredient {
   name: string;
   amount: string;            // "200g", "2 cloves", "to taste"
   missing: boolean;          // true = not in user's pantry
+  /** Shopping-list grouping when missing (from AI hint). */
+  pantryCategory?: Category;
 }
 
 export interface Recipe {
@@ -71,6 +73,9 @@ export interface Recipe {
   servings: number;
   ingredients: RecipeIngredient[];
   steps: string[];
+  chefTips: string[];
+  /** Human-readable portion line, e.g. "Serves 4". */
+  serving: string;
   // Provenance & user state
   mealType: MealType;
   createdAt: string;         // ISO datetime
@@ -82,7 +87,7 @@ export interface Recipe {
 export type ClaudeModel =
   | 'claude-sonnet-4-5'      // default
   | 'claude-haiku-4-5'
-  | 'claude-opus-4-7';
+  | 'claude-opus-4-5';
 
 export interface Settings {
   apiKey: string;            // empty string = not configured
@@ -98,10 +103,16 @@ export interface AIRecipe {
   cookTime: number;
   difficulty: Level;
   calories: number;
-  ingredients: { name: string; amount: string; missing: boolean }[];
+  ingredients: { name: string; amount: string; missing: boolean; pantryCategory?: Category }[];
   steps: string[];
+  chefTips?: string[];
+  serving?: string;
 }
 
 export interface AIResponse {
   recipes: AIRecipe[];       // expect length === 3
+}
+
+export interface AIDishResponse {
+  recipe: AIRecipe;
 }

@@ -111,7 +111,7 @@ export function SettingsPage() {
             options={[
               { value: 'claude-haiku-4-5', label: 'Haiku' },
               { value: 'claude-sonnet-4-5', label: 'Sonnet' },
-              { value: 'claude-opus-4-7', label: 'Opus' },
+              { value: 'claude-opus-4-5', label: 'Opus' },
             ]}
           />
         </Field>

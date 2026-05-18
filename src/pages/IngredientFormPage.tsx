@@ -10,6 +10,14 @@ import { useApp } from '../lib/app-state';
 import type { Category, Ingredient } from '../lib/types';
 
 const CATS: Category[] = ['produce', 'protein', 'dairy', 'grains', 'pantry', 'other'];
+const LS_LAST_CATEGORY = 'mise:lastCategory';
+
+function readSavedCategory(edit?: Ingredient): Category {
+  if (edit) return edit.category;
+  if (typeof localStorage === 'undefined') return 'produce';
+  const v = localStorage.getItem(LS_LAST_CATEGORY);
+  return typeof v === 'string' && CATS.includes(v as Category) ? (v as Category) : 'produce';
+}
 
 export function IngredientFormPage() {
   const { id } = useParams<{ id: string }>();
@@ -17,20 +25,41 @@ export function IngredientFormPage() {
   const navigate = useNavigate();
   const editing = id ? pantry.find(i => i.id === id) : undefined;
 
-  const [name, setName] = useState(editing?.name ?? '');
-  const [category, setCategory] = useState<Category>(editing?.category ?? 'produce');
-  const [expiresOn, setExpiresOn] = useState(editing?.expiresOn ?? '');
-  const [amount, setAmount] = useState(editing?.amount ?? '');
+  const [name, setName] = useState('');
+  const [category, setCategory] = useState<Category>(() => readSavedCategory(editing));
+  const [expiresOn, setExpiresOn] = useState('');
+  const [amount, setAmount] = useState('');
 
   // If editing a removed item (race condition), bounce back.
   useEffect(() => {
     if (id && !editing) navigate('/pantry', { replace: true });
   }, [id, editing, navigate]);
 
+  useEffect(() => {
+    if (id && editing) {
+      setName(editing.name);
+      setCategory(editing.category);
+      setExpiresOn(editing.expiresOn ?? '');
+      setAmount(editing.amount ?? '');
+      return;
+    }
+    if (!id) {
+      setName('');
+      setExpiresOn('');
+      setAmount('');
+      setCategory(readSavedCategory(undefined));
+    }
+  }, [id, editing?.id]);
+
   const canSave = name.trim().length > 0;
 
   async function handleSave() {
     if (!canSave) return;
+    try {
+      localStorage.setItem(LS_LAST_CATEGORY, category);
+    } catch {
+      /* ignore quota / SSR */
+    }
     if (editing) {
       await updateIngredient(editing.id, {
         name: name.trim(),

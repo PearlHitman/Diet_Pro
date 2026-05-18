@@ -98,7 +98,7 @@ export function LoadingPage() {
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', justifyContent: 'center' }}>
             <button
               onClick={() =>
-                navigate(fromDishFlow ? '/generate?mode=specific' : '/generate', { replace: true })
+                navigate(fromDishFlow ? '/dish' : '/generate', { replace: true })
               }
               style={{
                 padding: '11px 18px', borderRadius: 11,

@@ -185,6 +185,32 @@ const EN = {
   tapToGenerate: 'Tap to generate',
   seasonLabel: 'What\'s in season',
 
+  // Home — time greetings (additive keys)
+  homeGreetingMorning: 'Good morning',
+  homeGreetingAfternoon: 'Good afternoon',
+  homeGreetingEvening: 'Good evening',
+  homeSubtitleWhatsCooking: 'What are we cooking today?',
+  pantryCardNeedMoreHint: 'Add ingredients to get started',
+
+  // Pantry
+  pantrySearchNoMatch: 'No ingredients match "{q}".',
+  pantrySearchClear: 'Clear search',
+  pantryEditSheetTitle: 'Edit ingredient',
+
+  // Dish flow
+  dishGenerate: 'Generate',
+  dishShoppingList: 'Shopping list',
+  dishCanSubstitute: 'Can I substitute?',
+  dishSubstitutionTitle: 'Substitutions',
+  dishSaveHistory: 'Save to history',
+  dishAddFavorites: 'Add to favorites',
+  dishShoppingAllSet: 'Nothing to buy — your pantry looks ready for this dish.',
+  chefTipsLabel: 'Chef tips',
+  substitutionsLoading: 'Asking Claude…',
+  recipeDotLegend: 'Green: already in pantry · Grey: shopping list',
+
+  expiryOptionalHint: 'Expiry date (optional)',
+
   // Errors
   errorTitle: 'Something went wrong',
   errorNoKey: 'Set your API key in Settings first.',
@@ -365,6 +391,29 @@ const EL: Record<Keys, string> = {
   tapToGenerate: 'Πάτα για δημιουργία',
   seasonLabel: 'Τι είναι σε εποχή',
 
+  homeGreetingMorning: 'Καλημέρα',
+  homeGreetingAfternoon: 'Καλησπέρα',
+  homeGreetingEvening: 'Καλό βράδυ',
+  homeSubtitleWhatsCooking: 'Τι μαγειρεύουμε σήμερα;',
+  pantryCardNeedMoreHint: 'Πρόσθεσε υλικά για να ξεκινήσεις',
+
+  pantrySearchNoMatch: 'Δεν υπάρχουν υλικά που να ταιριάζουν με «{q}».',
+  pantrySearchClear: 'Καθαρισμός αναζήτησης',
+  pantryEditSheetTitle: 'Επεξεργασία υλικού',
+
+  dishGenerate: 'Δημιουργία',
+  dishShoppingList: 'Λίστα αγορών',
+  dishCanSubstitute: 'Μπορώ να το αντικαταστήσω;',
+  dishSubstitutionTitle: 'Αντικαταστάσεις',
+  dishSaveHistory: 'Αποθήκευση στο ιστορικό',
+  dishAddFavorites: 'Προσθήκη στα αγαπημένα',
+  dishShoppingAllSet: 'Δεν χρειάζονται αγορές — φαίνεται ότι τα έχεις όλα.',
+  chefTipsLabel: 'Συμβουλές σεφ',
+  substitutionsLoading: 'Ρωτάμε τον Claude…',
+  recipeDotLegend: 'Πράσινο: στο ντουλάπι · Γκρι: αγορά',
+
+  expiryOptionalHint: 'Ημερ. λήξης (προαιρετικό)',
+
   errorTitle: 'Κάτι πήγε στραβά',
   errorNoKey: 'Όρισε πρώτα το API κλειδί στις Ρυθμίσεις.',
   errorRate: 'Όριο ρυθμού Anthropic. Δοκίμασε σε λίγο.',
@@ -540,6 +589,29 @@ const ES: Record<Keys, string> = {
   noNetworkFeed: 'Sin conexión — contenido en caché',
   tapToGenerate: 'Toca para generar',
   seasonLabel: 'Qué está en temporada',
+
+  homeGreetingMorning: 'Buenos días',
+  homeGreetingAfternoon: 'Buenas tardes',
+  homeGreetingEvening: 'Buenas noches',
+  homeSubtitleWhatsCooking: '¿Qué cocinamos hoy?',
+  pantryCardNeedMoreHint: 'Añade ingredientes para empezar',
+
+  pantrySearchNoMatch: 'Ningún ingrediente coincide con «{q}».',
+  pantrySearchClear: 'Borrar búsqueda',
+  pantryEditSheetTitle: 'Editar ingrediente',
+
+  dishGenerate: 'Generar',
+  dishShoppingList: 'Lista de compras',
+  dishCanSubstitute: '¿Puedo sustituir?',
+  dishSubstitutionTitle: 'Sustitutos',
+  dishSaveHistory: 'Guardar en historial',
+  dishAddFavorites: 'Añadir a favoritos',
+  dishShoppingAllSet: 'Nada que comprar — parece que tu despensa lo cubre todo.',
+  chefTipsLabel: 'Consejos del chef',
+  substitutionsLoading: 'Preguntando a Claude…',
+  recipeDotLegend: 'Verde: en despensa · Gris: comprar',
+
+  expiryOptionalHint: 'Fecha de caducidad (opcional)',
 
   errorTitle: 'Algo salió mal',
   errorNoKey: 'Primero configura tu clave API en Ajustes.',

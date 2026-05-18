@@ -4,6 +4,8 @@
 
 import type { Customization, Ingredient, Language, MealType, Profile } from './types';
 
+export const DISH_SYSTEM_PROMPT = `You return precise, authentic recipes as JSON only — no markdown fences unless asked elsewhere.`;
+
 // ─── Meal type descriptions ──────────────────────────────────
 
 const MEAL_DESC: Record<MealType, string> = {
@@ -194,9 +196,16 @@ Strict schema:
       "difficulty": "Beginner" | "Intermediate" | "Expert",
       "calories": number — estimated kcal per serving,
       "ingredients": [
-        { "name": "string", "amount": "string e.g. '200g' or '2 cloves'", "missing": boolean }
+        {
+          "name": "string",
+          "amount": "string e.g. '200g' or '2 cloves'",
+          "missing": boolean,
+          "pantryCategory": "produce" | "protein" | "dairy" | "grains" | "pantry" | "other"
+        }
       ],
-      "steps": ["string — one step per array element, imperative voice"]
+      "steps": ["string — one step per array element, imperative voice"],
+      "chefTips": ["string — short practical tips for best results"],
+      "serving": "string — e.g. 'Serves 4' matching the user's servings preference"
     }
   ]
 }
@@ -254,4 +263,73 @@ Rules:
 - If the receipt is unreadable or has no food items, return {"ingredients":[]}
 
 No explanation, no markdown, no code fences. Just the JSON object.`;
+}
+
+function formatPantryShort(pantry: Ingredient[]): string {
+  if (pantry.length === 0) return '(empty)';
+  return pantry.map(p => `- ${p.name}${p.amount ? ` [${p.amount}]` : ''}`).join('\n');
+}
+
+function profileBlock(profile: Profile): string {
+  return `Name: ${profile.name || '(not set)'}
+Cuisine preference: ${profile.cuisine || '(open)'}
+Cooking level: ${profile.level}
+Servings for this dish: ${profile.servings}
+Allergies & avoidances: ${profile.allergies || '(none)'}
+Diet goal: ${profile.dietGoal}`;
+}
+
+/** Goal-first dish: authentic recipe regardless of pantry; JSON shape wraps a single recipe. */
+export function buildDishPrompt(dishName: string, pantry: Ingredient[], profile: Profile): string {
+  const trimmed = dishName.trim();
+  const langInstruction = profile.language === 'EL'
+    ? 'CRITICAL OUTPUT LANGUAGE: All recipe content MUST be in Greek (Ελληνικά).'
+    : profile.language === 'ES'
+      ? 'CRITICAL OUTPUT LANGUAGE: All recipe content MUST be in Spanish (Español).'
+      : 'Output language: English.';
+  return `The user wants to cook this specific dish: "${trimmed}".
+
+═══ USER PROFILE ═══
+${profileBlock(profile)}
+
+═══ THEIR PANTRY (context only — do NOT limit the dish to pantry; produce the REAL recipe they asked for) ═══
+${formatPantryShort(pantry)}
+
+═══ RULES ═══
+1. Give a complete, authentic version of "${trimmed}" that respects allergies and diet constraints from the profile.
+2. Scale amounts to ${profile.servings} servings.
+3. For each ingredient, set "missing" using loose pantry name matching against the pantry list. Set "pantryCategory" when missing is true so the app can group a shopping list.
+4. Include "chefTips" (2–4 short strings) and "serving" (e.g. "Serves ${profile.servings}").
+5. ${langInstruction}
+
+═══ OUTPUT (JSON ONLY, no prose, no fences) ═══
+{
+  "recipe": {
+    "name": "string",
+    "cookTime": number,
+    "difficulty": "Beginner" | "Intermediate" | "Expert",
+    "calories": number,
+    "ingredients": [
+      { "name": "string", "amount": "string", "missing": boolean,
+        "pantryCategory": "produce" | "protein" | "dairy" | "grains" | "pantry" | "other" }
+    ],
+    "steps": ["string"],
+    "chefTips": ["string"],
+    "serving": "string"
+  }
+}`;
+}
+
+/** Plain-text substitution hints for ingredients the user lacks. */
+export function buildSubstitutionPrompt(missingIngredientNames: string[], pantry: Ingredient[]): string {
+  const miss = missingIngredientNames.filter(Boolean).map(s => `- ${s}`).join('\n') || '(none)';
+  return `These ingredients are NOT in the user's pantry:\n${miss}
+
+Ingredients they DO have:\n${formatPantryShort(pantry)}
+
+Suggest the best substitutions from what they already have. If there is no reasonable substitute for an item, say "No good substitute" for that line.
+
+Respond in plain text as a numbered or bulleted list — NOT JSON — one line per missing ingredient.
+
+Keep it concise and practical for home cooking.`;
 }

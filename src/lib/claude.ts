@@ -7,8 +7,9 @@
 // deployment, you'd want to proxy through a backend instead.
 
 import Anthropic from '@anthropic-ai/sdk';
-import type { AIResponse, Category, Customization, Ingredient, Language, MealType, Profile, Recipe, Settings } from './types';
-import { buildProductPhotoPrompt, buildReceiptPrompt, buildRecipePrompt, RECIPE_SYSTEM_PROMPT } from './prompts';
+import type { AIResponse, Category, Customization, Ingredient, Language, MealType, Profile, Recipe, Settings, Level } from './types';
+import { buildProductPhotoPrompt, buildReceiptPrompt, buildRecipePrompt, buildDishPrompt, buildSubstitutionPrompt, RECIPE_SYSTEM_PROMPT, DISH_SYSTEM_PROMPT } from './prompts';
+import { pantryMatchesName } from './pantry-match';
 
 // Model token strings — keep in sync with src/lib/types.ts ClaudeModel.
 // The actual API model ID may have a date suffix; we use the canonical
@@ -16,8 +17,17 @@ import { buildProductPhotoPrompt, buildReceiptPrompt, buildRecipePrompt, RECIPE_
 const MODEL_ID: Record<Settings['model'], string> = {
   'claude-sonnet-4-5': 'claude-sonnet-4-5',
   'claude-haiku-4-5':  'claude-haiku-4-5',
-  'claude-opus-4-7':   'claude-opus-4-7',
+  'claude-opus-4-5':   'claude-opus-4-5',
 };
+
+const DIFFICULTIES = new Set<Level>(['Beginner', 'Intermediate', 'Expert']);
+
+const VALID_CATEGORIES = new Set<Category>(['produce', 'protein', 'dairy', 'grains', 'pantry', 'other']);
+
+function coerceOptionalPantryCat(raw: unknown): Category | undefined {
+  if (typeof raw === 'string' && VALID_CATEGORIES.has(raw as Category)) return raw as Category;
+  return undefined;
+}
 
 export class ClaudeError extends Error {
   constructor(message: string, public kind: 'auth' | 'rate' | 'network' | 'parse' | 'unknown') {
@@ -96,8 +106,17 @@ export async function generateRecipes(input: GenerateInput): Promise<Recipe[]> {
     difficulty: r.difficulty,
     calories: r.calories,
     servings: profile.servings,
-    ingredients: r.ingredients,
+    ingredients: r.ingredients.map(ing => ({
+      name: ing.name,
+      amount: ing.amount,
+      missing: ing.missing,
+      pantryCategory: coerceOptionalPantryCat((ing as { pantryCategory?: unknown }).pantryCategory),
+    })),
     steps: r.steps,
+    chefTips: Array.isArray(r.chefTips) ? r.chefTips.filter(x => typeof x === 'string' && x.trim()) : [],
+    serving: typeof r.serving === 'string' && r.serving.trim()
+      ? r.serving.trim()
+      : `Serves ${profile.servings}`,
     mealType,
     createdAt: now,
     starred: false,
@@ -124,26 +143,200 @@ export function parseJsonLoose(text: string): unknown {
   }
 }
 
+function validIngredient(x: unknown): boolean {
+  if (!x || typeof x !== 'object') return false;
+  const i = x as Record<string, unknown>;
+  if (typeof i.name !== 'string' || typeof i.amount !== 'string' || typeof i.missing !== 'boolean') return false;
+  const pc = i.pantryCategory;
+  if (pc !== undefined && !VALID_CATEGORIES.has(pc as Category)) return false;
+  return true;
+}
+
 export function isValidAIResponse(x: unknown): x is AIResponse {
   if (!x || typeof x !== 'object') return false;
-  const obj = x as any;
+  const obj = x as Record<string, unknown>;
   if (!Array.isArray(obj.recipes) || obj.recipes.length === 0) return false;
-  return obj.recipes.every((r: any) =>
-    typeof r?.name === 'string' &&
-    typeof r?.cookTime === 'number' &&
-    typeof r?.calories === 'number' &&
-    Array.isArray(r?.ingredients) &&
-    Array.isArray(r?.steps) &&
-    r.steps.length > 0,
+  return obj.recipes.every((r: unknown) => {
+    if (!r || typeof r !== 'object') return false;
+    const rr = r as Record<string, unknown>;
+    const tipsOk = rr.chefTips === undefined
+      || (Array.isArray(rr.chefTips) && rr.chefTips.every(t => typeof t === 'string'));
+    const servingsOk = rr.serving === undefined || typeof rr.serving === 'string';
+    return (
+      typeof rr.name === 'string' &&
+      typeof rr.cookTime === 'number' &&
+      DIFFICULTIES.has(rr.difficulty as Level) &&
+      typeof rr.calories === 'number' &&
+      Array.isArray(rr.ingredients) &&
+      rr.ingredients.every(validIngredient) &&
+      Array.isArray(rr.steps) &&
+      rr.steps.length > 0 &&
+      tipsOk &&
+      servingsOk
+    );
+  });
+}
+
+export function isValidAIDishResponse(x: unknown): boolean {
+  if (!x || typeof x !== 'object') return false;
+  const rec = (x as Record<string, unknown>).recipe;
+  if (!rec || typeof rec !== 'object') return false;
+  const rr = rec as Record<string, unknown>;
+  const tipsOk = rr.chefTips === undefined
+    || (Array.isArray(rr.chefTips) && rr.chefTips.every(t => typeof t === 'string'));
+  const servingsOk = rr.serving === undefined || typeof rr.serving === 'string';
+  return (
+    typeof rr.name === 'string' &&
+    typeof rr.cookTime === 'number' &&
+    DIFFICULTIES.has(rr.difficulty as Level) &&
+    typeof rr.calories === 'number' &&
+    Array.isArray(rr.ingredients) &&
+    rr.ingredients.every(validIngredient) &&
+    Array.isArray(rr.steps) &&
+    rr.steps.length > 0 &&
+    tipsOk &&
+    servingsOk
   );
+}
+
+export async function generateDishRecipe(input: {
+  dishName: string;
+  pantry: Ingredient[];
+  profile: Profile;
+  settings: Settings;
+}): Promise<Recipe> {
+  const { dishName, pantry, profile, settings } = input;
+
+  if (!settings.apiKey || !settings.apiKey.startsWith('sk-ant-')) {
+    throw new ClaudeError(
+      'No API key set. Go to Settings and paste your Anthropic API key.',
+      'auth',
+    );
+  }
+
+  const client = new Anthropic({
+    apiKey: settings.apiKey,
+    dangerouslyAllowBrowser: true,
+  });
+
+  const prompt = buildDishPrompt(dishName, pantry, profile);
+
+  let response;
+  try {
+    response = await client.messages.create({
+      model: MODEL_ID[settings.model],
+      max_tokens: 4096,
+      system: `${RECIPE_SYSTEM_PROMPT}\n\n${DISH_SYSTEM_PROMPT}`,
+      messages: [{ role: 'user', content: prompt }],
+    });
+  } catch (e: any) {
+    if (e?.status === 401) throw new ClaudeError('Invalid API key.', 'auth');
+    if (e?.status === 429) throw new ClaudeError('Rate limit hit. Try again in a moment.', 'rate');
+    if (e?.status >= 500) throw new ClaudeError('Anthropic service error. Try again.', 'network');
+    throw new ClaudeError(e?.message ?? 'Network error', 'network');
+  }
+
+  const textBlock = response.content.find(b => b.type === 'text');
+  if (!textBlock || textBlock.type !== 'text') {
+    throw new ClaudeError('No text in Claude response.', 'parse');
+  }
+
+  const parsed = parseJsonLoose(textBlock.text);
+  if (!isValidAIDishResponse(parsed)) {
+    throw new ClaudeError('Claude returned malformed recipe data.', 'parse');
+  }
+
+  const raw = parsed as { recipe: {
+    name: string;
+    cookTime: number;
+    difficulty: Level;
+    calories: number;
+    ingredients: { name: string; amount: string; missing: boolean; pantryCategory?: unknown }[];
+    steps: string[];
+    chefTips?: string[];
+    serving?: string;
+  } };
+
+  const ai = raw.recipe;
+  const now = new Date().toISOString();
+  const id = `${Date.now()}-dish`;
+
+  return {
+    id,
+    name: ai.name,
+    cookTime: ai.cookTime,
+    difficulty: ai.difficulty,
+    calories: ai.calories,
+    servings: profile.servings,
+    ingredients: ai.ingredients.map(ing => {
+      const has = pantryMatchesName(pantry, ing.name);
+      const cat = coerceOptionalPantryCat(ing.pantryCategory);
+      return {
+        name: ing.name,
+        amount: ing.amount,
+        missing: !has,
+        pantryCategory: !has ? (cat ?? 'other') : undefined,
+      };
+    }),
+    steps: ai.steps,
+    chefTips: Array.isArray(ai.chefTips)
+      ? ai.chefTips.filter(x => typeof x === 'string' && x.trim())
+      : [],
+    serving: typeof ai.serving === 'string' && ai.serving.trim()
+      ? ai.serving.trim()
+      : `Serves ${profile.servings}`,
+    mealType: 'comfort',
+    createdAt: now,
+    starred: false,
+  };
+}
+
+export async function suggestSubstitutions(input: {
+  missingIngredientNames: string[];
+  pantry: Ingredient[];
+  settings: Settings;
+}): Promise<string> {
+  const { missingIngredientNames, pantry, settings } = input;
+
+  if (!settings.apiKey || !settings.apiKey.startsWith('sk-ant-')) {
+    throw new ClaudeError(
+      'No API key set. Go to Settings and paste your Anthropic API key.',
+      'auth',
+    );
+  }
+
+  const client = new Anthropic({
+    apiKey: settings.apiKey,
+    dangerouslyAllowBrowser: true,
+  });
+
+  const user = buildSubstitutionPrompt(missingIngredientNames, pantry);
+
+  let response;
+  try {
+    response = await client.messages.create({
+      model: MODEL_ID[settings.model],
+      max_tokens: 1024,
+      messages: [{ role: 'user', content: user }],
+    });
+  } catch (e: any) {
+    if (e?.status === 401) throw new ClaudeError('Invalid API key.', 'auth');
+    if (e?.status === 429) throw new ClaudeError('Rate limit hit. Try again in a moment.', 'rate');
+    if (e?.status >= 500) throw new ClaudeError('Anthropic service error. Try again.', 'network');
+    throw new ClaudeError(e?.message ?? 'Network error', 'network');
+  }
+
+  const textBlock = response.content.find(b => b.type === 'text');
+  if (!textBlock || textBlock.type !== 'text') {
+    throw new ClaudeError('No text in Claude response.', 'parse');
+  }
+  return textBlock.text.trim();
 }
 
 // ─── Vision helpers ───────────────────────────────────────────
 
 // Haiku is always used for vision calls — cheaper and fast enough.
 const VISION_MODEL = 'claude-haiku-4-5';
-
-const VALID_CATEGORIES = new Set<Category>(['produce','protein','dairy','grains','pantry','other']);
 
 function coerceCategory(raw: unknown): Category {
   if (typeof raw === 'string' && VALID_CATEGORIES.has(raw as Category)) return raw as Category;

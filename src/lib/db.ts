@@ -7,8 +7,37 @@
 // is fine and much simpler than per-record stores).
 
 import { get, set, del } from 'idb-keyval';
-import type { Ingredient, Profile, Recipe, Settings } from './types';
+import type { Category, Ingredient, Profile, Recipe, Settings } from './types';
 import { resetOnboarded } from './onboarding-state';
+
+const CATEGORY_SET = new Set<Category>(['produce', 'protein', 'dairy', 'grains', 'pantry', 'other']);
+
+function normalizeRecipe(r: Recipe): Recipe {
+  return {
+    ...r,
+    chefTips: Array.isArray(r.chefTips) ? r.chefTips.filter(x => typeof x === 'string') : [],
+    serving: typeof r.serving === 'string' && r.serving.trim()
+      ? r.serving
+      : `Serves ${r.servings}`,
+    ingredients: (r.ingredients ?? []).map(i => {
+      const pc = i.pantryCategory;
+      return {
+        ...i,
+        pantryCategory:
+          pc !== undefined && CATEGORY_SET.has(pc) ? pc : undefined,
+      };
+    }),
+  };
+}
+
+function coerceLoadedModel(saved: Partial<Settings> | undefined): Settings['model'] {
+  const raw = saved?.model as string | undefined;
+  if (raw === 'claude-opus-4-7') return 'claude-opus-4-5';
+  if (raw === 'claude-haiku-4-5' || raw === 'claude-sonnet-4-5' || raw === 'claude-opus-4-5') {
+    return raw;
+  }
+  return DEFAULT_SETTINGS.model;
+}
 
 // ─── Defaults ────────────────────────────────────────────────
 
@@ -65,7 +94,8 @@ export async function saveProfile(profile: Profile): Promise<void> {
 // ─── Recipes (history + favorites in one list) ───────────────
 
 export async function loadRecipes(): Promise<Recipe[]> {
-  return (await get<Recipe[]>(K.recipes)) ?? [];
+  const raw = (await get<Recipe[]>(K.recipes)) ?? [];
+  return raw.map(normalizeRecipe);
 }
 
 export async function saveRecipes(recipes: Recipe[]): Promise<void> {
@@ -86,7 +116,7 @@ export async function addRecipes(newOnes: Recipe[]): Promise<void> {
 
 export async function loadSettings(): Promise<Settings> {
   const saved = await get<Partial<Settings>>(K.settings);
-  return { ...DEFAULT_SETTINGS, ...(saved ?? {}) };
+  return { ...DEFAULT_SETTINGS, ...(saved ?? {}), model: coerceLoadedModel(saved) };
 }
 
 export async function saveSettings(settings: Settings): Promise<void> {
