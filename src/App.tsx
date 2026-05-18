@@ -40,9 +40,10 @@ class ErrorBoundary extends React.Component<{ children: React.ReactNode }, EBSta
         <button
           onClick={() => window.location.reload()}
           style={{
-            padding: '12px 24px', borderRadius: 12, border: 'none',
-            background: T.accentGrad, color: '#1a1208',
-            fontSize: 14, fontWeight: 700, cursor: 'pointer', fontFamily: T.font,
+            padding: '12px 24px', borderRadius: 'var(--mise-radius-button)', border: 'none',
+            background: 'var(--mise-primary)', color: '#FFFFFF',
+            fontSize: 14, fontWeight: 600, cursor: 'pointer', fontFamily: T.font,
+            boxShadow: '0px 4px 12px rgba(124, 58, 237, 0.3)',
           }}
         >
           Reload app
@@ -61,8 +62,9 @@ import { MealTypePage } from './pages/MealTypePage';
 import { LoadingPage } from './pages/LoadingPage';
 import { ResultsPage } from './pages/ResultsPage';
 import { RecipeDetailPage } from './pages/RecipeDetailPage';
-import { HistoryPage, FavoritesPage } from './pages/HistoryAndFavorites';
+import { HistoryPage } from './pages/HistoryAndFavorites';
 import { TabBar } from './components/Chrome';
+import { Toaster } from './components/ui/sonner';
 import { ChefHat } from './components/Icons';
 import { isOnboarded } from './lib/onboarding-state';
 import { OnboardingPage } from './pages/OnboardingPage';
@@ -140,7 +142,8 @@ function Routed() {
         <Route path="/recipe/:id" element={<RecipeDetailPage />} />
 
         <Route path="/history" element={<HistoryPage />} />
-        <Route path="/favorites" element={<FavoritesPage />} />
+        {/* Favorites is now a tab inside History (?view=favs). Redirect old links. */}
+        <Route path="/favorites" element={<Navigate to="/history?view=favs" replace />} />
 
         {/* Fallback */}
         <Route path="*" element={<Navigate to="/" replace />} />
@@ -155,14 +158,14 @@ function UpdateBanner({ onUpdate }: { onUpdate: () => void }) {
   return (
     <div style={{
       position: 'fixed', top: 0, left: 0, right: 0, zIndex: 999,
-      background: T.accent, color: '#1a1208',
+      background: 'var(--mise-primary)', color: '#FFFFFF',
       display: 'flex', alignItems: 'center', justifyContent: 'space-between',
       paddingTop: 'calc(env(safe-area-inset-top) + 10px)',
       paddingBottom: '10px',
       paddingLeft: '16px',
       paddingRight: '16px',
       fontFamily: T.font, fontSize: 13, fontWeight: 600,
-      boxShadow: '0 2px 12px rgba(0,0,0,0.4)',
+      boxShadow: '0px 4px 12px rgba(124, 58, 237, 0.3)',
     }}>
       <span>A new version is available</span>
       <button
@@ -170,9 +173,9 @@ function UpdateBanner({ onUpdate }: { onUpdate: () => void }) {
         className="press"
         style={{
           padding: '6px 14px', borderRadius: 999,
-          background: 'rgba(0,0,0,0.18)', color: '#1a1208',
-          border: '1px solid rgba(0,0,0,0.15)',
-          cursor: 'pointer', fontSize: 12, fontWeight: 700,
+          background: 'rgba(255,255,255,0.20)', color: '#FFFFFF',
+          border: '1px solid rgba(255,255,255,0.30)',
+          cursor: 'pointer', fontSize: 12, fontWeight: 600,
           fontFamily: T.font,
         }}
       >
@@ -194,6 +197,7 @@ export function App() {
       <AppProvider>
         <BrowserRouter>
           {updateFn && <UpdateBanner onUpdate={updateFn} />}
+          <Toaster position="top-center" richColors />
           <Routed />
         </BrowserRouter>
       </AppProvider>

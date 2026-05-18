@@ -37,9 +37,14 @@ export function RecipeCard({
 
   const inner = (
     <div style={{
-      background: T.surface, border: `1px solid ${T.border}`,
-      borderRadius: 16, padding: '18px 18px 16px',
-      display: 'flex', flexDirection: 'column', gap: 14,
+      background: 'var(--mise-glass-fill)',
+      backdropFilter: 'blur(20px) saturate(180%)',
+      WebkitBackdropFilter: 'blur(20px) saturate(180%)',
+      border: '1px solid var(--mise-glass-border)',
+      borderRadius: 'var(--mise-radius-card)',
+      boxShadow: 'var(--mise-shadow-glass)',
+      padding: '20px 20px 18px',
+      display: 'flex', flexDirection: 'column', gap: 16,
     }}>
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>

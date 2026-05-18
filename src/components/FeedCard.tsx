@@ -30,17 +30,20 @@ export function FeedCard({
       className="fade-up"
       style={{
         animationDelay: `${index * 60}ms`,
-        background: T.surface,
-        border: `1px solid ${T.border}`,
-        borderRadius: 16,
+        background: 'var(--mise-glass-fill)',
+        backdropFilter: 'blur(20px) saturate(180%)',
+        WebkitBackdropFilter: 'blur(20px) saturate(180%)',
+        border: '1px solid var(--mise-glass-border)',
+        borderRadius: 'var(--mise-radius-card)',
+        boxShadow: 'var(--mise-shadow-glass)',
         overflow: 'hidden',
-        marginBottom: 12,
+        marginBottom: 14,
       }}
     >
       {/* Card header row */}
       <div style={{
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        padding: '10px 14px 0',
+        padding: '12px 16px 0',
       }}>
         <span style={{
           fontSize: 10, fontWeight: 700, letterSpacing: 0.8,
@@ -79,12 +82,15 @@ export function SkeletonCard({ index = 0 }: { index?: number }) {
       className="fade-up"
       style={{
         animationDelay: `${index * 60}ms`,
-        background: T.surface,
-        border: `1px solid ${T.border}`,
-        borderRadius: 16,
+        background: 'var(--mise-glass-fill)',
+        backdropFilter: 'blur(20px) saturate(180%)',
+        WebkitBackdropFilter: 'blur(20px) saturate(180%)',
+        border: '1px solid var(--mise-glass-border)',
+        borderRadius: 'var(--mise-radius-card)',
+        boxShadow: 'var(--mise-shadow-glass)',
         overflow: 'hidden',
-        marginBottom: 12,
-        padding: '10px 14px 14px',
+        marginBottom: 14,
+        padding: '12px 16px 16px',
       }}
     >
       <div className="skeleton" style={{ height: 10, width: '40%', marginBottom: 12 }} />

@@ -1,53 +1,92 @@
-// Shared screen chrome — adapted from your shell.jsx.
-// Differences vs the design canvas:
-//  • No IOSDevice frame (we're a real PWA, not a mocked iPhone)
-//  • SCREEN_PAD_TOP uses safe-area-inset so it works on actual notches
-//  • Header back-button uses react-router navigate
+// Shared screen chrome — Mise Liquid Glass aesthetic.
+// Light/dark via theme.css; safe-area aware for real PWA on iOS.
 
 import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { T, SCREEN_PAD_TOP } from '../tokens';
-import { ArrowLeft, ChefHat, Globe, Home, Package, Clock, Heart, User, Settings } from './Icons';
+import { ChefHat, Home, Package, Clock, User, ArrowLeft, Globe, Settings as SettingsIcon } from 'lucide-react';
 import { useApp } from '../lib/app-state';
 
-const TAB_ROUTES = ['/', '/pantry', '/history', '/favorites', '/profile'];
+export const SCREEN_PAD_TOP = 'max(54px, env(safe-area-inset-top))';
 
-export function Screen({ children, bg, style }: { children: React.ReactNode; bg?: string; style?: React.CSSProperties }) {
+const TAB_ROUTES = ['/', '/pantry', '/history', '/profile'];
+
+export function Screen({
+  children,
+  bg,
+  style,
+  className,
+}: {
+  children: React.ReactNode;
+  bg?: string;
+  style?: React.CSSProperties;
+  className?: string;
+}) {
   const location = useLocation();
   const hasTabBar = TAB_ROUTES.includes(location.pathname);
   return (
-    <div style={{
-      width: '100%', minHeight: '100vh',
-      background: bg ?? T.bg,
-      color: T.text, fontFamily: T.font,
-      paddingTop: SCREEN_PAD_TOP,
-      paddingBottom: hasTabBar
-        ? 'calc(56px + env(safe-area-inset-bottom))'
-        : 'env(safe-area-inset-bottom)',
-      boxSizing: 'border-box',
-      ...style,
-    }}>{children}</div>
+    <div
+      className={className}
+      style={{
+        width: '100%',
+        minHeight: '100vh',
+        background: bg ?? 'var(--mise-background)',
+        color: 'var(--mise-text-primary)',
+        fontFamily: 'var(--mise-font-text)',
+        paddingTop: SCREEN_PAD_TOP,
+        paddingBottom: hasTabBar
+          ? 'calc(72px + env(safe-area-inset-bottom))'
+          : 'env(safe-area-inset-bottom)',
+        boxSizing: 'border-box',
+        ...style,
+      }}
+    >
+      {children}
+    </div>
   );
 }
 
-export function AppHeader({ dense = false, right }: { dense?: boolean; right?: React.ReactNode }) {
+export function AppHeader({
+  dense = false,
+  right,
+}: {
+  dense?: boolean;
+  right?: React.ReactNode;
+}) {
   const { profile, t } = useApp();
   const navigate = useNavigate();
   return (
-    <div style={{
-      display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-      padding: dense ? '10px 20px 6px' : '14px 20px 8px',
-    }}>
+    <div
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        padding: dense ? '10px 20px 6px' : '14px 20px 8px',
+      }}
+    >
       <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-        <div style={{
-          width: 28, height: 28, borderRadius: 8,
-          background: T.accentTint, color: T.accent,
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          border: `1px solid ${T.borderAcc}`,
-        }}>
-          <ChefHat size={16} />
+        <div
+          style={{
+            width: 32,
+            height: 32,
+            borderRadius: 10,
+            background: 'rgba(124, 58, 237, 0.1)',
+            color: 'var(--mise-primary)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          <ChefHat size={18} />
         </div>
-        <div style={{ fontSize: 14, fontWeight: 600, letterSpacing: -0.2, color: T.text }}>
+        <div
+          style={{
+            fontSize: 15,
+            fontWeight: 600,
+            letterSpacing: -0.2,
+            color: 'var(--mise-text-primary)',
+            fontFamily: 'var(--mise-font-display)',
+          }}
+        >
           {t('appName')}
         </div>
       </div>
@@ -57,16 +96,25 @@ export function AppHeader({ dense = false, right }: { dense?: boolean; right?: R
           <button
             aria-label={t('settings')}
             onClick={() => navigate('/settings')}
+            className="press"
             style={{
-              width: 32, height: 32, borderRadius: 8,
-              border: `1px solid ${T.border}`,
-              background: T.surface,
-              color: T.text2,
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              cursor: 'pointer', padding: 0,
+              width: 36,
+              height: 36,
+              borderRadius: 'var(--mise-radius-button)',
+              border: '1px solid var(--mise-glass-border)',
+              background: 'var(--mise-glass-fill)',
+              backdropFilter: 'blur(20px) saturate(180%)',
+              WebkitBackdropFilter: 'blur(20px) saturate(180%)',
+              color: 'var(--mise-text-secondary)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              cursor: 'pointer',
+              padding: 0,
+              boxShadow: 'var(--mise-shadow-sm)',
             }}
           >
-            <Settings size={16} />
+            <SettingsIcon size={18} />
           </button>
         </div>
       )}
@@ -76,59 +124,123 @@ export function AppHeader({ dense = false, right }: { dense?: boolean; right?: R
 
 function LangPill({ lang }: { lang: 'EN' | 'EL' | 'ES' }) {
   return (
-    <div style={{
-      display: 'inline-flex', alignItems: 'center', gap: 5,
-      padding: '5px 9px 5px 8px',
-      borderRadius: 999,
-      background: T.surface, border: `1px solid ${T.border}`,
-      color: T.text2, fontSize: 11, fontWeight: 600, letterSpacing: 0.3,
-    }}>
-      <Globe size={12} />{lang}
+    <div
+      style={{
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: 5,
+        padding: '6px 11px',
+        borderRadius: 'var(--mise-radius-pill)',
+        background: 'var(--mise-glass-fill)',
+        backdropFilter: 'blur(12px)',
+        WebkitBackdropFilter: 'blur(12px)',
+        border: '1px solid var(--mise-glass-border)',
+        color: 'var(--mise-text-secondary)',
+        fontSize: 11,
+        fontWeight: 600,
+        letterSpacing: 0.3,
+        boxShadow: 'var(--mise-shadow-sm)',
+      }}
+    >
+      <Globe size={12} />
+      {lang}
     </div>
   );
 }
 
 export function SubHeader({
-  title, onBack, right,
-}: { title: string; onBack?: () => void; right?: React.ReactNode }) {
+  title,
+  onBack,
+  right,
+}: {
+  title: string;
+  onBack?: () => void;
+  right?: React.ReactNode;
+}) {
   const navigate = useNavigate();
   const handleBack = onBack ?? (() => navigate(-1));
   return (
-    <div style={{
-      display: 'flex', alignItems: 'center', gap: 8,
-      padding: '14px 16px 10px',
-      position: 'sticky', top: 0, zIndex: 5,
-      background: 'rgba(10,10,15,0.72)',
-      backdropFilter: 'blur(18px) saturate(180%)',
-      WebkitBackdropFilter: 'blur(18px) saturate(180%)',
-      borderBottom: `1px solid ${T.border}`,
-    }}>
-      <button aria-label="Back" onClick={handleBack} style={{
-        width: 32, height: 32, borderRadius: 8,
-        border: 'none', background: 'transparent', color: T.text2, cursor: 'pointer',
-        display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 0,
-      }}>
+    <div
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: 8,
+        padding: '12px 16px 10px',
+        position: 'sticky',
+        top: 0,
+        zIndex: 5,
+        background: 'var(--mise-glass-fill)',
+        backdropFilter: 'blur(40px) saturate(180%)',
+        WebkitBackdropFilter: 'blur(40px) saturate(180%)',
+        borderBottom: '1px solid var(--mise-glass-border)',
+      }}
+    >
+      <button
+        aria-label="Back"
+        onClick={handleBack}
+        className="press"
+        style={{
+          width: 36,
+          height: 36,
+          borderRadius: 'var(--mise-radius-button)',
+          border: '1px solid var(--mise-glass-border)',
+          background: 'rgba(255,255,255,0.5)',
+          color: 'var(--mise-text-primary)',
+          cursor: 'pointer',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: 0,
+        }}
+      >
         <ArrowLeft size={18} />
       </button>
-      <div style={{
-        flex: 1, textAlign: 'center',
-        fontSize: 15, fontWeight: 600, letterSpacing: -0.2, color: T.text,
-      }}>{title}</div>
-      <div style={{ minWidth: 32, display: 'flex', justifyContent: 'flex-end' }}>{right}</div>
+      <div
+        style={{
+          flex: 1,
+          textAlign: 'center',
+          fontSize: 17,
+          fontWeight: 600,
+          letterSpacing: -0.3,
+          color: 'var(--mise-text-primary)',
+          fontFamily: 'var(--mise-font-display)',
+        }}
+      >
+        {title}
+      </div>
+      <div style={{ minWidth: 36, display: 'flex', justifyContent: 'flex-end' }}>{right}</div>
     </div>
   );
 }
 
-export function SectionLabel({ children, color }: { children: React.ReactNode; color?: string }) {
+export function SectionLabel({
+  children,
+  color,
+}: {
+  children: React.ReactNode;
+  color?: string;
+}) {
   return (
-    <div style={{
-      fontSize: 11, fontWeight: 600, letterSpacing: 0.6,
-      textTransform: 'uppercase', color: color ?? T.accent,
-      marginBottom: 10,
-    }}>{children}</div>
+    <div
+      style={{
+        fontSize: 13,
+        fontWeight: 600,
+        letterSpacing: 0.5,
+        color: color ?? 'var(--mise-text-tertiary)',
+        marginBottom: 12,
+        fontFamily: 'var(--mise-font-text)',
+      }}
+    >
+      {children}
+    </div>
   );
 }
 
+/* ─── Bottom navigation ────────────────────────────────────────
+ * Frosted glass bar, 4 tabs (Favorites lives inside History via
+ * query param). Active state uses a soft purple pill background
+ * matching the Figma mock.
+ */
 export function TabBar() {
   const location = useLocation();
   const navigate = useNavigate();
@@ -137,24 +249,33 @@ export function TabBar() {
   if (!TAB_ROUTES.includes(location.pathname)) return null;
 
   const tabs = [
-    { path: '/',          icon: Home,     label: t('home') },
-    { path: '/pantry',    icon: Package,  label: t('pantry') },
-    { path: '/history',   icon: Clock,    label: t('history') },
-    { path: '/favorites', icon: Heart,    label: t('favorites') },
-    { path: '/profile',   icon: User,     label: t('profile') },
+    { path: '/', icon: Home, label: t('home') },
+    { path: '/pantry', icon: Package, label: t('pantry') },
+    { path: '/history', icon: Clock, label: t('history') },
+    { path: '/profile', icon: User, label: t('profile') },
   ] as const;
 
   return (
-    <div style={{
-      position: 'fixed', bottom: 0, left: 0, right: 0,
-      display: 'flex',
-      background: 'rgba(10,10,15,0.88)',
-      backdropFilter: 'blur(18px) saturate(180%)',
-      WebkitBackdropFilter: 'blur(18px) saturate(180%)',
-      borderTop: `1px solid ${T.border}`,
-      paddingBottom: 'env(safe-area-inset-bottom)',
-      zIndex: 100,
-    }}>
+    <nav
+      aria-label="Primary"
+      style={{
+        position: 'fixed',
+        bottom: 0,
+        left: 0,
+        right: 0,
+        display: 'flex',
+        justifyContent: 'space-around',
+        alignItems: 'center',
+        background: 'var(--mise-glass-fill)',
+        backdropFilter: 'blur(40px) saturate(180%)',
+        WebkitBackdropFilter: 'blur(40px) saturate(180%)',
+        borderTop: '1px solid var(--mise-glass-border)',
+        paddingTop: 8,
+        paddingBottom: 'calc(env(safe-area-inset-bottom) + 8px)',
+        boxShadow: '0px -4px 24px rgba(0, 0, 0, 0.08)',
+        zIndex: 100,
+      }}
+    >
       {tabs.map(({ path, icon: Icon, label }) => {
         const active = location.pathname === path;
         return (
@@ -162,26 +283,73 @@ export function TabBar() {
             key={path}
             onClick={() => navigate(path)}
             aria-label={label}
+            aria-current={active ? 'page' : undefined}
+            className="press"
             style={{
-              flex: 1,
-              display: 'flex', flexDirection: 'column',
-              alignItems: 'center', justifyContent: 'center',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
               gap: 4,
-              padding: '10px 0',
-              border: 'none', background: 'transparent',
+              padding: '8px 14px',
+              border: 'none',
+              borderRadius: 'var(--mise-radius-small)',
+              background: active ? 'rgba(124, 58, 237, 0.1)' : 'transparent',
               cursor: 'pointer',
-              color: active ? T.accent : T.muted,
-              fontFamily: T.font,
-              fontSize: 10,
-              fontWeight: active ? 600 : 400,
-              transition: 'color 0.15s',
+              color: active ? 'var(--mise-primary)' : 'var(--mise-text-secondary)',
+              fontFamily: 'var(--mise-font-text)',
+              transition: 'background-color 0.2s ease, color 0.2s ease',
             }}
           >
-            <Icon size={20} />
-            <span>{label}</span>
+            <Icon size={22} />
+            <span
+              style={{
+                fontSize: 11,
+                fontWeight: 500,
+                color: active ? 'var(--mise-primary)' : 'var(--mise-text-secondary)',
+              }}
+            >
+              {label}
+            </span>
           </button>
         );
       })}
-    </div>
+    </nav>
+  );
+}
+
+/* ─── Glass card primitives (utility wrappers) ───────────────── */
+
+export function GlassCard({
+  children,
+  style,
+  className,
+  onClick,
+}: {
+  children: React.ReactNode;
+  style?: React.CSSProperties;
+  className?: string;
+  onClick?: () => void;
+}) {
+  const Tag = onClick ? 'button' : 'div';
+  return (
+    <Tag
+      onClick={onClick}
+      className={className}
+      style={{
+        background: 'var(--mise-glass-fill)',
+        backdropFilter: 'blur(20px) saturate(180%)',
+        WebkitBackdropFilter: 'blur(20px) saturate(180%)',
+        border: '1px solid var(--mise-glass-border)',
+        borderRadius: 'var(--mise-radius-card)',
+        boxShadow: 'var(--mise-shadow-glass)',
+        textAlign: 'left',
+        font: 'inherit',
+        color: 'inherit',
+        cursor: onClick ? 'pointer' : undefined,
+        ...style,
+      }}
+    >
+      {children}
+    </Tag>
   );
 }

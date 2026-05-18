@@ -20,6 +20,7 @@ const DEFAULT_PROFILE: Profile = {
   allergies: '',
   dietGoal: 'None',
   language: 'EN',
+  theme: 'system',
 };
 
 const DEFAULT_SETTINGS: Settings = {

@@ -1,0 +1,5 @@
+@import 'tailwindcss';
+@import 'tw-animate-css';
+
+/* Allow components in src/ to be discovered by Tailwind v4. */
+@source '../**/*.{js,ts,jsx,tsx}';

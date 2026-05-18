@@ -1,22 +1,19 @@
 // Loading screen — fires the Claude API call and navigates to /results on
 // success, back to /generate on error (with an error message).
-//
-// We use a ref to ensure the request fires exactly once even under React
-// 18 StrictMode (which double-invokes effects in dev). Otherwise we'd
-// charge the user's API quota twice per generation.
 
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Screen } from '../components/Chrome';
 import { Sparkles, AlertCircle, ArrowLeft } from '../components/Icons';
 import { T, SCREEN_PAD_TOP } from '../tokens';
 import { useApp } from '../lib/app-state';
 import { generateRecipes, ClaudeError } from '../lib/claude';
-import { EMPTY_CUSTOMIZATION, type Customization, type MealType, type Recipe } from '../lib/types';
+import { EMPTY_CUSTOMIZATION, type Customization, type MealType } from '../lib/types';
 
 interface LocationState {
   mealType?: MealType;
   customization?: Customization;
+  dishIdea?: string;
 }
 
 export function LoadingPage() {
@@ -24,39 +21,59 @@ export function LoadingPage() {
   const navigate = useNavigate();
   const { pantry, profile, settings, appendRecipes, t } = useApp();
   const [error, setError] = useState<string | null>(null);
-  const startedRef = useRef(false);
+
+  /** Increment to re-run generation (Retry) without remounting. */
+  const [generationToken, setGenerationToken] = useState(0);
 
   const state = location.state as LocationState | null;
   const mealType = state?.mealType;
   const customization = state?.customization ?? EMPTY_CUSTOMIZATION;
+  const dishIdeaTrimmed = state?.dishIdea?.trim();
+  const fromDishFlow = !!(dishIdeaTrimmed && dishIdeaTrimmed.length > 0);
 
   useEffect(() => {
-    if (startedRef.current) return;
-    startedRef.current = true;
-
     if (!mealType) {
       navigate('/generate', { replace: true });
       return;
     }
 
+    let cancelled = false;
+
     (async () => {
       try {
-        const recipes = await generateRecipes({ pantry, profile, mealType, settings, customization });
+        const recipes = await generateRecipes({
+          pantry,
+          profile,
+          mealType,
+          settings,
+          customization,
+          dishIdea: dishIdeaTrimmed || undefined,
+        });
+        if (cancelled) return;
         await appendRecipes(recipes);
+        if (cancelled) return;
         navigate('/results', { state: { ids: recipes.map(r => r.id) }, replace: true });
       } catch (e) {
+        if (cancelled) return;
         if (e instanceof ClaudeError) {
-          const map: Record<ClaudeError['kind'], any> = {
-            auth: 'errorNoKey', rate: 'errorRate',
-            network: 'errorNetwork', parse: 'errorParse', unknown: 'errorTitle',
+          const map: Record<ClaudeError['kind'], string> = {
+            auth: t('errorNoKey'),
+            rate: t('errorRate'),
+            network: t('errorNetwork'),
+            parse: t('errorParse'),
+            unknown: t('errorTitle'),
           };
-          setError(t(map[e.kind]));
+          setError(map[e.kind]);
         } else {
           setError(t('errorTitle'));
         }
       }
     })();
-  }, [mealType]); // eslint-disable-line react-hooks/exhaustive-deps
+
+    return () => {
+      cancelled = true;
+    };
+  }, [mealType, generationToken]); // eslint-disable-line react-hooks/exhaustive-deps -- use latest closure on Retry
 
   if (error) {
     return (
@@ -78,9 +95,11 @@ export function LoadingPage() {
           <div style={{ fontSize: 14, color: T.text2, marginBottom: 24, lineHeight: 1.5 }}>
             {error}
           </div>
-          <div style={{ display: 'flex', gap: 8 }}>
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', justifyContent: 'center' }}>
             <button
-              onClick={() => navigate('/generate', { replace: true })}
+              onClick={() =>
+                navigate(fromDishFlow ? '/generate?mode=specific' : '/generate', { replace: true })
+              }
               style={{
                 padding: '11px 18px', borderRadius: 11,
                 background: T.surface, color: T.text2,
@@ -90,12 +109,16 @@ export function LoadingPage() {
               }}
             ><ArrowLeft size={14} />{t('back')}</button>
             <button
-              onClick={() => { startedRef.current = false; setError(null); }}
+              onClick={() => {
+                setError(null);
+                setGenerationToken(k => k + 1);
+              }}
               style={{
-                padding: '11px 18px', borderRadius: 11,
-                background: T.accentGrad, color: '#1a1208',
+                padding: '12px 20px', borderRadius: 'var(--mise-radius-button)',
+                background: 'var(--mise-primary)', color: '#FFFFFF',
                 border: 'none', cursor: 'pointer',
-                fontSize: 14, fontWeight: 700, fontFamily: T.font,
+                fontSize: 14, fontWeight: 600, fontFamily: T.font,
+                boxShadow: '0px 4px 12px rgba(124, 58, 237, 0.3)',
               }}
             >{t('retry')}</button>
           </div>

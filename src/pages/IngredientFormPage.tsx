@@ -97,10 +97,10 @@ export function IngredientFormPage() {
       <div style={{
         padding: '12px 20px',
         paddingBottom: 'max(12px, env(safe-area-inset-bottom))',
-        borderTop: `1px solid ${T.border}`,
-        background: 'rgba(10,10,15,0.92)',
-        backdropFilter: 'blur(12px)',
-        WebkitBackdropFilter: 'blur(12px)',
+        borderTop: '1px solid var(--mise-glass-border)',
+        background: 'var(--mise-glass-fill)',
+        backdropFilter: 'blur(40px) saturate(180%)',
+        WebkitBackdropFilter: 'blur(40px) saturate(180%)',
       }}>
         <PrimaryButton onClick={handleSave} disabled={!canSave} fullWidth>
           {t('save')}

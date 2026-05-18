@@ -47,6 +47,8 @@ export interface PromptInput {
   profile: Profile;
   mealType: MealType;
   customization?: Customization;
+  /** When set — user asked for variants around a concrete dish idea. */
+  dishIdea?: string;
 }
 
 // System prompt sets the creative persona. Kept separate so claude.ts
@@ -64,8 +66,20 @@ You always produce:
 - Recipes the user will actually remember and want to repeat`;
 
 export function buildRecipePrompt({
-  pantry, profile, mealType, customization,
+  pantry, profile, mealType, customization, dishIdea,
 }: PromptInput): string {
+  const trimmedDish = dishIdea?.trim();
+  const dishSection = trimmedDish
+    ? `\n═══ USER'S DISH IN MIND ═══
+The user named a craving or dish they want to cook toward:
+"${trimmedDish}"
+
+Every recipe MUST clearly relate to this request — same culinary family,
+spirit, technique, or dish type (adapt names and flavours to match). Do NOT
+produce three unrelated generic meals. Stay honest about which ingredients are
+really in their pantry versus missing.`
+    : '';
+
   const langInstruction = profile.language === 'EL'
     ? 'CRITICAL OUTPUT LANGUAGE: All recipe content (names, ingredients, steps) MUST be in Greek (Ελληνικά). Numbers and units stay numeric.'
     : 'Output language: English.';
@@ -117,6 +131,7 @@ Diet goal: ${profile.dietGoal}
 
 ═══ MEAL TYPE ═══
 ${MEAL_DESC[mealType]}
+${dishSection}
 ${mustSection}${skipSection}
 
 ═══ HARD RULES (must all be satisfied) ═══
@@ -160,6 +175,10 @@ ${mustSection}${skipSection}
 10. DIVERSITY: The 3 recipes should be meaningfully different (different
     proteins or cooking techniques or cuisine styles), unless must-include
     constraints force similarity.
+    ${trimmedDish
+      ? '\nWhen the user named a DISH IN MIND: offer three substantive variations — e.g. different technique, richness level, or regional twist — not three copies of one recipe.'
+      : ''
+    }
 
 11. ${langInstruction}
 

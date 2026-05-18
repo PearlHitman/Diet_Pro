@@ -28,6 +28,7 @@ export interface Ingredient {
 export type Level = 'Beginner' | 'Intermediate' | 'Expert';
 export type DietGoal = 'None' | 'Weight loss' | 'Muscle' | 'Health';
 export type Language = 'EN' | 'EL' | 'ES';
+export type ThemePref = 'system' | 'light' | 'dark';
 
 export interface Profile {
   name: string;
@@ -37,6 +38,7 @@ export interface Profile {
   allergies: string;         // free text, comma-separated
   dietGoal: DietGoal;
   language: Language;
+  theme: ThemePref;          // visual theme preference
 }
 
 // ─── Recipes ─────────────────────────────────────────────────

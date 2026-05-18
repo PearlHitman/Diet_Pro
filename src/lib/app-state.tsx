@@ -7,6 +7,7 @@ import React, { createContext, useContext, useEffect, useState, useCallback } fr
 import type { Ingredient, Profile, Recipe, Settings, Language } from './types';
 import * as db from './db';
 import { t as translate } from './i18n';
+import { applyTheme } from './theme';
 
 interface AppState {
   // Data
@@ -43,7 +44,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [pantry, setPantry] = useState<Ingredient[]>([]);
   const [profile, setProfileState] = useState<Profile>({
     name: '', cuisine: '', servings: 2, level: 'Intermediate',
-    allergies: '', dietGoal: 'None', language: 'EN',
+    allergies: '', dietGoal: 'None', language: 'EN', theme: 'system',
   });
   const [recipes, setRecipes] = useState<Recipe[]>([]);
   const [settings, setSettingsState] = useState<Settings>({ apiKey: '', model: 'claude-sonnet-4-5' });
@@ -119,10 +120,18 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const resetAll = useCallback(async () => {
     await db.resetAll();
     setPantry([]);
-    setProfileState({ name: '', cuisine: '', servings: 2, level: 'Intermediate', allergies: '', dietGoal: 'None', language: 'EN' });
+    setProfileState({
+      name: '', cuisine: '', servings: 2, level: 'Intermediate',
+      allergies: '', dietGoal: 'None', language: 'EN', theme: 'system',
+    });
     setRecipes([]);
     setSettingsState({ apiKey: '', model: 'claude-sonnet-4-5' });
   }, []);
+
+  // Re-apply theme whenever profile.theme changes (incl. on first load).
+  useEffect(() => {
+    applyTheme(profile.theme);
+  }, [profile.theme]);
 
   // ─── i18n bound to current language ─────────────────────────
 

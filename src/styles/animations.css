@@ -86,9 +86,9 @@
 .shimmer {
   background: linear-gradient(
     90deg,
-    rgba(255,255,255,0.02) 0%,
-    rgba(255,255,255,0.06) 50%,
-    rgba(255,255,255,0.02) 100%
+    rgba(124, 58, 237, 0.04) 0%,
+    rgba(124, 58, 237, 0.10) 50%,
+    rgba(124, 58, 237, 0.04) 100%
   );
   background-size: 200% 100%;
   animation: shimmer 1.4s linear infinite;
@@ -97,13 +97,24 @@
 .skeleton {
   background: linear-gradient(
     90deg,
-    rgba(255,255,255,0.03) 0%,
-    rgba(255,255,255,0.07) 50%,
-    rgba(255,255,255,0.03) 100%
+    rgba(124, 58, 237, 0.06) 0%,
+    rgba(124, 58, 237, 0.12) 50%,
+    rgba(124, 58, 237, 0.06) 100%
   );
   background-size: 200% 100%;
   animation: shimmer 1.4s linear infinite;
   border-radius: 8px;
+}
+
+:root[data-theme="dark"] .shimmer,
+:root[data-theme="dark"] .skeleton {
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.04) 0%,
+    rgba(255, 255, 255, 0.10) 50%,
+    rgba(255, 255, 255, 0.04) 100%
+  );
+  background-size: 200% 100%;
 }
 
 @keyframes shimmer {

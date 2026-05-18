@@ -32,7 +32,9 @@ export interface GenerateInput {
   profile: Profile;
   mealType: MealType;
   settings: Settings;
-  customization?: Customization;  // optional for back-compat
+  customization?: Customization;
+  /** Free-text craving from "I have a dish in mind" flow. */
+  dishIdea?: string;
 }
 
 export async function generateRecipes(input: GenerateInput): Promise<Recipe[]> {
@@ -55,6 +57,7 @@ export async function generateRecipes(input: GenerateInput): Promise<Recipe[]> {
     profile: input.profile,
     mealType: input.mealType,
     customization: input.customization,
+    dishIdea: input.dishIdea?.trim() || undefined,
   });
 
   let response;
@@ -103,7 +106,9 @@ export async function generateRecipes(input: GenerateInput): Promise<Recipe[]> {
 
 // ─── Helpers ─────────────────────────────────────────────────
 
-function parseJsonLoose(text: string): unknown {
+// Exported for unit testing — these guard untrusted AI output, so they're
+// the highest-value functions in the file to have test coverage on.
+export function parseJsonLoose(text: string): unknown {
   // Strip code fences if Claude added them despite instructions.
   const cleaned = text.replace(/^```(?:json)?\s*/i, '').replace(/\s*```\s*$/i, '').trim();
   try {
@@ -119,7 +124,7 @@ function parseJsonLoose(text: string): unknown {
   }
 }
 
-function isValidAIResponse(x: unknown): x is AIResponse {
+export function isValidAIResponse(x: unknown): x is AIResponse {
   if (!x || typeof x !== 'object') return false;
   const obj = x as any;
   if (!Array.isArray(obj.recipes) || obj.recipes.length === 0) return false;
