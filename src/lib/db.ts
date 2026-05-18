@@ -7,10 +7,8 @@
 // is fine and much simpler than per-record stores).
 
 import { get, set, del } from 'idb-keyval';
-import type { Category, Ingredient, Profile, Recipe, Settings } from './types';
+import { CATEGORY_SET, type Ingredient, type Profile, type Recipe, type Settings } from './types';
 import { resetOnboarded } from './onboarding-state';
-
-const CATEGORY_SET = new Set<Category>(['produce', 'protein', 'dairy', 'grains', 'pantry', 'other']);
 
 function normalizeRecipe(r: Recipe): Recipe {
   return {
@@ -52,9 +50,16 @@ const DEFAULT_PROFILE: Profile = {
   theme: 'system',
 };
 
+function coerceLoadedRecipeSpeed(saved: Partial<Settings> | undefined): Settings['recipeSpeed'] {
+  const raw = saved?.recipeSpeed;
+  if (raw === 'fast' || raw === 'best') return raw;
+  return DEFAULT_SETTINGS.recipeSpeed;
+}
+
 const DEFAULT_SETTINGS: Settings = {
   apiKey: '',
   model: 'claude-sonnet-4-5',
+  recipeSpeed: 'best',
 };
 
 // ─── Keys ────────────────────────────────────────────────────
@@ -116,7 +121,12 @@ export async function addRecipes(newOnes: Recipe[]): Promise<void> {
 
 export async function loadSettings(): Promise<Settings> {
   const saved = await get<Partial<Settings>>(K.settings);
-  return { ...DEFAULT_SETTINGS, ...(saved ?? {}), model: coerceLoadedModel(saved) };
+  return {
+    ...DEFAULT_SETTINGS,
+    ...(saved ?? {}),
+    model: coerceLoadedModel(saved),
+    recipeSpeed: coerceLoadedRecipeSpeed(saved),
+  };
 }
 
 export async function saveSettings(settings: Settings): Promise<void> {
@@ -127,4 +137,86 @@ export async function saveSettings(settings: Settings): Promise<void> {
 
 export async function resetAll(): Promise<void> {
   await Promise.all([del(K.pantry), del(K.profile), del(K.recipes), del(K.settings), del(K.feed), resetOnboarded()]);
+}
+
+// ─── Export / Import (manual cross-device "sync") ────────────
+//
+// We deliberately *do not* include the API key in the export — users
+// may share or back up these files, and Anthropic keys are easy to
+// re-paste from console.anthropic.com on a new device. Everything else
+// they actually generated (pantry, recipes, profile, model choice) is
+// included.
+
+export const EXPORT_FORMAT_VERSION = 1;
+
+export interface ExportPayload {
+  format: 'mise-export';
+  version: number;
+  exportedAt: string; // ISO datetime
+  pantry: Ingredient[];
+  profile: Profile;
+  recipes: Recipe[];
+  settings: Omit<Settings, 'apiKey'>;
+}
+
+export async function exportAllData(): Promise<ExportPayload> {
+  const [pantry, profile, recipes, settings] = await Promise.all([
+    loadPantry(), loadProfile(), loadRecipes(), loadSettings(),
+  ]);
+  // Strip API key before exporting.
+  const { apiKey: _apiKey, ...safeSettings } = settings;
+  void _apiKey;
+  return {
+    format: 'mise-export',
+    version: EXPORT_FORMAT_VERSION,
+    exportedAt: new Date().toISOString(),
+    pantry,
+    profile,
+    recipes,
+    settings: safeSettings,
+  };
+}
+
+function isPlainObject(x: unknown): x is Record<string, unknown> {
+  return !!x && typeof x === 'object' && !Array.isArray(x);
+}
+
+/**
+ * Validate and apply an imported payload. Existing data is replaced
+ * (not merged) — merging is ambiguous when ingredient IDs collide.
+ * Throws an Error with a user-readable message on bad payloads.
+ *
+ * The current API key is preserved; the import never touches it.
+ */
+export async function importAllData(raw: unknown): Promise<void> {
+  if (!isPlainObject(raw) || raw.format !== 'mise-export') {
+    throw new Error('That doesn\'t look like a Mise export file.');
+  }
+  if (typeof raw.version !== 'number' || raw.version > EXPORT_FORMAT_VERSION) {
+    throw new Error('Export file is from a newer version of the app.');
+  }
+  if (!Array.isArray(raw.pantry) || !Array.isArray(raw.recipes)
+      || !isPlainObject(raw.profile) || !isPlainObject(raw.settings)) {
+    throw new Error('Export file is missing required sections.');
+  }
+
+  const currentSettings = await loadSettings();
+  const importedSettings = raw.settings as Partial<Settings>;
+  const mergedSettings: Settings = {
+    ...currentSettings,
+    // Allow model override from the imported file; never the API key.
+    model: importedSettings.model
+      ? coerceLoadedModel(importedSettings)
+      : currentSettings.model,
+    recipeSpeed: importedSettings.recipeSpeed
+      ? coerceLoadedRecipeSpeed(importedSettings)
+      : currentSettings.recipeSpeed,
+  };
+
+  await Promise.all([
+    savePantry(raw.pantry as Ingredient[]),
+    saveProfile({ ...(await loadProfile()), ...(raw.profile as Partial<Profile>) }),
+    saveRecipes((raw.recipes as Recipe[]).map(normalizeRecipe)),
+    saveSettings(mergedSettings),
+  ]);
 }

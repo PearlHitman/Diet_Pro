@@ -3,13 +3,27 @@
 
 // ─── Pantry ──────────────────────────────────────────────────
 
-export type Category =
-  | 'produce'       // φρούτα/λαχανικά
-  | 'protein'       // κρέας/ψάρι/αυγά
-  | 'dairy'         // γαλακτοκομικά
-  | 'grains'        // ζυμαρικά/ρύζι/ψωμί
-  | 'pantry'        // λάδια, μπαχαρικά, κονσέρβες
-  | 'other';
+// Canonical ordering of pantry categories. Imported everywhere instead
+// of being retyped locally (it had drifted into two different orders
+// across the codebase before being centralised here).
+export const CATEGORIES = [
+  'produce', // φρούτα/λαχανικά
+  'protein', // κρέας/ψάρι/αυγά
+  'dairy',   // γαλακτοκομικά
+  'grains',  // ζυμαρικά/ρύζι/ψωμί
+  'pantry',  // λάδια, μπαχαρικά, κονσέρβες
+  'other',
+] as const;
+
+export type Category = typeof CATEGORIES[number];
+
+/** Set form for fast membership/validation checks. */
+export const CATEGORY_SET: ReadonlySet<Category> = new Set(CATEGORIES);
+
+/** Type guard for unknown values coming off the wire / from storage. */
+export function isCategory(x: unknown): x is Category {
+  return typeof x === 'string' && CATEGORY_SET.has(x as Category);
+}
 
 export interface Ingredient {
   id: string;
@@ -89,14 +103,17 @@ export type ClaudeModel =
   | 'claude-haiku-4-5'
   | 'claude-opus-4-5';
 
+/** Recipe batch generation profile — separate from `model` (used for subs etc.). */
+export type RecipeSpeed = 'fast' | 'best';
+
 export interface Settings {
   apiKey: string;            // empty string = not configured
   model: ClaudeModel;
+  /** Fast = Haiku + 2 compact recipes; Best = chosen model + 3 full recipes. */
+  recipeSpeed: RecipeSpeed;
 }
 
-// ─── AI response shape ───────────────────────────────────────
-// What we expect back from Claude. We validate against this before
-// trusting it — Claude can drift from schemas under load.
+// ─── AI response shape ─────────────────────────────────────
 
 export interface AIRecipe {
   name: string;
@@ -110,7 +127,7 @@ export interface AIRecipe {
 }
 
 export interface AIResponse {
-  recipes: AIRecipe[];       // expect length === 3
+  recipes: AIRecipe[];       // 2 in fast mode, 3 in best mode
 }
 
 export interface AIDishResponse {

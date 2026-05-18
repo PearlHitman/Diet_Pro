@@ -7,8 +7,9 @@
 // deployment, you'd want to proxy through a backend instead.
 
 import Anthropic from '@anthropic-ai/sdk';
-import type { AIResponse, Category, Customization, Ingredient, Language, MealType, Profile, Recipe, Settings, Level } from './types';
-import { buildProductPhotoPrompt, buildReceiptPrompt, buildRecipePrompt, buildDishPrompt, buildSubstitutionPrompt, RECIPE_SYSTEM_PROMPT, DISH_SYSTEM_PROMPT } from './prompts';
+import type { AIResponse, Customization, Ingredient, Language, MealType, Profile, Recipe, Settings, Level } from './types';
+import { CATEGORY_SET, isCategory, type Category } from './types';
+import { buildProductPhotoPrompt, buildReceiptPrompt, buildRecipePrompt, buildDishPrompt, buildSubstitutionPrompt, RECIPE_SYSTEM_PROMPT, RECIPE_SYSTEM_PROMPT_SPEED, DISH_SYSTEM_PROMPT } from './prompts';
 import { pantryMatchesName } from './pantry-match';
 
 // Model token strings — keep in sync with src/lib/types.ts ClaudeModel.
@@ -22,11 +23,15 @@ const MODEL_ID: Record<Settings['model'], string> = {
 
 const DIFFICULTIES = new Set<Level>(['Beginner', 'Intermediate', 'Expert']);
 
-const VALID_CATEGORIES = new Set<Category>(['produce', 'protein', 'dairy', 'grains', 'pantry', 'other']);
+const HAIKU_MODEL = 'claude-haiku-4-5';
+const BEST_MAX_TOKENS = 4096;
+/** Fast mode: 2 compact recipes (~800–1200 output tokens typical). 2048 avoids truncation. */
+const FAST_MAX_TOKENS = 2048;
+/** Single dish in fast mode — one recipe, tighter cap. */
+const DISH_FAST_MAX_TOKENS = 1536;
 
 function coerceOptionalPantryCat(raw: unknown): Category | undefined {
-  if (typeof raw === 'string' && VALID_CATEGORIES.has(raw as Category)) return raw as Category;
-  return undefined;
+  return isCategory(raw) ? raw : undefined;
 }
 
 export class ClaudeError extends Error {
@@ -62,20 +67,23 @@ export async function generateRecipes(input: GenerateInput): Promise<Recipe[]> {
     dangerouslyAllowBrowser: true,
   });
 
+  const fast = settings.recipeSpeed === 'fast';
+
   const prompt = buildRecipePrompt({
     pantry: input.pantry,
     profile: input.profile,
     mealType: input.mealType,
     customization: input.customization,
     dishIdea: input.dishIdea?.trim() || undefined,
+    speed: fast,
   });
 
   let response;
   try {
     response = await client.messages.create({
-      model: MODEL_ID[settings.model],
-      max_tokens: 4096,
-      system: RECIPE_SYSTEM_PROMPT,
+      model: fast ? HAIKU_MODEL : MODEL_ID[settings.model],
+      max_tokens: fast ? FAST_MAX_TOKENS : BEST_MAX_TOKENS,
+      system: fast ? RECIPE_SYSTEM_PROMPT_SPEED : RECIPE_SYSTEM_PROMPT,
       messages: [{ role: 'user', content: prompt }],
     });
   } catch (e: any) {
@@ -93,7 +101,7 @@ export async function generateRecipes(input: GenerateInput): Promise<Recipe[]> {
 
   // Parse JSON, tolerating accidental markdown fences.
   const parsed = parseJsonLoose(textBlock.text);
-  if (!isValidAIResponse(parsed)) {
+  if (!isValidAIResponse(parsed, fast ? { minRecipes: 1, maxRecipes: 2 } : { minRecipes: 1, maxRecipes: 3 })) {
     throw new ClaudeError('Claude returned malformed recipe data.', 'parse');
   }
 
@@ -148,14 +156,25 @@ function validIngredient(x: unknown): boolean {
   const i = x as Record<string, unknown>;
   if (typeof i.name !== 'string' || typeof i.amount !== 'string' || typeof i.missing !== 'boolean') return false;
   const pc = i.pantryCategory;
-  if (pc !== undefined && !VALID_CATEGORIES.has(pc as Category)) return false;
+  if (pc !== undefined && !CATEGORY_SET.has(pc as Category)) return false;
   return true;
 }
 
-export function isValidAIResponse(x: unknown): x is AIResponse {
+export interface ValidateAIResponseOptions {
+  minRecipes?: number;
+  maxRecipes?: number;
+}
+
+export function isValidAIResponse(
+  x: unknown,
+  opts: ValidateAIResponseOptions = {},
+): x is AIResponse {
+  const minRecipes = opts.minRecipes ?? 1;
+  const maxRecipes = opts.maxRecipes ?? 3;
   if (!x || typeof x !== 'object') return false;
   const obj = x as Record<string, unknown>;
-  if (!Array.isArray(obj.recipes) || obj.recipes.length === 0) return false;
+  if (!Array.isArray(obj.recipes)) return false;
+  if (obj.recipes.length < minRecipes || obj.recipes.length > maxRecipes) return false;
   return obj.recipes.every((r: unknown) => {
     if (!r || typeof r !== 'object') return false;
     const rr = r as Record<string, unknown>;
@@ -220,13 +239,16 @@ export async function generateDishRecipe(input: {
   });
 
   const prompt = buildDishPrompt(dishName, pantry, profile);
+  const fast = settings.recipeSpeed === 'fast';
 
   let response;
   try {
     response = await client.messages.create({
-      model: MODEL_ID[settings.model],
-      max_tokens: 4096,
-      system: `${RECIPE_SYSTEM_PROMPT}\n\n${DISH_SYSTEM_PROMPT}`,
+      model: fast ? HAIKU_MODEL : MODEL_ID[settings.model],
+      max_tokens: fast ? DISH_FAST_MAX_TOKENS : BEST_MAX_TOKENS,
+      system: fast
+        ? `${RECIPE_SYSTEM_PROMPT_SPEED}\n\n${DISH_SYSTEM_PROMPT}`
+        : `${RECIPE_SYSTEM_PROMPT}\n\n${DISH_SYSTEM_PROMPT}`,
       messages: [{ role: 'user', content: prompt }],
     });
   } catch (e: any) {
@@ -339,8 +361,7 @@ export async function suggestSubstitutions(input: {
 const VISION_MODEL = 'claude-haiku-4-5';
 
 function coerceCategory(raw: unknown): Category {
-  if (typeof raw === 'string' && VALID_CATEGORIES.has(raw as Category)) return raw as Category;
-  return 'other';
+  return isCategory(raw) ? raw : 'other';
 }
 
 export interface ScannedIngredient {

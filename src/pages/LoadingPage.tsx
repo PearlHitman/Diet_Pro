@@ -8,6 +8,7 @@ import { Sparkles, AlertCircle, ArrowLeft } from '../components/Icons';
 import { T, SCREEN_PAD_TOP } from '../tokens';
 import { useApp } from '../lib/app-state';
 import { generateRecipes, ClaudeError } from '../lib/claude';
+import { loadFlowState, saveResultIds } from '../lib/generate-flow';
 import { EMPTY_CUSTOMIZATION, type Customization, type MealType } from '../lib/types';
 
 interface LocationState {
@@ -25,10 +26,14 @@ export function LoadingPage() {
   /** Increment to re-run generation (Retry) without remounting. */
   const [generationToken, setGenerationToken] = useState(0);
 
-  const state = location.state as LocationState | null;
-  const mealType = state?.mealType;
-  const customization = state?.customization ?? EMPTY_CUSTOMIZATION;
-  const dishIdeaTrimmed = state?.dishIdea?.trim();
+  // Prefer router state (fast path); fall back to sessionStorage so a
+  // mid-flow reload doesn't lose what the user picked.
+  const navState = location.state as LocationState | null;
+  const fallback = loadFlowState();
+  const mealType: MealType | undefined = navState?.mealType ?? fallback?.mealType;
+  const customization: Customization =
+    navState?.customization ?? fallback?.customization ?? EMPTY_CUSTOMIZATION;
+  const dishIdeaTrimmed = (navState?.dishIdea ?? fallback?.dishIdea)?.trim();
   const fromDishFlow = !!(dishIdeaTrimmed && dishIdeaTrimmed.length > 0);
 
   useEffect(() => {
@@ -52,7 +57,10 @@ export function LoadingPage() {
         if (cancelled) return;
         await appendRecipes(recipes);
         if (cancelled) return;
-        navigate('/results', { state: { ids: recipes.map(r => r.id) }, replace: true });
+        const ids = recipes.map(r => r.id);
+        // Persist ids so /results can recover from a reload too.
+        saveResultIds(ids);
+        navigate('/results', { state: { ids }, replace: true });
       } catch (e) {
         if (cancelled) return;
         if (e instanceof ClaudeError) {
@@ -148,7 +156,7 @@ export function LoadingPage() {
           {t('generating')}
         </div>
         <div style={{ fontSize: 13, color: T.muted }}>
-          {t('generatingHint')}
+          {settings.recipeSpeed === 'fast' ? t('generatingHintFast') : t('generatingHint')}
         </div>
       </div>
     </Screen>

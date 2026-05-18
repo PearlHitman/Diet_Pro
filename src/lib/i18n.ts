@@ -109,7 +109,8 @@ const EN = {
   mealFestive: 'Festive',
   mealFestiveSub: 'For sharing',
   generating: 'Generating recipes…',
-  generatingHint: 'Asking Claude for three ideas',
+  generatingHint: 'Asking Claude for three ideas — may take 30–60s',
+  generatingHintFast: 'Usually ~15–25 seconds with Haiku',
   generateMore: 'Generate 3 more',
   dishIdeaLabel: 'What do you want to make?',
   dishIdeaPlaceholder: 'e.g. creamy mushroom pasta, dak galbi…',
@@ -148,10 +149,21 @@ const EN = {
   validating: 'Validating…',
   testKey: 'Test key',
   model: 'AI model',
-  modelHint: 'Sonnet is recommended.',
+  modelHint: 'Used for Best-mode generation and substitutions. Fast mode always uses Haiku.',
+  recipeSpeed: 'Recipe generation',
+  recipeSpeedHint: 'Fast returns 2 shorter recipes with Haiku (~15–25s). Best uses your chosen model and 3 full recipes (~30–60s).',
+  recipeSpeedFast: 'Fast',
+  recipeSpeedBest: 'Best',
   getApiKey: 'Get a key from console.anthropic.com',
   resetAll: 'Reset all data',
   resetConfirm: 'This will delete your pantry, profile, recipes, and settings. Are you sure?',
+  exportData: 'Export data',
+  exportDataHint: 'Save your pantry, recipes and profile as a JSON file (API key excluded).',
+  importData: 'Import data',
+  importDataHint: 'Restore from a previously exported file. Replaces current data.',
+  importConfirm: 'Importing will replace your current pantry, recipes, profile and settings (the API key is kept). Continue?',
+  importSuccess: 'Data imported.',
+  importFailed: 'Import failed: {reason}',
 
   // Camera import
   addFromCamera: 'Add from camera',
@@ -318,7 +330,8 @@ const EL: Record<Keys, string> = {
   mealFestive: 'Γιορτινό',
   mealFestiveSub: 'Για παρέα',
   generating: 'Δημιουργία συνταγών…',
-  generatingHint: 'Ζητώ τρεις ιδέες από τον Claude',
+  generatingHint: 'Ζητώ τρεις ιδέες από τον Claude — μπορεί να πάρει 30–60 δευτ.',
+  generatingHintFast: 'Συνήθως ~15–25 δευτερόλεπτα με Haiku',
   generateMore: 'Άλλες 3 προτάσεις',
   dishIdeaLabel: 'Τι θες να φτιάξεις;',
   dishIdeaPlaceholder: 'π.χ. μακαρόνια με μανιτάρια σε κρεμώδη σάλτσα…',
@@ -354,10 +367,21 @@ const EL: Record<Keys, string> = {
   validating: 'Επαλήθευση…',
   testKey: 'Δοκιμή κλειδιού',
   model: 'Μοντέλο AI',
-  modelHint: 'Συνιστάται το Sonnet.',
+  modelHint: 'Για λειτουργία Best και υποκατάστατα. Η λειτουργία Fast χρησιμοποιεί πάντα Haiku.',
+  recipeSpeed: 'Δημιουργία συνταγών',
+  recipeSpeedHint: 'Fast: 2 σύντομες συνταγές με Haiku (~15–25 δευτ.). Best: το επιλεγμένο μοντέλο και 3 πλήρεις συνταγές (~30–60 δευτ.).',
+  recipeSpeedFast: 'Fast',
+  recipeSpeedBest: 'Best',
   getApiKey: 'Πάρε κλειδί από το console.anthropic.com',
   resetAll: 'Διαγραφή όλων',
   resetConfirm: 'Θα διαγραφούν ντουλάπι, προφίλ, συνταγές και ρυθμίσεις. Σίγουρα;',
+  exportData: 'Εξαγωγή δεδομένων',
+  exportDataHint: 'Αποθήκευση ντουλαπιού, συνταγών και προφίλ ως αρχείο JSON (χωρίς το κλειδί API).',
+  importData: 'Εισαγωγή δεδομένων',
+  importDataHint: 'Επαναφορά από προηγούμενο αρχείο εξαγωγής. Αντικαθιστά τα τρέχοντα δεδομένα.',
+  importConfirm: 'Η εισαγωγή θα αντικαταστήσει το ντουλάπι, τις συνταγές, το προφίλ και τις ρυθμίσεις σου (το κλειδί API διατηρείται). Συνέχεια;',
+  importSuccess: 'Τα δεδομένα εισήχθησαν.',
+  importFailed: 'Αποτυχία εισαγωγής: {reason}',
 
   // Camera import
   addFromCamera: 'Προσθήκη από κάμερα',
@@ -518,7 +542,8 @@ const ES: Record<Keys, string> = {
   mealFestive: 'Festiva',
   mealFestiveSub: 'Para compartir',
   generating: 'Generando recetas…',
-  generatingHint: 'Pidiendo tres ideas a Claude',
+  generatingHint: 'Pidiendo tres ideas a Claude — puede tardar 30–60 s',
+  generatingHintFast: 'Suele tardar ~15–25 segundos con Haiku',
   generateMore: 'Generar 3 más',
   dishIdeaLabel: '¿Qué quieres preparar?',
   dishIdeaPlaceholder: 'p. ej. pasta cremosa con setas…',
@@ -554,10 +579,21 @@ const ES: Record<Keys, string> = {
   validating: 'Validando…',
   testKey: 'Probar clave',
   model: 'Modelo de IA',
-  modelHint: 'Se recomienda Sonnet.',
+  modelHint: 'Para modo Best y sustituciones. El modo Fast siempre usa Haiku.',
+  recipeSpeed: 'Generación de recetas',
+  recipeSpeedHint: 'Fast: 2 recetas cortas con Haiku (~15–25 s). Best: tu modelo elegido y 3 recetas completas (~30–60 s).',
+  recipeSpeedFast: 'Rápido',
+  recipeSpeedBest: 'Mejor',
   getApiKey: 'Obtén una clave en console.anthropic.com',
   resetAll: 'Restablecer todos los datos',
   resetConfirm: 'Esto eliminará tu despensa, perfil, recetas y ajustes. ¿Estás seguro?',
+  exportData: 'Exportar datos',
+  exportDataHint: 'Guarda tu despensa, recetas y perfil como un archivo JSON (la clave API no se incluye).',
+  importData: 'Importar datos',
+  importDataHint: 'Restaurar desde un archivo exportado anteriormente. Reemplaza los datos actuales.',
+  importConfirm: 'La importación reemplazará tu despensa, recetas, perfil y ajustes actuales (la clave API se conserva). ¿Continuar?',
+  importSuccess: 'Datos importados.',
+  importFailed: 'Importación fallida: {reason}',
 
   addFromCamera: 'Añadir desde cámara',
   scanBarcode: 'Escanear código de barras',
@@ -585,42 +621,53 @@ const ES: Record<Keys, string> = {
   foodFact: 'Dato Curioso',
   inSeason: 'De Temporada',
   refreshFeed: 'Actualizar',
-  loadingFeed: 'Cargando…',
-  noNetworkFeed: 'Sin conexión — contenido en caché',
-  tapToGenerate: 'Toca para generar',
-  seasonLabel: 'Qué está en temporada',
 
+  // Home — saludos por hora
   homeGreetingMorning: 'Buenos días',
   homeGreetingAfternoon: 'Buenas tardes',
   homeGreetingEvening: 'Buenas noches',
   homeSubtitleWhatsCooking: '¿Qué cocinamos hoy?',
+
+  // Pantry — additions
   pantryCardNeedMoreHint: 'Añade ingredientes para empezar',
-
-  pantrySearchNoMatch: 'Ningún ingrediente coincide con «{q}».',
-  pantrySearchClear: 'Borrar búsqueda',
   pantryEditSheetTitle: 'Editar ingrediente',
+  pantrySearchClear: 'Borrar búsqueda',
+  pantrySearchNoMatch: 'Ningún ingrediente coincide con "{q}".',
 
+  // Generate flow
+  tapToGenerate: 'Toca para generar',
+  seasonLabel: 'De temporada',
   dishGenerate: 'Generar',
-  dishShoppingList: 'Lista de compras',
-  dishCanSubstitute: '¿Puedo sustituir?',
-  dishSubstitutionTitle: 'Sustitutos',
-  dishSaveHistory: 'Guardar en historial',
-  dishAddFavorites: 'Añadir a favoritos',
-  dishShoppingAllSet: 'Nada que comprar — parece que tu despensa lo cubre todo.',
-  chefTipsLabel: 'Consejos del chef',
-  substitutionsLoading: 'Preguntando a Claude…',
-  recipeDotLegend: 'Verde: en despensa · Gris: comprar',
 
+  // Recipe detail
+  chefTipsLabel: 'Consejos del chef',
+  recipeDotLegend: 'Verde: ya en la despensa · Gris: lista de compra',
   expiryOptionalHint: 'Fecha de caducidad (opcional)',
 
+  // Dish flow
+  dishShoppingList: 'Lista de compra',
+  dishCanSubstitute: '¿Puedo sustituirlo?',
+  dishSubstitutionTitle: 'Sustituciones',
+  dishSaveHistory: 'Guardar en historial',
+  dishAddFavorites: 'Añadir a favoritos',
+  dishShoppingAllSet: 'Nada que comprar — tu despensa parece lista para este plato.',
+  substitutionsLoading: 'Preguntando a Claude…',
+
+  // Feed states
+  loadingFeed: 'Cargando feed…',
+  noNetworkFeed: 'Sin conexión — mostrando contenido en caché',
+
+  // Errors
   errorTitle: 'Algo salió mal',
-  errorNoKey: 'Primero configura tu clave API en Ajustes.',
-  errorRate: 'Límite de velocidad de Anthropic alcanzado. Inténtalo de nuevo en un momento.',
+  errorNoKey: 'Configura tu clave API en Ajustes primero.',
+  errorRate: 'Límite de Anthropic alcanzado. Inténtalo en un momento.',
   errorNetwork: 'Error de red. Comprueba tu conexión.',
   errorParse: 'Claude devolvió una respuesta inesperada. Inténtalo de nuevo.',
 };
 
 const STRINGS = { EN, EL, ES } as const;
+
+export type I18nKey = Keys;
 
 export function t(lang: Language, key: Keys, vars?: Record<string, string | number>): string {
   let s: string = STRINGS[lang][key];

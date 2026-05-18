@@ -3,6 +3,7 @@
 // prompts across the codebase.
 
 import type { Customization, Ingredient, Language, MealType, Profile } from './types';
+import { daysUntil } from './date';
 
 export const DISH_SYSTEM_PROMPT = `You return precise, authentic recipes as JSON only — no markdown fences unless asked elsewhere.`;
 
@@ -16,14 +17,6 @@ const MEAL_DESC: Record<MealType, string> = {
 };
 
 // ─── Helpers ─────────────────────────────────────────────────
-
-function daysUntil(isoDate: string | null): number | null {
-  if (!isoDate) return null;
-  const expiry = new Date(isoDate + 'T00:00:00');
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  return Math.round((expiry.getTime() - today.getTime()) / 86_400_000);
-}
 
 function formatPantry(pantry: Ingredient[]): string {
   if (pantry.length === 0) return '(pantry is empty)';
@@ -51,6 +44,8 @@ export interface PromptInput {
   customization?: Customization;
   /** When set — user asked for variants around a concrete dish idea. */
   dishIdea?: string;
+  /** Fast mode: 2 compact recipes, shorter output. */
+  speed?: boolean;
 }
 
 // System prompt sets the creative persona. Kept separate so claude.ts
@@ -67,7 +62,16 @@ You always produce:
 - Steps that explain the *why* alongside the *what* ("sear skin-side down without moving it so the fat renders and the skin crisps, ~6 min")
 - Recipes the user will actually remember and want to repeat`;
 
-export function buildRecipePrompt({
+export const RECIPE_SYSTEM_PROMPT_SPEED = `You are a practical home cook. Return only valid JSON — no markdown, no prose.
+Use specific dish names (not "Chicken Stir-Fry"). Keep steps short and imperative.
+Prioritize pantry items marked expiring soon. Be concise: fewer tokens = faster for the user.`;
+
+export function buildRecipePrompt(input: PromptInput): string {
+  if (input.speed) return buildRecipePromptSpeed(input);
+  return buildRecipePromptBest(input);
+}
+
+function buildRecipePromptBest({
   pantry, profile, mealType, customization, dishIdea,
 }: PromptInput): string {
   const trimmedDish = dishIdea?.trim();
@@ -211,6 +215,68 @@ Strict schema:
 }
 
 Generate the 3 recipes now.`;
+}
+
+function buildRecipePromptSpeed({
+  pantry, profile, mealType, customization, dishIdea,
+}: PromptInput): string {
+  const trimmedDish = dishIdea?.trim();
+  const langInstruction = profile.language === 'EL'
+    ? 'OUTPUT LANGUAGE: Greek (Ελληνικά) for all text fields.'
+    : profile.language === 'ES'
+      ? 'OUTPUT LANGUAGE: Spanish (Español) for all text fields.'
+      : 'OUTPUT LANGUAGE: English.';
+
+  const mustInclude = customization?.mustInclude ?? [];
+  const skip = customization?.skip ?? [];
+
+  const mustSection = mustInclude.length > 0
+    ? `\nMUST include in BOTH recipes: ${mustInclude.join(', ')}.`
+    : '';
+  const skipSection = skip.length > 0
+    ? `\nNEVER use: ${skip.join(', ')}.`
+    : '';
+  const dishSection = trimmedDish
+    ? `\nUser wants dishes related to: "${trimmedDish}". Both recipes must fit.`
+    : '';
+
+  const maxSteps = profile.level === 'Beginner' ? 4 : profile.level === 'Intermediate' ? 5 : 6;
+
+  return `Suggest exactly 2 recipes the user can cook from their pantry. FAST MODE — be concise.
+
+PANTRY:
+${formatPantry(pantry)}
+
+PROFILE: ${profile.level} cook, ${profile.servings} servings, cuisine: ${profile.cuisine || 'any'}, allergies: ${profile.allergies || 'none'}, diet: ${profile.dietGoal}.
+MEAL TYPE: ${MEAL_DESC[mealType]}${dishSection}${mustSection}${skipSection}
+
+RULES:
+- ≥70% ingredients from pantry ("missing": false). At most 2 missing items per recipe.
+- Prefer items expiring today or within 3 days.
+- Respect allergies and skip list.
+- Max ${maxSteps} steps per recipe; each step ≤120 characters.
+- Max 8 ingredients per recipe.
+- chefTips: 0 or 1 short tip per recipe (optional).
+- Names ≤60 characters. Two different proteins or techniques.
+- ${langInstruction}
+
+JSON ONLY (no fences):
+{
+  "recipes": [
+    {
+      "name": "string",
+      "cookTime": number,
+      "difficulty": "Beginner" | "Intermediate" | "Expert",
+      "calories": number,
+      "ingredients": [{ "name": "string", "amount": "string", "missing": boolean, "pantryCategory": "produce"|"protein"|"dairy"|"grains"|"pantry"|"other" }],
+      "steps": ["string"],
+      "chefTips": ["string"],
+      "serving": "Serves ${profile.servings}"
+    }
+  ]
+}
+
+Generate exactly 2 recipes now.`;
 }
 
 // ─── Vision: single product photo ────────────────────────────

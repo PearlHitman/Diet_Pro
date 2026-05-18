@@ -4,7 +4,7 @@
 // state set is rare).
 
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
-import type { Ingredient, Profile, Recipe, Settings, Language } from './types';
+import type { Ingredient, Profile, Recipe, Settings } from './types';
 import * as db from './db';
 import { t as translate } from './i18n';
 import { applyTheme } from './theme';
@@ -34,6 +34,10 @@ interface AppState {
   // Reset
   resetAll: () => Promise<void>;
 
+  // Export / import (manual cross-device "sync")
+  exportData: () => Promise<db.ExportPayload>;
+  importData: (raw: unknown) => Promise<void>;
+
   // i18n shortcut
   t: (key: Parameters<typeof translate>[1], vars?: Record<string, string | number>) => string;
 }
@@ -47,7 +51,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     allergies: '', dietGoal: 'None', language: 'EN', theme: 'system',
   });
   const [recipes, setRecipes] = useState<Recipe[]>([]);
-  const [settings, setSettingsState] = useState<Settings>({ apiKey: '', model: 'claude-sonnet-4-5' });
+  const [settings, setSettingsState] = useState<Settings>({ apiKey: '', model: 'claude-sonnet-4-5', recipeSpeed: 'best' });
   const [ready, setReady] = useState(false);
 
   // Initial load.
@@ -125,7 +129,21 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       allergies: '', dietGoal: 'None', language: 'EN', theme: 'system',
     });
     setRecipes([]);
-    setSettingsState({ apiKey: '', model: 'claude-sonnet-4-5' });
+    setSettingsState({ apiKey: '', model: 'claude-sonnet-4-5', recipeSpeed: 'best' });
+  }, []);
+
+  const exportData = useCallback(() => db.exportAllData(), []);
+
+  const importData = useCallback(async (raw: unknown) => {
+    await db.importAllData(raw);
+    // Reload all in-memory state from disk so the UI reflects the import.
+    const [p, pr, r, s] = await Promise.all([
+      db.loadPantry(), db.loadProfile(), db.loadRecipes(), db.loadSettings(),
+    ]);
+    setPantry(p);
+    setProfileState(pr);
+    setRecipes(r);
+    setSettingsState(s);
   }, []);
 
   // Re-apply theme whenever profile.theme changes (incl. on first load).
@@ -147,6 +165,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     saveProfile, saveSettings,
     appendRecipes, toggleStar,
     resetAll,
+    exportData, importData,
     t,
   };
 

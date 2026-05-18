@@ -1,21 +1,37 @@
-// Settings — API key (BYOK), model, theme, danger zone.
+// Settings — API key (BYOK), model, theme, data portability, danger zone.
 
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
+import { toast } from 'sonner';
 import { Screen, SubHeader } from '../components/Chrome';
 import { Field, Input, Segmented, PrimaryButton, GhostButton } from '../components/Forms';
 import { Check, X, AlertCircle, Trash } from '../components/Icons';
 import { useApp } from '../lib/app-state';
 import { validateApiKey } from '../lib/claude';
-import type { ClaudeModel, ThemePref } from '../lib/types';
+import type { ClaudeModel, RecipeSpeed, ThemePref } from '../lib/types';
 
 type KeyState = 'unchecked' | 'checking' | 'valid' | 'invalid';
 
+function downloadJson(filename: string, data: unknown): void {
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  // Revoke a tick later so Safari has time to start the download.
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
 export function SettingsPage() {
-  const { settings, saveSettings, profile, saveProfile, resetAll, t } = useApp();
+  const { settings, saveSettings, profile, saveProfile, resetAll, exportData, importData, t } = useApp();
   const [keyDraft, setKeyDraft] = useState(settings.apiKey);
   const [model, setModel] = useState<ClaudeModel>(settings.model);
+  const [recipeSpeed, setRecipeSpeed] = useState<RecipeSpeed>(settings.recipeSpeed ?? 'best');
   const [keyState, setKeyState] = useState<KeyState>(settings.apiKey ? 'valid' : 'unchecked');
   const [validationError, setValidationError] = useState('');
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   async function handleSaveKey() {
     setKeyState('checking');
@@ -23,7 +39,7 @@ export function SettingsPage() {
     const result = await validateApiKey(keyDraft);
     if (result.ok) {
       setKeyState('valid');
-      await saveSettings({ ...settings, apiKey: keyDraft, model });
+      await saveSettings({ ...settings, apiKey: keyDraft, model, recipeSpeed });
     } else {
       setKeyState('invalid');
       setValidationError(result.reason);
@@ -32,7 +48,12 @@ export function SettingsPage() {
 
   async function handleModelChange(m: ClaudeModel) {
     setModel(m);
-    await saveSettings({ ...settings, model: m });
+    await saveSettings({ ...settings, model: m, recipeSpeed });
+  }
+
+  async function handleRecipeSpeedChange(speed: RecipeSpeed) {
+    setRecipeSpeed(speed);
+    await saveSettings({ ...settings, recipeSpeed: speed, model });
   }
 
   async function handleThemeChange(theme: ThemePref) {
@@ -46,6 +67,38 @@ export function SettingsPage() {
       await resetAll();
       setKeyDraft('');
       setKeyState('unchecked');
+    }
+  }
+
+  async function handleExport() {
+    try {
+      const payload = await exportData();
+      const stamp = new Date().toISOString().slice(0, 10);
+      downloadJson(`mise-export-${stamp}.json`, payload);
+    } catch (e) {
+      const reason = e instanceof Error ? e.message : String(e);
+      toast.error(t('importFailed', { reason }));
+    }
+  }
+
+  function handleImportClick() {
+    if (!window.confirm(t('importConfirm'))) return;
+    fileInputRef.current?.click();
+  }
+
+  async function handleImportFile(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    // Reset the input so the same file can be re-selected later.
+    e.target.value = '';
+    if (!file) return;
+    try {
+      const text = await file.text();
+      const parsed = JSON.parse(text);
+      await importData(parsed);
+      toast.success(t('importSuccess'));
+    } catch (err) {
+      const reason = err instanceof Error ? err.message : String(err);
+      toast.error(t('importFailed', { reason }));
     }
   }
 
@@ -103,6 +156,18 @@ export function SettingsPage() {
           </div>
         </Field>
 
+        {/* Recipe generation speed */}
+        <Field label={t('recipeSpeed')} hint={t('recipeSpeedHint')}>
+          <Segmented<RecipeSpeed>
+            value={recipeSpeed}
+            onChange={handleRecipeSpeedChange}
+            options={[
+              { value: 'fast', label: t('recipeSpeedFast') },
+              { value: 'best', label: t('recipeSpeedBest') },
+            ]}
+          />
+        </Field>
+
         {/* Model */}
         <Field label={t('model')} hint={t('modelHint')}>
           <Segmented<ClaudeModel>
@@ -126,6 +191,26 @@ export function SettingsPage() {
               { value: 'light', label: t('themeLight') },
               { value: 'dark', label: t('themeDark') },
             ]}
+          />
+        </Field>
+
+        {/* Data portability */}
+        <Field label={t('exportData')} hint={t('exportDataHint')}>
+          <GhostButton onClick={handleExport} fullWidth>
+            {t('exportData')}
+          </GhostButton>
+        </Field>
+
+        <Field label={t('importData')} hint={t('importDataHint')}>
+          <GhostButton onClick={handleImportClick} fullWidth>
+            {t('importData')}
+          </GhostButton>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="application/json,.json"
+            onChange={handleImportFile}
+            style={{ display: 'none' }}
           />
         </Field>
 
