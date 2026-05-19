@@ -175,38 +175,6 @@ IndexedDB  ←──  db.ts  ←──  app-state.tsx (context)  ←──  page
 - Until `ready` (and onboarding check passes), the app shows `BrandedLoader`.
 - Mutators in `useApp` set local state AND persist atomically.
 
-## Known tasks to do next (priority order)
-
-1. **History date grouping.** The list is flat — group by day with
-   sticky date headers ("Today", "Yesterday", "Mon Nov 3").
-
-2. **Pantry "expiring only" toggle.** Text search by name is already
-   implemented on `PantryPage`; add a filter toggle for expiring-soon items.
-
-3. **Regenerate one.** On Results page, each recipe gets a small
-   "regenerate this one" button that re-runs Claude with the prompt
-   adjusted to "replace recipe #N keeping the others". Talk through the
-   prompt change first.
-
-4. **PNG icons.** `sharp` is installed and `npm run generate-assets` writes
-   PNGs/splashes from `public/icons/icon.svg`. Only the SVG is committed
-   today — run the script and commit the generated assets.
-
-5. **Pantry import from text.** Settings → paste a shopping list, Claude
-   parses it into structured ingredients. Signature:
-   `parseShoppingList(text: string, settings: Settings): Promise<Ingredient[]>`
-   in `claude.ts` (use Haiku).
-
-**Already shipped (was on this list previously):**
-
-- ~~Bottom tab bar~~ — `TabBar` in `src/components/Chrome.tsx`.
-- ~~Pantry text search~~ — search input on `PantryPage`.
-- ~~Liquid Glass redesign~~ — `theme.css`, glass components, onboarding flow.
-- ~~Camera/receipt import~~ — `CameraImport.tsx` + Claude vision (Haiku).
-- ~~Dish-in-mind flow~~ — `DishPage.tsx`.
-- ~~History + Favorites combined~~ — tabs in `HistoryAndFavorites.tsx`
-  (`/history?view=favs`).
-
 ## What NOT to do
 
 - **Don't add styled-components / Emotion / a second CSS framework.**

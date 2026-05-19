@@ -1,18 +1,7 @@
-// Cook Mode — Option B "Scroll + Lock" layout.
-//
-// Completed steps  -> collapsed single line, strikethrough, faded
-// Active step      -> large hero card ("Now cooking")
-// Future steps     -> small, dimmed preview (2-line clamp)
-// Sticky timer     -> banner below header when a timer is running
-//
-// Rendered OUTSIDE page-enter (see App.tsx) so position:fixed works
-// correctly on iOS Safari (no ancestor transform creates a containing block).
-
-import React, { useEffect, useRef, useState, useCallback } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { ArrowLeft, ArrowRight, Check, Mic, TimerReset } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useApp } from '../lib/app-state';
-
-// ─── Speech API types (not in every TS lib) ─────────────────
 
 interface ISpeechRecognition extends EventTarget {
   continuous: boolean;
@@ -21,14 +10,16 @@ interface ISpeechRecognition extends EventTarget {
   start(): void;
   stop(): void;
   onresult: ((e: ISpeechRecognitionEvent) => void) | null;
-  onerror:  ((e: Event) => void) | null;
-  onend:    (() => void) | null;
+  onerror: ((e: Event) => void) | null;
+  onend: (() => void) | null;
 }
+
 interface ISpeechRecognitionResult { readonly 0: { transcript: string } }
 interface ISpeechRecognitionEvent extends Event {
   readonly resultIndex: number;
   readonly results: { length: number; [i: number]: ISpeechRecognitionResult };
 }
+
 declare global {
   interface Window {
     SpeechRecognition?: new () => ISpeechRecognition;
@@ -36,135 +27,170 @@ declare global {
   }
 }
 
-// ─── Timer types ─────────────────────────────────────────────
-
-interface TimerState { total: number; remaining: number; running: boolean }
-
-// ─── Helpers ─────────────────────────────────────────────────
+interface TimerState {
+  total: number;
+  remaining: number;
+  running: boolean;
+}
 
 function parseTimerSeconds(text: string): number {
-  const hr  = text.match(/(\d+(?:\.\d+)?)\s*(?:hour|hr)/i);
-  const min = text.match(/(\d+(?:\.\d+)?)\s*(?:minute|min)/i);
-  const sec = text.match(/(\d+(?:\.\d+)?)\s*(?:second|sec)/i);
-  let t = 0;
-  if (hr)  t += parseFloat(hr[1])  * 3600;
-  if (min) t += parseFloat(min[1]) * 60;
-  if (sec) t += parseFloat(sec[1]);
-  return Math.round(t);
+  const hr = text.match(/(\d+(?:\.\d+)?)\s*(?:hour|hr|hours|hrs)/i);
+  const min = text.match(/(\d+(?:\.\d+)?)\s*(?:minute|min|minutes|mins)/i);
+  const sec = text.match(/(\d+(?:\.\d+)?)\s*(?:second|sec|seconds|secs)/i);
+  let total = 0;
+  if (hr) total += parseFloat(hr[1]) * 3600;
+  if (min) total += parseFloat(min[1]) * 60;
+  if (sec) total += parseFloat(sec[1]);
+  return Math.round(total);
 }
 
 function fmt(secs: number) {
-  return `${Math.floor(secs / 60)}:${(secs % 60).toString().padStart(2, '0')}`;
+  const minutes = Math.floor(secs / 60);
+  const seconds = secs % 60;
+  return `${minutes}:${seconds.toString().padStart(2, '0')}`;
 }
 
-/** Highlight time mentions in amber. */
-function HighStep({ text }: { text: string }) {
+function TimeHighlightedStep({ text }: { text: string }) {
   const parts = text.split(/(\d+(?:\.\d+)?\s*(?:minutes?|mins?|seconds?|secs?|hours?|hrs?))/gi);
   return (
     <>
-      {parts.map((p, i) =>
-        /\d/.test(p) && /min|sec|hour|hr/i.test(p)
-          ? <span key={i} style={{ color: '#F59E0B', fontWeight: 700 }}>{p}</span>
-          : <React.Fragment key={i}>{p}</React.Fragment>
+      {parts.map((part, index) =>
+        /\d/.test(part) && /min|sec|hour|hr/i.test(part)
+          ? (
+            <span key={index} style={{ color: 'var(--mise-warning)', fontWeight: 800 }}>
+              {part}
+            </span>
+          )
+          : <React.Fragment key={index}>{part}</React.Fragment>,
       )}
     </>
   );
 }
 
-// ─── Component ───────────────────────────────────────────────
+function playTimerDoneTone() {
+  try {
+    const ctx = new AudioContext();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.frequency.value = 880;
+    gain.gain.setValueAtTime(0.25, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.75);
+    osc.start();
+    osc.stop(ctx.currentTime + 0.75);
+  } catch {
+    // Audio can be blocked until the user interacts; the timer still works.
+  }
+}
 
 export function CookModePage() {
-  const { id }      = useParams<{ id: string }>();
+  const { id } = useParams<{ id: string }>();
   const { recipes, t, profile } = useApp();
-  const navigate    = useNavigate();
-  const recipe      = recipes.find(r => r.id === id);
+  const navigate = useNavigate();
+  const recipe = recipes.find(r => r.id === id);
 
-  const [stepIdx, setStepIdx] = useState(0);
-  const [timers,  setTimers]  = useState<Record<number, TimerState>>({});
-  const intervalRef    = useRef<ReturnType<typeof setInterval> | null>(null);
-  const recognitionRef = useRef<ISpeechRecognition | null>(null);
-  const wakeLockRef    = useRef<WakeLockSentinel | null>(null);
-  const activeRef      = useRef<HTMLDivElement | null>(null);
-
-  const steps      = recipe?.steps ?? [];
+  const steps = recipe?.steps ?? [];
   const totalSteps = steps.length;
-  const done       = stepIdx >= totalSteps - 1;
 
-  // ── Wake lock ────────────────────────────────────────────────
+  const [completedCount, setCompletedCount] = useState(0);
+  const [timers, setTimers] = useState<Record<number, TimerState>>({});
+  const [voiceOn, setVoiceOn] = useState(false);
+
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const recognitionRef = useRef<ISpeechRecognition | null>(null);
+  const wakeLockRef = useRef<WakeLockSentinel | null>(null);
+  const activeRef = useRef<HTMLDivElement | null>(null);
+
+  const isComplete = totalSteps > 0 && completedCount >= totalSteps;
+  const activeIndex = Math.min(completedCount, Math.max(totalSteps - 1, 0));
+  const timer = timers[activeIndex];
+
   useEffect(() => {
-    if ('wakeLock' in navigator) {
-      navigator.wakeLock.request('screen')
-        .then(l => { wakeLockRef.current = l; })
-        .catch(() => {});
-    }
+    if (!('wakeLock' in navigator)) return;
+    navigator.wakeLock.request('screen')
+      .then(lock => { wakeLockRef.current = lock; })
+      .catch(() => {});
     return () => { wakeLockRef.current?.release().catch(() => {}); };
   }, []);
 
-  // ── Init timer for current step ──────────────────────────────
   useEffect(() => {
-    if (!steps[stepIdx] || timers[stepIdx] !== undefined) return;
-    const secs = parseTimerSeconds(steps[stepIdx]);
-    if (secs > 0)
-      setTimers(p => ({ ...p, [stepIdx]: { total: secs, remaining: secs, running: false } }));
-  }, [stepIdx, steps]);
+    if (!steps[activeIndex] || timers[activeIndex] !== undefined || isComplete) return;
+    const seconds = parseTimerSeconds(steps[activeIndex]);
+    if (seconds > 0) {
+      setTimers(prev => ({
+        ...prev,
+        [activeIndex]: { total: seconds, remaining: seconds, running: false },
+      }));
+    }
+  }, [activeIndex, isComplete, steps, timers]);
 
-  // ── Timer tick ───────────────────────────────────────────────
   useEffect(() => {
     if (intervalRef.current) clearInterval(intervalRef.current);
-    if (!timers[stepIdx]?.running) return;
+    if (!timer?.running || isComplete) return;
+
     intervalRef.current = setInterval(() => {
       setTimers(prev => {
-        const cur = prev[stepIdx];
-        if (!cur?.running) return prev;
-        if (cur.remaining <= 1) {
-          try {
-            const ctx = new AudioContext();
-            const osc = ctx.createOscillator();
-            const g   = ctx.createGain();
-            osc.connect(g); g.connect(ctx.destination);
-            osc.frequency.value = 880;
-            g.gain.setValueAtTime(0.3, ctx.currentTime);
-            g.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.8);
-            osc.start(); osc.stop(ctx.currentTime + 0.8);
-          } catch (_) {}
-          return { ...prev, [stepIdx]: { ...cur, remaining: 0, running: false } };
+        const current = prev[activeIndex];
+        if (!current?.running) return prev;
+        if (current.remaining <= 1) {
+          playTimerDoneTone();
+          return { ...prev, [activeIndex]: { ...current, remaining: 0, running: false } };
         }
-        return { ...prev, [stepIdx]: { ...cur, remaining: cur.remaining - 1 } };
+        return {
+          ...prev,
+          [activeIndex]: { ...current, remaining: current.remaining - 1 },
+        };
       });
     }, 1000);
-    return () => { if (intervalRef.current) clearInterval(intervalRef.current); };
-  }, [timers, stepIdx]);
 
-  // ── Toggle timer ─────────────────────────────────────────────
+    return () => {
+      if (intervalRef.current) clearInterval(intervalRef.current);
+    };
+  }, [activeIndex, isComplete, timer?.running]);
+
+  const markDoneAndNext = useCallback(() => {
+    setCompletedCount(count => Math.min(count + 1, totalSteps));
+  }, [totalSteps]);
+
+  const goPrevious = useCallback(() => {
+    setCompletedCount(count => Math.max(count - 1, 0));
+  }, []);
+
+  const jumpToStep = useCallback((index: number) => {
+    setCompletedCount(Math.min(Math.max(index, 0), totalSteps));
+  }, [totalSteps]);
+
   const toggleTimer = useCallback(() => {
     setTimers(prev => {
-      const cur = prev[stepIdx];
-      if (!cur) return prev;
-      if (cur.remaining === 0)
-        return { ...prev, [stepIdx]: { ...cur, remaining: cur.total, running: true } };
-      return { ...prev, [stepIdx]: { ...cur, running: !cur.running } };
+      const current = prev[activeIndex];
+      if (!current) return prev;
+      if (current.remaining === 0) {
+        return { ...prev, [activeIndex]: { ...current, remaining: current.total, running: true } };
+      }
+      return { ...prev, [activeIndex]: { ...current, running: !current.running } };
     });
-  }, [stepIdx]);
-
-  // ── Voice ─────────────────────────────────────────────────────
-  const [voiceOn, setVoiceOn] = useState(false);
+  }, [activeIndex]);
 
   const startVoice = useCallback(() => {
-    const SR = window.SpeechRecognition ?? window.webkitSpeechRecognition;
-    if (!SR) return;
-    const rec = new SR();
+    const Recognition = window.SpeechRecognition ?? window.webkitSpeechRecognition;
+    if (!Recognition) return;
+
+    const rec = new Recognition();
     rec.continuous = true;
     rec.interimResults = false;
     rec.lang = profile.language === 'EL' ? 'el-GR' : profile.language === 'ES' ? 'es-ES' : 'en-US';
-    rec.onresult = (e: ISpeechRecognitionEvent) => {
+    rec.onresult = (event: ISpeechRecognitionEvent) => {
       const parts: string[] = [];
-      for (let i = e.resultIndex; i < e.results.length; i++)
-        parts.push(e.results[i][0].transcript.toLowerCase());
-      if (/\b(next|siguiente|\u03b5\u03c0\u03cc\u03bc\u03b5\u03bd\u03bf)\b/.test(parts.join(' ')))
-        setStepIdx(p => Math.min(p + 1, totalSteps - 1));
+      for (let i = event.resultIndex; i < event.results.length; i++) {
+        parts.push(event.results[i][0].transcript.toLowerCase());
+      }
+      if (/\b(next|siguiente|\u03b5\u03c0\u03cc\u03bc\u03b5\u03bd\u03bf)\b/.test(parts.join(' '))) {
+        setCompletedCount(count => Math.min(count + 1, totalSteps));
+      }
     };
     rec.onerror = () => setVoiceOn(false);
-    rec.onend   = () => setVoiceOn(false);
+    rec.onend = () => setVoiceOn(false);
     recognitionRef.current = rec;
     rec.start();
     setVoiceOn(true);
@@ -178,16 +204,11 @@ export function CookModePage() {
 
   useEffect(() => () => { recognitionRef.current?.stop(); }, []);
 
-  // ── Advance + scroll active into view ────────────────────────
-  const goNext = useCallback(() => {
-    setStepIdx(i => Math.min(i + 1, totalSteps - 1));
-  }, [totalSteps]);
-
   useEffect(() => {
-    activeRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  }, [stepIdx]);
+    if (isComplete) return;
+    activeRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }, [activeIndex, isComplete]);
 
-  // ── No recipe guard ───────────────────────────────────────────
   if (!recipe) {
     return (
       <div style={{
@@ -196,342 +217,508 @@ export function CookModePage() {
         display: 'flex', alignItems: 'center', justifyContent: 'center',
         fontFamily: 'var(--mise-font-text)',
       }}>
-        <button onClick={() => navigate(-1)}
-          style={{ padding: '12px 28px', borderRadius: 999,
-            background: 'var(--mise-primary)', color: '#fff',
-            border: 'none', cursor: 'pointer', fontSize: 15, fontWeight: 700 }}>
-          Back
+        <button
+          onClick={() => navigate(-1)}
+          style={{
+            padding: '12px 28px',
+            borderRadius: 'var(--mise-radius-pill)',
+            background: 'var(--mise-primary)',
+            color: '#fff',
+            border: 'none',
+            cursor: 'pointer',
+            fontSize: 15,
+            fontWeight: 700,
+          }}
+        >
+          {t('back')}
         </button>
       </div>
     );
   }
 
-  const timer = timers[stepIdx];
+  const timerProgress = timer ? ((timer.total - timer.remaining) / timer.total) * 100 : 0;
 
-  // ── Render ────────────────────────────────────────────────────
   return (
     <div style={{
-      // Fill the entire viewport. position:fixed + explicit TRBL=0 is the
-      // most reliable approach on every iPhone model and iOS Safari version.
-      position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 200,
-      width: '100vw', maxWidth: '100vw',   // explicit: iOS Safari right:0 can latch to doc width
-      // Grid shell: header / timer / scrollable list / footer
+      position: 'fixed',
+      inset: 0,
+      zIndex: 200,
       display: 'grid',
-      gridTemplateRows: 'auto auto 1fr auto',
-      background: 'var(--mise-background)',
-      fontFamily: 'var(--mise-font-text)',
-      // Clip any child that would bleed past the viewport edge (e.g. long words)
+      gridTemplateRows: 'auto 1fr auto',
       overflow: 'hidden',
-      // Respect notch / Dynamic Island / home indicator safe areas
-      paddingTop:    'env(safe-area-inset-top)',
+      background: 'linear-gradient(180deg, var(--mise-surface) 0%, var(--mise-background) 100%)',
+      color: 'var(--mise-text-primary)',
+      fontFamily: 'var(--mise-font-text)',
+      paddingTop: 'env(safe-area-inset-top)',
+      paddingRight: 'env(safe-area-inset-right)',
       paddingBottom: 'env(safe-area-inset-bottom)',
-      paddingLeft:   'env(safe-area-inset-left)',
-      paddingRight:  'env(safe-area-inset-right)',
+      paddingLeft: 'env(safe-area-inset-left)',
     }}>
-
-      {/* ── ROW 1: Header ─────────────────────────────────────── */}
       <div style={{
-        display: 'flex', alignItems: 'center', gap: 10,
-        padding: '12px 16px',
+        position: 'relative',
+        zIndex: 2,
+        padding: '12px 18px 10px',
+        background: 'color-mix(in srgb, var(--mise-surface) 88%, transparent)',
+        backdropFilter: 'blur(22px) saturate(160%)',
+        WebkitBackdropFilter: 'blur(22px) saturate(160%)',
         borderBottom: '1px solid var(--mise-glass-border)',
-        background: 'var(--mise-surface)',
       }}>
-        {/* Back */}
-        <button onClick={() => navigate(-1)}
-          style={{
-            width: 36, height: 36, borderRadius: 10, flexShrink: 0,
-            border: '1px solid var(--mise-glass-border)',
-            background: 'transparent',
-            color: 'var(--mise-text-primary)', cursor: 'pointer',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontSize: 20,
-          }}>‹</button>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <button
+            onClick={() => navigate(-1)}
+            aria-label={t('back')}
+            className="press"
+            style={{
+              width: 38,
+              height: 38,
+              borderRadius: 12,
+              border: '1px solid color-mix(in srgb, var(--mise-primary) 22%, transparent)',
+              background: 'var(--mise-glass-fill)',
+              color: 'var(--mise-text-primary)',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              flexShrink: 0,
+            }}
+          >
+            <ArrowLeft size={18} strokeWidth={2.25} />
+          </button>
 
-        {/* Title + step counter */}
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{
-            fontSize: 14, fontWeight: 700, color: 'var(--mise-text-primary)',
-            whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
-          }}>{recipe.name}</div>
-          <div style={{ fontSize: 11, color: 'var(--mise-text-secondary)', marginTop: 1 }}>
-            {t('stepOf', { current: stepIdx + 1, total: totalSteps })}
-          </div>
-        </div>
-
-        {/* Mic */}
-        <button onClick={voiceOn ? stopVoice : startVoice}
-          style={{
-            width: 36, height: 36, borderRadius: 10, flexShrink: 0,
-            border: voiceOn
-              ? '2px solid var(--mise-primary)'
-              : '1px solid var(--mise-glass-border)',
-            background: voiceOn ? 'rgba(124,58,237,0.12)' : 'transparent',
-            color: voiceOn ? 'var(--mise-primary)' : 'var(--mise-text-secondary)',
-            cursor: 'pointer', fontSize: 17,
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            animation: voiceOn ? 'micPulse 1.4s ease-in-out infinite' : 'none',
-          }}>🎤</button>
-      </div>
-
-      {/* ── ROW 2: Timer banner (only when step has a timer) ───── */}
-      {timer && (
-        <div style={{
-          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-          padding: '10px 16px', gap: 12,
-          background: timer.remaining === 0
-            ? 'rgba(16,185,129,0.12)'
-            : timer.running
-              ? 'rgba(124,58,237,0.10)'
-              : 'var(--mise-glass-elevated)',
-          borderBottom: '1px solid var(--mise-glass-border)',
-        }}>
-          {/* Label + progress bar */}
-          <div style={{ flexShrink: 0 }}>
-            <div style={{ fontSize: 11, color: 'var(--mise-text-secondary)', marginBottom: 4 }}>
-              {timer.remaining === 0
-                ? '✓ Timer done'
-                : timer.running
-                  ? `Running — step ${stepIdx + 1}`
-                  : `Timer — step ${stepIdx + 1}`}
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{
+              fontSize: 15,
+              fontWeight: 800,
+              whiteSpace: 'nowrap',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+            }}>
+              {recipe.name}
             </div>
             <div style={{
-              width: 100, height: 3, borderRadius: 2,
-              background: 'var(--mise-glass-border)', overflow: 'hidden',
+              marginTop: 2,
+              fontSize: 12,
+              color: 'var(--mise-text-secondary)',
+              fontVariantNumeric: 'tabular-nums',
             }}>
+              {isComplete
+                ? t('cookComplete')
+                : t('stepOf', { current: activeIndex + 1, total: totalSteps })}
+            </div>
+          </div>
+
+          <button
+            onClick={voiceOn ? stopVoice : startVoice}
+            aria-label={t('voiceHint')}
+            className="press"
+            style={{
+              width: 38,
+              height: 38,
+              borderRadius: 12,
+              border: voiceOn
+                ? '1px solid var(--mise-primary)'
+                : '1px solid color-mix(in srgb, var(--mise-primary) 22%, transparent)',
+              background: voiceOn
+                ? 'color-mix(in srgb, var(--mise-primary) 14%, transparent)'
+                : 'var(--mise-glass-fill)',
+              color: voiceOn ? 'var(--mise-primary)' : 'var(--mise-text-secondary)',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              flexShrink: 0,
+              animation: voiceOn ? 'miseCookMicPulse 1.4s ease-in-out infinite' : 'none',
+            }}
+          >
+            <Mic size={17} strokeWidth={2.25} />
+          </button>
+        </div>
+
+        {timer && !isComplete && (
+          <div style={{
+            marginTop: 12,
+            borderRadius: 18,
+            border: '1px solid color-mix(in srgb, var(--mise-warning) 42%, var(--mise-glass-border))',
+            background: 'color-mix(in srgb, var(--mise-warning) 10%, var(--mise-glass-elevated))',
+            boxShadow: 'var(--mise-shadow-sm)',
+            overflow: 'hidden',
+          }}>
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 12,
+              padding: '12px 14px 10px',
+            }}>
+              <TimerReset
+                size={20}
+                strokeWidth={2.1}
+                color={timer.remaining === 0 ? 'var(--mise-success)' : 'var(--mise-warning)'}
+                style={{ flexShrink: 0 }}
+              />
+
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{
+                  fontSize: 11,
+                  fontWeight: 900,
+                  letterSpacing: 1.1,
+                  textTransform: 'uppercase',
+                  color: timer.remaining === 0 ? 'var(--mise-success)' : 'var(--mise-warning)',
+                }}>
+                  {timer.remaining === 0
+                    ? t('timerDone')
+                    : `${timer.running ? 'Running' : 'Timer'} - ${t('stepOf', { current: activeIndex + 1, total: totalSteps })}`}
+                </div>
+                <div style={{
+                  marginTop: 2,
+                  fontSize: 28,
+                  lineHeight: 1,
+                  fontWeight: 900,
+                  fontVariantNumeric: 'tabular-nums',
+                  color: 'var(--mise-text-primary)',
+                }}>
+                  {timer.remaining === 0 ? fmt(0) : fmt(timer.remaining)}
+                </div>
+              </div>
+
+              <button
+                onClick={toggleTimer}
+                className="press"
+                style={{
+                  minWidth: 74,
+                  height: 36,
+                  padding: '0 14px',
+                  borderRadius: 11,
+                  border: 'none',
+                  background: timer.running ? 'var(--mise-warning)' : 'var(--mise-primary)',
+                  color: '#fff',
+                  cursor: 'pointer',
+                  fontSize: 13,
+                  fontWeight: 800,
+                  fontFamily: 'var(--mise-font-text)',
+                }}
+              >
+                {timer.remaining === 0
+                  ? t('timerStart')
+                  : timer.running
+                    ? t('timerPause')
+                    : timer.remaining === timer.total
+                      ? t('timerStart')
+                      : t('timerResume')}
+              </button>
+            </div>
+            <div style={{ height: 3, background: 'color-mix(in srgb, var(--mise-warning) 18%, transparent)' }}>
               <div style={{
-                height: '100%', borderRadius: 2,
-                background: timer.remaining === 0 ? '#10B981' : 'var(--mise-primary)',
-                width: `${((timer.total - timer.remaining) / timer.total) * 100}%`,
+                width: `${timerProgress}%`,
+                height: '100%',
+                background: timer.remaining === 0 ? 'var(--mise-success)' : 'var(--mise-warning)',
                 transition: 'width 1s linear',
               }} />
             </div>
           </div>
+        )}
+      </div>
 
-          {/* Countdown */}
-          <div style={{
-            fontSize: 26, fontWeight: 800, letterSpacing: -1,
-            fontVariantNumeric: 'tabular-nums',
-            color: timer.remaining === 0 ? '#10B981' : 'var(--mise-text-primary)',
-            flex: 1, textAlign: 'center',
-          }}>
-            {timer.remaining === 0 ? 'Done!' : fmt(timer.remaining)}
-          </div>
-
-          {/* Pause / Resume / Restart */}
-          <button onClick={toggleTimer}
-            style={{
-              flexShrink: 0, padding: '8px 14px', borderRadius: 999,
-              border: 'none', cursor: 'pointer', fontSize: 13, fontWeight: 700,
-              background: timer.remaining === 0
-                ? 'rgba(16,185,129,0.15)'
-                : timer.running
-                  ? 'var(--mise-glass-border)'
-                  : 'var(--mise-primary)',
-              color: timer.remaining === 0
-                ? '#10B981'
-                : timer.running
-                  ? 'var(--mise-text-primary)'
-                  : '#fff',
-            }}>
-            {timer.remaining === 0
-              ? t('timerDone')
-              : timer.running
-                ? t('timerPause')
-                : timer.remaining === timer.total
-                  ? t('timerStart')
-                  : t('timerResume')}
-          </button>
-        </div>
-      )}
-
-      {/* ── ROW 3: Scrollable step list ───────────────────────── */}
       <div style={{
         overflowY: 'auto',
-        overflowX: 'hidden',          // never allow horizontal scroll
+        overflowX: 'hidden',
         WebkitOverflowScrolling: 'touch',
-        minHeight: 0,                  // required for grid 1fr to work correctly
-        padding: '12px 16px 8px',
+        minHeight: 0,
+        padding: '14px 20px 16px',
       }}>
-        {steps.map((step, i) => {
-          const isDone   = i < stepIdx;
-          const isActive = i === stepIdx;
+        <div style={{
+          maxWidth: 640,
+          margin: '0 auto',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 4,
+        }}>
+          {steps.map((step, index) => {
+            const isDone = index < completedCount;
+            const isActive = index === activeIndex && !isComplete;
 
-          // ── Completed: one-line strikethrough ──────────────
-          if (isDone) {
-            return (
-              <div key={i} onClick={() => setStepIdx(i)}
-                style={{
-                  display: 'flex', alignItems: 'center', gap: 10,
-                  padding: '9px 4px',
-                  cursor: 'pointer',
-                  opacity: 0.4,
-                  borderBottom: '1px solid var(--mise-glass-border)',
-                  overflow: 'hidden',   // belt-and-suspenders clip
-                }}>
-                {/* Check badge */}
-                <div style={{
-                  width: 22, height: 22, borderRadius: 9999, flexShrink: 0,
-                  background: 'var(--mise-primary)',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  fontSize: 11, color: '#fff', fontWeight: 700,
-                }}>✓</div>
-                {/* Truncated text */}
-                <div style={{
-                  fontSize: 13, color: 'var(--mise-text-primary)',
-                  textDecoration: 'line-through',
-                  whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
-                  flex: 1, minWidth: 0,   // minWidth:0 is required for ellipsis in flex
-                }}>{step}</div>
-              </div>
-            );
-          }
+            if (isDone) {
+              return (
+                <button
+                  key={index}
+                  type="button"
+                  onClick={() => jumpToStep(index)}
+                  className="press"
+                  style={{
+                    width: '100%',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 12,
+                    padding: '8px 0',
+                    border: 'none',
+                    background: 'transparent',
+                    color: 'var(--mise-text-secondary)',
+                    cursor: 'pointer',
+                    opacity: 0.58,
+                    textAlign: 'left',
+                    fontFamily: 'var(--mise-font-text)',
+                  }}
+                >
+                  <span style={{
+                    width: 24,
+                    height: 24,
+                    borderRadius: 999,
+                    background: 'color-mix(in srgb, var(--mise-success) 58%, white)',
+                    color: '#fff',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    flexShrink: 0,
+                  }}>
+                    <Check size={15} strokeWidth={3} />
+                  </span>
+                  <span style={{
+                    flex: 1,
+                    minWidth: 0,
+                    whiteSpace: 'nowrap',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    textDecoration: 'line-through',
+                    fontSize: 14,
+                    lineHeight: 1.35,
+                  }}>
+                    {step}
+                  </span>
+                </button>
+              );
+            }
 
-          // ── Active: large hero card ─────────────────────────
-          if (isActive) {
-            return (
-              <div key={i} ref={activeRef}
-                style={{
-                  width: '100%', boxSizing: 'border-box',
-                  borderRadius: 18,
-                  border: '2px solid var(--mise-primary)',
-                  background: 'rgba(124,58,237,0.07)',
-                  padding: '18px 16px',
-                  margin: '10px 0',
-                  boxShadow: '0 6px 24px rgba(124,58,237,0.18)',
-                  overflow: 'hidden',
-                }}>
-                {/* "Now cooking" label */}
-                <div style={{
-                  fontSize: 11, fontWeight: 700, letterSpacing: 0.8,
-                  color: 'var(--mise-primary)', textTransform: 'uppercase',
-                  marginBottom: 8,
-                }}>{t('nowCooking')}</div>
+            if (isActive) {
+              return (
+                <div
+                  key={index}
+                  ref={activeRef}
+                  style={{
+                    position: 'relative',
+                    margin: '10px 0 12px',
+                    borderRadius: 20,
+                    border: '1.5px solid var(--mise-primary)',
+                    background: 'color-mix(in srgb, var(--mise-primary) 5%, var(--mise-glass-elevated))',
+                    boxShadow: '0 12px 34px color-mix(in srgb, var(--mise-primary) 18%, transparent)',
+                    padding: '24px 18px 22px',
+                  }}
+                >
+                  <div style={{
+                    position: 'absolute',
+                    top: -12,
+                    left: 16,
+                    padding: '4px 10px',
+                    borderRadius: 7,
+                    background: 'var(--mise-primary)',
+                    color: '#fff',
+                    fontSize: 11,
+                    lineHeight: 1,
+                    fontWeight: 900,
+                    letterSpacing: 0.7,
+                    textTransform: 'uppercase',
+                    boxShadow: '0 6px 14px color-mix(in srgb, var(--mise-primary) 24%, transparent)',
+                  }}>
+                    {t('nowCooking')}
+                  </div>
 
-                {/* Step number badge */}
-                <div style={{
-                  width: 40, height: 40, borderRadius: 12,
-                  background: 'var(--mise-primary)',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  fontSize: 18, fontWeight: 800, color: '#fff',
-                  marginBottom: 12,
-                }}>{i + 1}</div>
+                  <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
+                    <div style={{
+                      width: 34,
+                      height: 34,
+                      borderRadius: 14,
+                      background: 'var(--mise-primary)',
+                      color: '#fff',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      flexShrink: 0,
+                      fontSize: 16,
+                      fontWeight: 900,
+                      fontVariantNumeric: 'tabular-nums',
+                    }}>
+                      {index + 1}
+                    </div>
 
-                {/* Step text — wraps naturally, amber highlights on times */}
-                <div style={{
-                  fontSize: 16, lineHeight: 1.65,
-                  color: 'var(--mise-text-primary)', fontWeight: 500,
-                  wordBreak: 'break-word',
-                }}>
-                  <HighStep text={step} />
+                    <div style={{
+                      flex: 1,
+                      minWidth: 0,
+                      color: 'var(--mise-text-primary)',
+                      fontSize: 18,
+                      lineHeight: 1.55,
+                      fontWeight: 650,
+                      wordBreak: 'break-word',
+                    }}>
+                      <TimeHighlightedStep text={step} />
+                    </div>
+                  </div>
                 </div>
-              </div>
+              );
+            }
+
+            return (
+              <button
+                key={index}
+                type="button"
+                onClick={() => jumpToStep(index)}
+                className="press"
+                style={{
+                  width: '100%',
+                  display: 'flex',
+                  alignItems: 'flex-start',
+                  gap: 12,
+                  padding: '10px 0',
+                  border: 'none',
+                  background: 'transparent',
+                  color: 'var(--mise-text-secondary)',
+                  cursor: 'pointer',
+                  opacity: 0.72,
+                  textAlign: 'left',
+                  fontFamily: 'var(--mise-font-text)',
+                }}
+              >
+                <span style={{
+                  width: 24,
+                  height: 24,
+                  borderRadius: 999,
+                  border: '1px solid color-mix(in srgb, var(--mise-primary) 36%, var(--mise-glass-border))',
+                  color: 'var(--mise-primary)',
+                  background: 'color-mix(in srgb, var(--mise-primary) 8%, transparent)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  flexShrink: 0,
+                  fontSize: 12,
+                  fontWeight: 750,
+                  fontVariantNumeric: 'tabular-nums',
+                  marginTop: 1,
+                }}>
+                  {index + 1}
+                </span>
+                <span style={{
+                  flex: 1,
+                  minWidth: 0,
+                  display: '-webkit-box',
+                  WebkitLineClamp: 2,
+                  WebkitBoxOrient: 'vertical',
+                  overflow: 'hidden',
+                  fontSize: 14,
+                  lineHeight: 1.4,
+                }}>
+                  {step}
+                </span>
+              </button>
             );
-          }
+          })}
 
-          // ── Future: small dimmed 2-line preview ─────────────
-          return (
-            <div key={i} onClick={() => setStepIdx(i)}
-              style={{
-                display: 'flex', alignItems: 'flex-start', gap: 10,
-                padding: '10px 4px',
-                cursor: 'pointer',
-                opacity: 0.55,
-                borderBottom: i < steps.length - 1
-                  ? '1px solid var(--mise-glass-border)'
-                  : 'none',
-                overflow: 'hidden',
+          {isComplete && (
+            <div style={{
+              marginTop: 10,
+              padding: '24px 18px',
+              borderRadius: 20,
+              border: '1px solid color-mix(in srgb, var(--mise-success) 35%, var(--mise-glass-border))',
+              background: 'color-mix(in srgb, var(--mise-success) 9%, var(--mise-glass-elevated))',
+              textAlign: 'center',
+              boxShadow: 'var(--mise-shadow-sm)',
+            }}>
+              <div style={{
+                width: 44,
+                height: 44,
+                borderRadius: 18,
+                margin: '0 auto 12px',
+                background: 'var(--mise-success)',
+                color: '#fff',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
               }}>
-              {/* Step number circle */}
-              <div style={{
-                width: 22, height: 22, borderRadius: 9999, flexShrink: 0,
-                border: '1.5px solid var(--mise-glass-border)',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                fontSize: 11, color: 'var(--mise-text-secondary)', fontWeight: 700,
-                marginTop: 1,
-              }}>{i + 1}</div>
-              {/* 2-line clamped text */}
-              <div style={{
-                fontSize: 13, lineHeight: 1.5,
-                color: 'var(--mise-text-primary)',
-                flex: 1, minWidth: 0,               // allows flex item to shrink
-                display: '-webkit-box',
-                WebkitLineClamp: 2,
-                WebkitBoxOrient: 'vertical',
-                overflow: 'hidden',
-              }}>{step}</div>
+                <Check size={26} strokeWidth={3} />
+              </div>
+              <div style={{ fontSize: 19, fontWeight: 850, marginBottom: 6 }}>
+                {t('cookComplete')}
+              </div>
+              <div style={{ fontSize: 14, lineHeight: 1.45, color: 'var(--mise-text-secondary)' }}>
+                {t('cookCompleteHint')}
+              </div>
             </div>
-          );
-        })}
+          )}
 
-        {/* Completion card */}
-        {done && (
-          <div style={{
-            textAlign: 'center', padding: '28px 16px', marginTop: 8,
-            borderRadius: 16,
-            background: 'rgba(16,185,129,0.08)',
-            border: '1px solid rgba(16,185,129,0.2)',
-          }}>
-            <div style={{ fontSize: 40, marginBottom: 10 }}>🎉</div>
-            <div style={{ fontSize: 17, fontWeight: 700, color: 'var(--mise-text-primary)', marginBottom: 6 }}>
-              {t('cookComplete')}
-            </div>
-            <div style={{ fontSize: 13, color: 'var(--mise-text-secondary)' }}>
-              {t('cookCompleteHint')}
-            </div>
-          </div>
-        )}
-
-        <div style={{ height: 12 }} />
+          <div style={{ height: 12 }} />
+        </div>
       </div>
 
-      {/* ── ROW 4: Footer ─────────────────────────────────────── */}
       <div style={{
+        padding: '12px 20px max(12px, env(safe-area-inset-bottom))',
+        background: 'color-mix(in srgb, var(--mise-surface) 90%, transparent)',
+        backdropFilter: 'blur(22px) saturate(160%)',
+        WebkitBackdropFilter: 'blur(22px) saturate(160%)',
         borderTop: '1px solid var(--mise-glass-border)',
-        background: 'var(--mise-surface)',
-        padding: '12px 16px',
-        display: 'flex', alignItems: 'center', gap: 10,
       }}>
-        {/* Back chevron */}
-        <button
-          onClick={() => setStepIdx(i => Math.max(i - 1, 0))}
-          disabled={stepIdx === 0}
-          style={{
-            width: 44, height: 52, borderRadius: 12, flexShrink: 0,
-            border: '1px solid var(--mise-glass-border)',
-            background: 'transparent',
-            color: stepIdx === 0
-              ? 'var(--mise-glass-border)'
-              : 'var(--mise-text-primary)',
-            cursor: stepIdx === 0 ? 'default' : 'pointer',
-            fontSize: 22,
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-          }}>‹</button>
+        <div style={{ maxWidth: 640, margin: '0 auto', display: 'flex', alignItems: 'center', gap: 10 }}>
+          <button
+            type="button"
+            onClick={goPrevious}
+            disabled={completedCount === 0}
+            aria-label={t('back')}
+            className="press"
+            style={{
+              width: 52,
+              height: 54,
+              borderRadius: 15,
+              border: '1px solid color-mix(in srgb, var(--mise-primary) 24%, var(--mise-glass-border))',
+              background: completedCount === 0
+                ? 'color-mix(in srgb, var(--mise-glass-fill) 50%, transparent)'
+                : 'var(--mise-glass-fill)',
+              color: completedCount === 0 ? 'var(--mise-text-tertiary)' : 'var(--mise-primary)',
+              cursor: completedCount === 0 ? 'default' : 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              flexShrink: 0,
+            }}
+          >
+            <ArrowLeft size={19} strokeWidth={2.4} />
+          </button>
 
-        {/* Main CTA */}
-        <button
-          onClick={done ? () => navigate(-1) : goNext}
-          className="press"
-          style={{
-            flex: 1, height: 52,
-            borderRadius: 'var(--mise-radius-button)',
-            border: 'none',
-            background: done ? '#10B981' : 'var(--mise-primary)',
-            color: '#fff',
-            fontSize: 15, fontWeight: 700, cursor: 'pointer',
-            fontFamily: 'var(--mise-font-text)',
-            boxShadow: done
-              ? '0 4px 12px rgba(16,185,129,0.3)'
-              : '0 4px 12px rgba(124,58,237,0.3)',
-          }}>
-          {done ? t('cookComplete') : t('markDoneNext')}
-        </button>
+          <button
+            type="button"
+            onClick={isComplete ? () => navigate(-1) : markDoneAndNext}
+            className="press"
+            style={{
+              flex: 1,
+              minWidth: 0,
+              height: 54,
+              borderRadius: 15,
+              border: 'none',
+              background: isComplete ? 'var(--mise-success)' : 'var(--mise-primary)',
+              color: '#fff',
+              cursor: 'pointer',
+              fontSize: 15,
+              fontWeight: 850,
+              fontFamily: 'var(--mise-font-text)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 10,
+              boxShadow: isComplete
+                ? '0 8px 22px color-mix(in srgb, var(--mise-success) 26%, transparent)'
+                : '0 8px 22px color-mix(in srgb, var(--mise-primary) 28%, transparent)',
+            }}
+          >
+            <span style={{
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
+            }}>
+              {isComplete ? t('cookComplete') : t('markDoneNext')}
+            </span>
+            {!isComplete && <ArrowRight size={17} strokeWidth={2.6} style={{ flexShrink: 0 }} />}
+          </button>
+        </div>
       </div>
 
-      {/* Mic pulse animation */}
       <style>{`
-        @keyframes micPulse {
-          0%, 100% { box-shadow: 0 0 0 0 rgba(124,58,237,0.4); }
-          50%       { box-shadow: 0 0 0 8px rgba(124,58,237,0); }
+        @keyframes miseCookMicPulse {
+          0%, 100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--mise-primary) 34%, transparent); }
+          50% { box-shadow: 0 0 0 8px transparent; }
         }
       `}</style>
     </div>
