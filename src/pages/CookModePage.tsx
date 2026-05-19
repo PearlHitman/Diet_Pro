@@ -192,7 +192,7 @@ export function CookModePage() {
     return (
       <div style={{
         position: 'fixed', inset: 0, zIndex: 200,
-        background: 'var(--mise-bg)',
+        background: 'var(--mise-background)',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
         fontFamily: 'var(--mise-font-text)',
       }}>
@@ -213,7 +213,7 @@ export function CookModePage() {
       position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 200,
       display: 'grid',
       gridTemplateRows: 'auto auto 1fr auto',
-      background: 'var(--mise-bg)',
+      background: 'var(--mise-background)',
       fontFamily: 'var(--mise-font-text)',
       paddingTop:    'env(safe-area-inset-top)',
       paddingBottom: 'env(safe-area-inset-bottom)',
@@ -225,25 +225,25 @@ export function CookModePage() {
       <div style={{
         display: 'flex', alignItems: 'center', gap: 10,
         padding: '12px 16px',
-        borderBottom: '1px solid var(--mise-border)',
+        borderBottom: '1px solid var(--mise-glass-border)',
         background: 'var(--mise-surface)',
       }}>
         <button onClick={() => navigate(-1)}
           style={{
             width: 36, height: 36, borderRadius: 10,
-            border: '1px solid var(--mise-border)',
+            border: '1px solid var(--mise-glass-border)',
             background: 'transparent',
-            color: 'var(--mise-text)', cursor: 'pointer',
+            color: 'var(--mise-text-primary)', cursor: 'pointer',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             fontSize: 20, flexShrink: 0,
           }}>‹</button>
 
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{
-            fontSize: 14, fontWeight: 700, color: 'var(--mise-text)',
+            fontSize: 14, fontWeight: 700, color: 'var(--mise-text-primary)',
             whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
           }}>{recipe.name}</div>
-          <div style={{ fontSize: 11, color: 'var(--mise-muted)', marginTop: 1 }}>
+          <div style={{ fontSize: 11, color: 'var(--mise-text-secondary)', marginTop: 1 }}>
             {t('stepOf', { current: stepIdx + 1, total: totalSteps })}
           </div>
         </div>
@@ -252,9 +252,9 @@ export function CookModePage() {
         <button onClick={voiceOn ? stopVoice : startVoice}
           style={{
             width: 36, height: 36, borderRadius: 10, flexShrink: 0,
-            border: voiceOn ? '2px solid var(--mise-primary)' : '1px solid var(--mise-border)',
+            border: voiceOn ? '2px solid var(--mise-primary)' : '1px solid var(--mise-glass-border)',
             background: voiceOn ? 'rgba(124,58,237,0.12)' : 'transparent',
-            color: voiceOn ? 'var(--mise-primary)' : 'var(--mise-muted)',
+            color: voiceOn ? 'var(--mise-primary)' : 'var(--mise-text-secondary)',
             cursor: 'pointer', fontSize: 17,
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             animation: voiceOn ? 'micPulse 1.4s ease-in-out infinite' : 'none',
@@ -270,11 +270,11 @@ export function CookModePage() {
             ? 'rgba(16,185,129,0.12)'
             : timer.running
               ? 'rgba(124,58,237,0.10)'
-              : 'var(--mise-surface2)',
-          borderBottom: '1px solid var(--mise-border)',
+              : 'var(--mise-glass-elevated)',
+          borderBottom: '1px solid var(--mise-glass-border)',
         }}>
           <div>
-            <div style={{ fontSize: 11, color: 'var(--mise-muted)', marginBottom: 2 }}>
+            <div style={{ fontSize: 11, color: 'var(--mise-text-secondary)', marginBottom: 2 }}>
               {timer.remaining === 0
                 ? '✓ Timer done'
                 : timer.running
@@ -284,7 +284,7 @@ export function CookModePage() {
             {/* Progress bar */}
             <div style={{
               width: 120, height: 3, borderRadius: 2,
-              background: 'var(--mise-border)', overflow: 'hidden',
+              background: 'var(--mise-glass-border)', overflow: 'hidden',
             }}>
               <div style={{
                 height: '100%', borderRadius: 2,
@@ -298,7 +298,7 @@ export function CookModePage() {
           <div style={{
             fontSize: 26, fontWeight: 800,
             fontVariantNumeric: 'tabular-nums',
-            color: timer.remaining === 0 ? '#10B981' : 'var(--mise-text)',
+            color: timer.remaining === 0 ? '#10B981' : 'var(--mise-text-primary)',
             letterSpacing: -1,
           }}>
             {timer.remaining === 0 ? 'Done!' : fmt(timer.remaining)}
@@ -312,12 +312,12 @@ export function CookModePage() {
               background: timer.remaining === 0
                 ? 'rgba(16,185,129,0.15)'
                 : timer.running
-                  ? 'var(--mise-border)'
+                  ? 'var(--mise-glass-border)'
                   : 'var(--mise-primary)',
               color: timer.remaining === 0
                 ? '#10B981'
                 : timer.running
-                  ? 'var(--mise-text)'
+                  ? 'var(--mise-text-primary)'
                   : '#fff',
             }}>
             {timer.remaining === 0
@@ -353,7 +353,7 @@ export function CookModePage() {
                   padding: '8px 4px',
                   cursor: 'pointer',
                   opacity: 0.38,
-                  borderBottom: '1px solid var(--mise-border)',
+                  borderBottom: '1px solid var(--mise-glass-border)',
                 }}>
                 <div style={{
                   width: 22, height: 22, borderRadius: 9999, flexShrink: 0,
@@ -362,7 +362,7 @@ export function CookModePage() {
                   fontSize: 11, color: '#fff', fontWeight: 700,
                 }}>✓</div>
                 <div style={{
-                  fontSize: 13, color: 'var(--mise-text)',
+                  fontSize: 13, color: 'var(--mise-text-primary)',
                   textDecoration: 'line-through',
                   whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
                   flex: 1,
@@ -378,7 +378,7 @@ export function CookModePage() {
                 style={{
                   borderRadius: 18,
                   border: '2px solid var(--mise-primary)',
-                  background: 'var(--mise-accent-tint, rgba(124,58,237,0.07))',
+                  background: 'rgba(124,58,237,0.07)',
                   padding: '18px 16px',
                   margin: '10px 0',
                   boxShadow: '0 6px 24px rgba(124,58,237,0.18)',
@@ -403,7 +403,7 @@ export function CookModePage() {
                 {/* Step text */}
                 <div style={{
                   fontSize: 16, lineHeight: 1.65,
-                  color: 'var(--mise-text)', fontWeight: 500,
+                  color: 'var(--mise-text-primary)', fontWeight: 500,
                 }}>
                   <HighStep text={step} />
                 </div>
@@ -420,18 +420,18 @@ export function CookModePage() {
                 padding: '10px 4px',
                 cursor: 'pointer',
                 opacity: 0.55,
-                borderBottom: i < steps.length - 1 ? '1px solid var(--mise-border)' : 'none',
+                borderBottom: i < steps.length - 1 ? '1px solid var(--mise-glass-border)' : 'none',
               }}>
               <div style={{
                 width: 22, height: 22, borderRadius: 9999, flexShrink: 0,
-                border: '1.5px solid var(--mise-border)',
+                border: '1.5px solid var(--mise-glass-border)',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
-                fontSize: 11, color: 'var(--mise-muted)', fontWeight: 700,
+                fontSize: 11, color: 'var(--mise-text-secondary)', fontWeight: 700,
                 marginTop: 1,
               }}>{i + 1}</div>
               <div style={{
                 fontSize: 13, lineHeight: 1.5,
-                color: 'var(--mise-text)',
+                color: 'var(--mise-text-primary)',
                 // show at most 2 lines
                 display: '-webkit-box',
                 WebkitLineClamp: 2,
@@ -453,10 +453,10 @@ export function CookModePage() {
             border: '1px solid rgba(16,185,129,0.2)',
           }}>
             <div style={{ fontSize: 40, marginBottom: 10 }}>🎉</div>
-            <div style={{ fontSize: 17, fontWeight: 700, color: 'var(--mise-text)', marginBottom: 6 }}>
+            <div style={{ fontSize: 17, fontWeight: 700, color: 'var(--mise-text-primary)', marginBottom: 6 }}>
               {t('cookComplete')}
             </div>
-            <div style={{ fontSize: 13, color: 'var(--mise-muted)' }}>
+            <div style={{ fontSize: 13, color: 'var(--mise-text-secondary)' }}>
               {t('cookCompleteHint')}
             </div>
           </div>
@@ -467,7 +467,7 @@ export function CookModePage() {
 
       {/* ── ROW 4: Footer ── */}
       <div style={{
-        borderTop: '1px solid var(--mise-border)',
+        borderTop: '1px solid var(--mise-glass-border)',
         background: 'var(--mise-surface)',
         padding: '12px 16px',
         display: 'flex', alignItems: 'center', gap: 10,
@@ -476,9 +476,9 @@ export function CookModePage() {
           disabled={stepIdx === 0}
           style={{
             width: 44, height: 52, borderRadius: 12, flexShrink: 0,
-            border: '1px solid var(--mise-border)',
+            border: '1px solid var(--mise-glass-border)',
             background: 'transparent',
-            color: stepIdx === 0 ? 'var(--mise-border)' : 'var(--mise-text)',
+            color: stepIdx === 0 ? 'var(--mise-glass-border)' : 'var(--mise-text-primary)',
             cursor: stepIdx === 0 ? 'default' : 'pointer',
             fontSize: 22,
             display: 'flex', alignItems: 'center', justifyContent: 'center',
