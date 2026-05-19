@@ -243,9 +243,16 @@ export function CookModePage() {
       position: 'fixed',
       inset: 0,
       zIndex: 200,
+      width: '100vw',
+      maxWidth: '100vw',
+      height: '100dvh',
+      maxHeight: '100dvh',
+      boxSizing: 'border-box',
       display: 'grid',
       gridTemplateRows: 'auto 1fr auto',
       overflow: 'hidden',
+      overscrollBehaviorX: 'none',
+      touchAction: 'pan-y',
       background: 'linear-gradient(180deg, var(--mise-surface) 0%, var(--mise-background) 100%)',
       color: 'var(--mise-text-primary)',
       fontFamily: 'var(--mise-font-text)',
@@ -257,13 +264,17 @@ export function CookModePage() {
       <div style={{
         position: 'relative',
         zIndex: 2,
-        padding: '12px 18px 10px',
+        width: '100%',
+        maxWidth: '100%',
+        boxSizing: 'border-box',
+        overflow: 'hidden',
+        padding: '12px clamp(14px, 4vw, 20px) 10px',
         background: 'color-mix(in srgb, var(--mise-surface) 88%, transparent)',
         backdropFilter: 'blur(22px) saturate(160%)',
         WebkitBackdropFilter: 'blur(22px) saturate(160%)',
         borderBottom: '1px solid var(--mise-glass-border)',
       }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
           <button
             onClick={() => navigate(-1)}
             aria-label={t('back')}
@@ -292,6 +303,7 @@ export function CookModePage() {
               whiteSpace: 'nowrap',
               overflow: 'hidden',
               textOverflow: 'ellipsis',
+              maxWidth: '100%',
             }}>
               {recipe.name}
             </div>
@@ -337,6 +349,9 @@ export function CookModePage() {
         {timer && !isComplete && (
           <div style={{
             marginTop: 12,
+            width: '100%',
+            maxWidth: '100%',
+            boxSizing: 'border-box',
             borderRadius: 18,
             border: '1px solid color-mix(in srgb, var(--mise-warning) 42%, var(--mise-glass-border))',
             background: 'color-mix(in srgb, var(--mise-warning) 10%, var(--mise-glass-elevated))',
@@ -347,6 +362,7 @@ export function CookModePage() {
               display: 'flex',
               alignItems: 'center',
               gap: 12,
+              minWidth: 0,
               padding: '12px 14px 10px',
             }}>
               <TimerReset
@@ -362,6 +378,9 @@ export function CookModePage() {
                   fontWeight: 900,
                   letterSpacing: 1.1,
                   textTransform: 'uppercase',
+                  whiteSpace: 'nowrap',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
                   color: timer.remaining === 0 ? 'var(--mise-success)' : 'var(--mise-warning)',
                 }}>
                   {timer.remaining === 0
@@ -385,6 +404,7 @@ export function CookModePage() {
                 className="press"
                 style={{
                   minWidth: 74,
+                  maxWidth: 92,
                   height: 36,
                   padding: '0 14px',
                   borderRadius: 11,
@@ -395,6 +415,9 @@ export function CookModePage() {
                   fontSize: 13,
                   fontWeight: 800,
                   fontFamily: 'var(--mise-font-text)',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap',
                 }}
               >
                 {timer.remaining === 0
@@ -423,11 +446,17 @@ export function CookModePage() {
         overflowX: 'hidden',
         WebkitOverflowScrolling: 'touch',
         minHeight: 0,
-        padding: '14px 20px 16px',
+        width: '100%',
+        maxWidth: '100%',
+        boxSizing: 'border-box',
+        overscrollBehaviorX: 'none',
+        padding: '14px clamp(14px, 4vw, 20px) 16px',
       }}>
         <div style={{
+          width: '100%',
           maxWidth: 640,
           margin: '0 auto',
+          boxSizing: 'border-box',
           display: 'flex',
           flexDirection: 'column',
           gap: 4,
@@ -445,6 +474,8 @@ export function CookModePage() {
                   className="press"
                   style={{
                     width: '100%',
+                    maxWidth: '100%',
+                    boxSizing: 'border-box',
                     display: 'flex',
                     alignItems: 'center',
                     gap: 12,
@@ -474,6 +505,7 @@ export function CookModePage() {
                   <span style={{
                     flex: 1,
                     minWidth: 0,
+                    maxWidth: '100%',
                     whiteSpace: 'nowrap',
                     overflow: 'hidden',
                     textOverflow: 'ellipsis',
@@ -494,6 +526,9 @@ export function CookModePage() {
                   ref={activeRef}
                   style={{
                     position: 'relative',
+                    width: '100%',
+                    maxWidth: '100%',
+                    boxSizing: 'border-box',
                     margin: '10px 0 12px',
                     borderRadius: 20,
                     border: '1.5px solid var(--mise-primary)',
@@ -520,7 +555,7 @@ export function CookModePage() {
                     {t('nowCooking')}
                   </div>
 
-                  <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
+                  <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12, minWidth: 0 }}>
                     <div style={{
                       width: 34,
                       height: 34,
@@ -541,11 +576,14 @@ export function CookModePage() {
                     <div style={{
                       flex: 1,
                       minWidth: 0,
+                      maxWidth: '100%',
                       color: 'var(--mise-text-primary)',
-                      fontSize: 18,
+                      fontSize: 17,
                       lineHeight: 1.55,
                       fontWeight: 650,
-                      wordBreak: 'break-word',
+                      overflowWrap: 'anywhere',
+                      wordBreak: 'normal',
+                      hyphens: 'auto',
                     }}>
                       <TimeHighlightedStep text={step} />
                     </div>
@@ -562,6 +600,8 @@ export function CookModePage() {
                 className="press"
                 style={{
                   width: '100%',
+                  maxWidth: '100%',
+                  boxSizing: 'border-box',
                   display: 'flex',
                   alignItems: 'flex-start',
                   gap: 12,
@@ -596,6 +636,7 @@ export function CookModePage() {
                 <span style={{
                   flex: 1,
                   minWidth: 0,
+                  maxWidth: '100%',
                   display: '-webkit-box',
                   WebkitLineClamp: 2,
                   WebkitBoxOrient: 'vertical',
@@ -612,6 +653,9 @@ export function CookModePage() {
           {isComplete && (
             <div style={{
               marginTop: 10,
+              width: '100%',
+              maxWidth: '100%',
+              boxSizing: 'border-box',
               padding: '24px 18px',
               borderRadius: 20,
               border: '1px solid color-mix(in srgb, var(--mise-success) 35%, var(--mise-glass-border))',
@@ -646,13 +690,26 @@ export function CookModePage() {
       </div>
 
       <div style={{
-        padding: '12px 20px max(12px, env(safe-area-inset-bottom))',
+        width: '100%',
+        maxWidth: '100%',
+        boxSizing: 'border-box',
+        overflow: 'hidden',
+        padding: '12px clamp(14px, 4vw, 20px) max(12px, env(safe-area-inset-bottom))',
         background: 'color-mix(in srgb, var(--mise-surface) 90%, transparent)',
         backdropFilter: 'blur(22px) saturate(160%)',
         WebkitBackdropFilter: 'blur(22px) saturate(160%)',
         borderTop: '1px solid var(--mise-glass-border)',
       }}>
-        <div style={{ maxWidth: 640, margin: '0 auto', display: 'flex', alignItems: 'center', gap: 10 }}>
+        <div style={{
+          width: '100%',
+          maxWidth: 640,
+          minWidth: 0,
+          margin: '0 auto',
+          boxSizing: 'border-box',
+          display: 'flex',
+          alignItems: 'center',
+          gap: 10,
+        }}>
           <button
             type="button"
             onClick={goPrevious}
@@ -685,6 +742,7 @@ export function CookModePage() {
             style={{
               flex: 1,
               minWidth: 0,
+              maxWidth: '100%',
               height: 54,
               borderRadius: 15,
               border: 'none',
@@ -698,12 +756,14 @@ export function CookModePage() {
               alignItems: 'center',
               justifyContent: 'center',
               gap: 10,
+              overflow: 'hidden',
               boxShadow: isComplete
                 ? '0 8px 22px color-mix(in srgb, var(--mise-success) 26%, transparent)'
                 : '0 8px 22px color-mix(in srgb, var(--mise-primary) 28%, transparent)',
             }}
           >
             <span style={{
+              minWidth: 0,
               overflow: 'hidden',
               textOverflow: 'ellipsis',
               whiteSpace: 'nowrap',
