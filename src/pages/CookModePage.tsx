@@ -1,31 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { ArrowLeft, ArrowRight, Check, Mic, TimerReset } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Check, TimerReset } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useApp } from '../lib/app-state';
-
-interface ISpeechRecognition extends EventTarget {
-  continuous: boolean;
-  interimResults: boolean;
-  lang: string;
-  start(): void;
-  stop(): void;
-  onresult: ((e: ISpeechRecognitionEvent) => void) | null;
-  onerror: ((e: Event) => void) | null;
-  onend: (() => void) | null;
-}
-
-interface ISpeechRecognitionResult { readonly 0: { transcript: string } }
-interface ISpeechRecognitionEvent extends Event {
-  readonly resultIndex: number;
-  readonly results: { length: number; [i: number]: ISpeechRecognitionResult };
-}
-
-declare global {
-  interface Window {
-    SpeechRecognition?: new () => ISpeechRecognition;
-    webkitSpeechRecognition?: new () => ISpeechRecognition;
-  }
-}
 
 interface TimerState {
   total: number;
@@ -34,13 +10,18 @@ interface TimerState {
 }
 
 function parseTimerSeconds(text: string): number {
-  const hr = text.match(/(\d+(?:\.\d+)?)\s*(?:hour|hr|hours|hrs)/i);
-  const min = text.match(/(\d+(?:\.\d+)?)\s*(?:minute|min|minutes|mins)/i);
-  const sec = text.match(/(\d+(?:\.\d+)?)\s*(?:second|sec|seconds|secs)/i);
+  const number = String.raw`\d+(?:[.,]\d+)?`;
+  const range = String.raw`(${number})(?:\s*[-–—]\s*(${number}))?`;
+  const toNumber = (value: string | undefined) => value ? parseFloat(value.replace(',', '.')) : 0;
+  const pickedValue = (match: RegExpMatchArray | null) => match ? toNumber(match[2] ?? match[1]) : 0;
+
+  const hr = text.match(new RegExp(`${range}\\s*(?:hours?|hrs?|ώρες|ωρες|ώρα|ωρα)`, 'i'));
+  const min = text.match(new RegExp(`${range}\\s*(?:minutes?|mins?|λεπτά|λεπτα|λεπτό|λεπτο|λεπ\\.)`, 'i'));
+  const sec = text.match(new RegExp(`${range}\\s*(?:seconds?|secs?|δευτερόλεπτα|δευτερολεπτα|δευτ\\.?|δλ)`, 'i'));
   let total = 0;
-  if (hr) total += parseFloat(hr[1]) * 3600;
-  if (min) total += parseFloat(min[1]) * 60;
-  if (sec) total += parseFloat(sec[1]);
+  if (hr) total += pickedValue(hr) * 3600;
+  if (min) total += pickedValue(min) * 60;
+  if (sec) total += pickedValue(sec);
   return Math.round(total);
 }
 
@@ -51,11 +32,11 @@ function fmt(secs: number) {
 }
 
 function TimeHighlightedStep({ text }: { text: string }) {
-  const parts = text.split(/(\d+(?:\.\d+)?\s*(?:minutes?|mins?|seconds?|secs?|hours?|hrs?))/gi);
+  const parts = text.split(/(\d+(?:[.,]\d+)?(?:\s*[-–—]\s*\d+(?:[.,]\d+)?)?\s*(?:minutes?|mins?|seconds?|secs?|hours?|hrs?|λεπτά|λεπτα|λεπτό|λεπτο|λεπ\.|ώρες|ωρες|ώρα|ωρα|δευτερόλεπτα|δευτερολεπτα|δευτ\.?|δλ))/gi);
   return (
     <>
       {parts.map((part, index) =>
-        /\d/.test(part) && /min|sec|hour|hr/i.test(part)
+        /\d/.test(part) && /min|sec|hour|hr|λεπτ|ωρ|ώρ|δευτ|δλ/i.test(part)
           ? (
             <span key={index} style={{ color: 'var(--mise-warning)', fontWeight: 800 }}>
               {part}
@@ -86,7 +67,7 @@ function playTimerDoneTone() {
 
 export function CookModePage() {
   const { id } = useParams<{ id: string }>();
-  const { recipes, t, profile } = useApp();
+  const { recipes, t } = useApp();
   const navigate = useNavigate();
   const recipe = recipes.find(r => r.id === id);
 
@@ -95,10 +76,8 @@ export function CookModePage() {
 
   const [completedCount, setCompletedCount] = useState(0);
   const [timers, setTimers] = useState<Record<number, TimerState>>({});
-  const [voiceOn, setVoiceOn] = useState(false);
 
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const recognitionRef = useRef<ISpeechRecognition | null>(null);
   const wakeLockRef = useRef<WakeLockSentinel | null>(null);
   const activeRef = useRef<HTMLDivElement | null>(null);
 
@@ -171,38 +150,6 @@ export function CookModePage() {
       return { ...prev, [activeIndex]: { ...current, running: !current.running } };
     });
   }, [activeIndex]);
-
-  const startVoice = useCallback(() => {
-    const Recognition = window.SpeechRecognition ?? window.webkitSpeechRecognition;
-    if (!Recognition) return;
-
-    const rec = new Recognition();
-    rec.continuous = true;
-    rec.interimResults = false;
-    rec.lang = profile.language === 'EL' ? 'el-GR' : profile.language === 'ES' ? 'es-ES' : 'en-US';
-    rec.onresult = (event: ISpeechRecognitionEvent) => {
-      const parts: string[] = [];
-      for (let i = event.resultIndex; i < event.results.length; i++) {
-        parts.push(event.results[i][0].transcript.toLowerCase());
-      }
-      if (/\b(next|siguiente|\u03b5\u03c0\u03cc\u03bc\u03b5\u03bd\u03bf)\b/.test(parts.join(' '))) {
-        setCompletedCount(count => Math.min(count + 1, totalSteps));
-      }
-    };
-    rec.onerror = () => setVoiceOn(false);
-    rec.onend = () => setVoiceOn(false);
-    recognitionRef.current = rec;
-    rec.start();
-    setVoiceOn(true);
-  }, [profile.language, totalSteps]);
-
-  const stopVoice = useCallback(() => {
-    recognitionRef.current?.stop();
-    recognitionRef.current = null;
-    setVoiceOn(false);
-  }, []);
-
-  useEffect(() => () => { recognitionRef.current?.stop(); }, []);
 
   useEffect(() => {
     if (isComplete) return;
@@ -318,32 +265,6 @@ export function CookModePage() {
                 : t('stepOf', { current: activeIndex + 1, total: totalSteps })}
             </div>
           </div>
-
-          <button
-            onClick={voiceOn ? stopVoice : startVoice}
-            aria-label={t('voiceHint')}
-            className="press"
-            style={{
-              width: 38,
-              height: 38,
-              borderRadius: 12,
-              border: voiceOn
-                ? '1px solid var(--mise-primary)'
-                : '1px solid color-mix(in srgb, var(--mise-primary) 22%, transparent)',
-              background: voiceOn
-                ? 'color-mix(in srgb, var(--mise-primary) 14%, transparent)'
-                : 'var(--mise-glass-fill)',
-              color: voiceOn ? 'var(--mise-primary)' : 'var(--mise-text-secondary)',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              flexShrink: 0,
-              animation: voiceOn ? 'miseCookMicPulse 1.4s ease-in-out infinite' : 'none',
-            }}
-          >
-            <Mic size={17} strokeWidth={2.25} />
-          </button>
         </div>
 
         {timer && !isComplete && (
@@ -464,6 +385,7 @@ export function CookModePage() {
           {steps.map((step, index) => {
             const isDone = index < completedCount;
             const isActive = index === activeIndex && !isComplete;
+            const stepTimerSeconds = parseTimerSeconds(step);
 
             if (isDone) {
               return (
@@ -646,6 +568,21 @@ export function CookModePage() {
                 }}>
                   {step}
                 </span>
+                {stepTimerSeconds > 0 && (
+                  <span style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 4,
+                    flexShrink: 0,
+                    color: 'var(--mise-warning)',
+                    fontSize: 12,
+                    fontWeight: 800,
+                    fontVariantNumeric: 'tabular-nums',
+                  }}>
+                    <TimerReset size={13} strokeWidth={2.2} />
+                    {fmt(stepTimerSeconds)}
+                  </span>
+                )}
               </button>
             );
           })}
@@ -774,13 +711,6 @@ export function CookModePage() {
           </button>
         </div>
       </div>
-
-      <style>{`
-        @keyframes miseCookMicPulse {
-          0%, 100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--mise-primary) 34%, transparent); }
-          50% { box-shadow: 0 0 0 8px transparent; }
-        }
-      `}</style>
     </div>
   );
 }

@@ -37,8 +37,8 @@ export function MetaRow({ recipe }: { recipe: Recipe }) {
 }
 
 export function RecipeCard({
-  recipe, expanded = false, linkToDetail = true,
-}: { recipe: Recipe; expanded?: boolean; linkToDetail?: boolean }) {
+  recipe, expanded = false, linkToDetail = true, showSteps = true,
+}: { recipe: Recipe; expanded?: boolean; linkToDetail?: boolean; showSteps?: boolean }) {
   const { toggleStar, t } = useApp();
   const missing = recipe.ingredients.filter(i => i.missing).length;
 
@@ -114,33 +114,34 @@ export function RecipeCard({
             </div>
           </div>
 
-          {/* Steps */}
-          <div>
-            <SectionLabel>{t('stepsLabel')}</SectionLabel>
-            <ol style={{
-              margin: 0, padding: 0, listStyle: 'none',
-              display: 'flex', flexDirection: 'column', gap: 12,
-            }}>
-              {recipe.steps.map((step, i) => (
-                <li key={i} style={{
-                  display: 'flex', gap: 12, alignItems: 'flex-start',
-                  fontSize: 13.5, color: T.text2, lineHeight: 1.55,
-                }}>
-                  <div style={{
-                    flex: 'none',
-                    width: 22, height: 22, borderRadius: 999,
-                    background: T.accentTint, color: T.accent,
-                    border: `1px solid ${T.borderAcc}`,
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    fontSize: 11, fontWeight: 700,
-                    fontVariantNumeric: 'tabular-nums',
-                    marginTop: 1,
-                  }}>{i + 1}</div>
-                  <div style={{ flex: 1 }}>{step}</div>
-                </li>
-              ))}
-            </ol>
-          </div>
+          {showSteps && (
+            <div>
+              <SectionLabel>{t('stepsLabel')}</SectionLabel>
+              <ol style={{
+                margin: 0, padding: 0, listStyle: 'none',
+                display: 'flex', flexDirection: 'column', gap: 12,
+              }}>
+                {recipe.steps.map((step, i) => (
+                  <li key={i} style={{
+                    display: 'flex', gap: 12, alignItems: 'flex-start',
+                    fontSize: 13.5, color: T.text2, lineHeight: 1.55,
+                  }}>
+                    <div style={{
+                      flex: 'none',
+                      width: 22, height: 22, borderRadius: 999,
+                      background: T.accentTint, color: T.accent,
+                      border: `1px solid ${T.borderAcc}`,
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      fontSize: 11, fontWeight: 700,
+                      fontVariantNumeric: 'tabular-nums',
+                      marginTop: 1,
+                    }}>{i + 1}</div>
+                    <div style={{ flex: 1 }}>{step}</div>
+                  </li>
+                ))}
+              </ol>
+            </div>
+          )}
 
           {recipe.chefTips.length > 0 && (
             <div>

@@ -38,7 +38,7 @@ export function RecipeDetailPage() {
         }
       />
       <div style={{ padding: '14px 16px 0' }}>
-        <RecipeCard recipe={recipe} expanded linkToDetail={false} />
+        <RecipeCard recipe={recipe} expanded linkToDetail={false} showSteps={false} />
       </div>
       <div style={{ padding: '0 16px 28px' }}>
         <button
