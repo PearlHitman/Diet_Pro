@@ -455,6 +455,45 @@ export async function scanReceipt(
     }));
 }
 
+// ─── Generic text call (used by nutrition estimator) ─────────
+
+/**
+ * Minimal wrapper: sends a single user message and returns the text response.
+ * Uses Haiku by default for speed and cost.
+ */
+export async function callClaude({
+  apiKey,
+  model = 'claude-haiku-4-5',
+  prompt,
+  system,
+  maxTokens = 256,
+}: {
+  apiKey: string;
+  model?: string;
+  prompt: string;
+  system?: string;
+  maxTokens?: number;
+}): Promise<string> {
+  if (!apiKey) throw new ClaudeError('No API key set.', 'auth');
+  const client = new Anthropic({ apiKey, dangerouslyAllowBrowser: true });
+  let response;
+  try {
+    response = await client.messages.create({
+      model,
+      max_tokens: maxTokens,
+      ...(system ? { system } : {}),
+      messages: [{ role: 'user', content: prompt }],
+    });
+  } catch (e: any) {
+    if (e?.status === 401) throw new ClaudeError('Invalid API key.', 'auth');
+    if (e?.status === 429) throw new ClaudeError('Rate limit hit.', 'rate');
+    throw new ClaudeError(e?.message ?? 'Network error', 'network');
+  }
+  const block = response.content.find(b => b.type === 'text');
+  if (!block || block.type !== 'text') throw new ClaudeError('No text in response.', 'parse');
+  return block.text.trim();
+}
+
 // ─── API key validation (for Settings) ───────────────────────
 
 export async function validateApiKey(apiKey: string): Promise<{ ok: true } | { ok: false; reason: string }> {

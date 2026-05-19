@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { ArrowLeft, ArrowRight, Check, TimerReset } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useApp } from '../lib/app-state';
+import { toDateStr } from '../lib/nutrition';
 
 interface TimerState {
   total: number;
@@ -67,9 +68,10 @@ function playTimerDoneTone() {
 
 export function CookModePage() {
   const { id } = useParams<{ id: string }>();
-  const { recipes, t } = useApp();
+  const { recipes, t, addLoggedMeal } = useApp();
   const navigate = useNavigate();
   const recipe = recipes.find(r => r.id === id);
+  const [mealLogged, setMealLogged] = useState(false);
 
   const steps = recipe?.steps ?? [];
   const totalSteps = steps.length;
@@ -619,6 +621,52 @@ export function CookModePage() {
               <div style={{ fontSize: 14, lineHeight: 1.45, color: 'var(--mise-text-secondary)' }}>
                 {t('cookCompleteHint')}
               </div>
+
+              {/* Log meal to nutrition */}
+              {recipe && (
+                <div style={{ marginTop: 16 }}>
+                  {mealLogged ? (
+                    <div style={{
+                      display: 'inline-flex', alignItems: 'center', gap: 6,
+                      padding: '8px 16px', borderRadius: 99,
+                      background: 'rgba(16,185,129,0.15)',
+                      border: '1px solid rgba(16,185,129,0.3)',
+                      fontSize: 13, fontWeight: 600, color: 'var(--mise-success)',
+                    }}>
+                      <Check size={14} strokeWidth={3} /> Logged to nutrition
+                    </div>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        await addLoggedMeal({
+                          id: Math.random().toString(36).slice(2) + Date.now().toString(36),
+                          date: toDateStr(),
+                          name: recipe.name,
+                          source: 'recipe',
+                          recipeId: recipe.id,
+                          calories: recipe.calories,
+                          protein: recipe.protein ?? 0,
+                          carbs: recipe.carbs ?? 0,
+                          fat: recipe.fat ?? 0,
+                          servings: 1,
+                        });
+                        setMealLogged(true);
+                      }}
+                      style={{
+                        padding: '10px 20px', borderRadius: 99,
+                        border: '1px solid rgba(124,58,237,0.3)',
+                        background: 'rgba(124,58,237,0.1)',
+                        color: 'var(--mise-primary)',
+                        fontSize: 14, fontWeight: 600, cursor: 'pointer',
+                        fontFamily: 'var(--mise-font-text)',
+                      }}
+                    >
+                      Log this meal to nutrition →
+                    </button>
+                  )}
+                </div>
+              )}
             </div>
           )}
 

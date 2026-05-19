@@ -90,10 +90,48 @@ export interface Recipe {
   chefTips: string[];
   /** Human-readable portion line, e.g. "Serves 4". */
   serving: string;
+  // Macros — estimated per serving. Optional: old recipes lack these.
+  protein?: number;          // g per serving
+  carbs?: number;            // g per serving
+  fat?: number;              // g per serving
   // Provenance & user state
   mealType: MealType;
   createdAt: string;         // ISO datetime
   starred: boolean;
+}
+
+// ─── Body stats & nutrition ───────────────────────────────────
+
+export type Sex = 'male' | 'female';
+export type ActivityLevel = 'sedentary' | 'light' | 'moderate' | 'active' | 'very_active';
+
+export interface BodyStats {
+  sex: Sex;
+  age: number;          // years
+  weight: number;       // kg
+  height: number;       // cm
+  activityLevel: ActivityLevel;
+}
+
+/** Computed daily targets (derived from BodyStats + DietGoal, never stored). */
+export interface NutritionGoals {
+  calories: number;   // kcal/day
+  protein: number;    // g/day
+  carbs: number;      // g/day
+  fat: number;        // g/day
+}
+
+export interface LoggedMeal {
+  id: string;
+  date: string;           // YYYY-MM-DD
+  name: string;
+  source: 'recipe' | 'manual';
+  recipeId?: string;
+  calories: number;       // kcal
+  protein: number;        // g
+  carbs: number;          // g
+  fat: number;            // g
+  servings: number;       // multiplier (1 = as-is)
 }
 
 // ─── Settings ────────────────────────────────────────────────
@@ -120,6 +158,9 @@ export interface AIRecipe {
   cookTime: number;
   difficulty: Level;
   calories: number;
+  protein?: number;
+  carbs?: number;
+  fat?: number;
   ingredients: { name: string; amount: string; missing: boolean; pantryCategory?: Category }[];
   steps: string[];
   chefTips?: string[];

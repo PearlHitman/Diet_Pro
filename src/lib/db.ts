@@ -7,7 +7,7 @@
 // is fine and much simpler than per-record stores).
 
 import { get, set, del } from 'idb-keyval';
-import { CATEGORY_SET, type Ingredient, type Profile, type Recipe, type Settings } from './types';
+import { CATEGORY_SET, type BodyStats, type Ingredient, type LoggedMeal, type Profile, type Recipe, type Settings } from './types';
 import { resetOnboarded } from './onboarding-state';
 
 function normalizeRecipe(r: Recipe): Recipe {
@@ -65,11 +65,13 @@ const DEFAULT_SETTINGS: Settings = {
 // ─── Keys ────────────────────────────────────────────────────
 
 const K = {
-  pantry:   'kitchen:pantry:v1',
-  profile:  'kitchen:profile:v1',
-  recipes:  'kitchen:recipes:v1',
-  settings: 'kitchen:settings:v1',
-  feed:     'kitchen:feed:v1',
+  pantry:     'kitchen:pantry:v1',
+  profile:    'kitchen:profile:v1',
+  recipes:    'kitchen:recipes:v1',
+  settings:   'kitchen:settings:v1',
+  feed:       'kitchen:feed:v1',
+  bodyStats:  'kitchen:bodystats:v1',
+  nutrition:  'kitchen:nutrition:v1',
 } as const;
 
 // Expose feed key so feed.ts can share the same constant.
@@ -133,10 +135,51 @@ export async function saveSettings(settings: Settings): Promise<void> {
   await set(K.settings, settings);
 }
 
+// ─── Body stats ──────────────────────────────────────────────
+
+export async function loadBodyStats(): Promise<BodyStats | null> {
+  return (await get<BodyStats>(K.bodyStats)) ?? null;
+}
+
+export async function saveBodyStats(stats: BodyStats): Promise<void> {
+  await set(K.bodyStats, stats);
+}
+
+// ─── Nutrition log ───────────────────────────────────────────
+// Capped at 90 days of entries on write.
+
+const NUTRITION_LOG_MAX_DAYS = 90;
+
+export async function loadNutritionLog(): Promise<LoggedMeal[]> {
+  return (await get<LoggedMeal[]>(K.nutrition)) ?? [];
+}
+
+export async function saveNutritionLog(log: LoggedMeal[]): Promise<void> {
+  await set(K.nutrition, log);
+}
+
+export async function addLoggedMeal(meal: LoggedMeal): Promise<void> {
+  const log = await loadNutritionLog();
+  const cutoff = new Date();
+  cutoff.setDate(cutoff.getDate() - NUTRITION_LOG_MAX_DAYS);
+  const cutoffStr = cutoff.toISOString().slice(0, 10);
+  const pruned = log.filter(m => m.date >= cutoffStr);
+  await saveNutritionLog([meal, ...pruned]);
+}
+
+export async function removeLoggedMeal(id: string): Promise<void> {
+  const log = await loadNutritionLog();
+  await saveNutritionLog(log.filter(m => m.id !== id));
+}
+
 // ─── Reset (debug helper, useful during dev) ─────────────────
 
 export async function resetAll(): Promise<void> {
-  await Promise.all([del(K.pantry), del(K.profile), del(K.recipes), del(K.settings), del(K.feed), resetOnboarded()]);
+  await Promise.all([
+    del(K.pantry), del(K.profile), del(K.recipes),
+    del(K.settings), del(K.feed), del(K.bodyStats), del(K.nutrition),
+    resetOnboarded(),
+  ]);
 }
 
 // ─── Export / Import (manual cross-device "sync") ────────────

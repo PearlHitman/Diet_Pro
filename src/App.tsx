@@ -70,6 +70,7 @@ import { ChefHat } from './components/Icons';
 import { isOnboarded } from './lib/onboarding-state';
 import { OnboardingPage } from './pages/OnboardingPage';
 import { DishPage } from './pages/DishPage';
+import { NutritionPage } from './pages/NutritionPage';
 
 function BrandedLoader() {
   const [visible, setVisible] = useState(false);
@@ -158,6 +159,7 @@ function Routed() {
               <Route path="/recipe/:id" element={<RecipeDetailPage />} />
 
               <Route path="/dish" element={<DishPage />} />
+              <Route path="/nutrition" element={<NutritionPage />} />
 
               <Route path="/history" element={<HistoryPage />} />
               <Route path="/favorites" element={<Navigate to="/history?view=favs" replace />} />

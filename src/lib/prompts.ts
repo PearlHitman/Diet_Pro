@@ -198,6 +198,9 @@ Strict schema:
       "cookTime": number — total minutes from start to plating,
       "difficulty": "Beginner" | "Intermediate" | "Expert",
       "calories": number — estimated kcal per serving,
+      "protein": number — estimated grams of protein per serving,
+      "carbs": number — estimated grams of carbohydrates per serving,
+      "fat": number — estimated grams of fat per serving,
       "ingredients": [
         {
           "name": "string",
@@ -267,6 +270,9 @@ JSON ONLY (no fences):
       "cookTime": number,
       "difficulty": "Beginner" | "Intermediate" | "Expert",
       "calories": number,
+      "protein": number,
+      "carbs": number,
+      "fat": number,
       "ingredients": [{ "name": "string", "amount": "string", "missing": boolean, "pantryCategory": "produce"|"protein"|"dairy"|"grains"|"pantry"|"other" }],
       "steps": ["string"],
       "chefTips": ["string"],
@@ -374,6 +380,9 @@ ${formatPantryShort(pantry)}
     "cookTime": number,
     "difficulty": "Beginner" | "Intermediate" | "Expert",
     "calories": number,
+    "protein": number,
+    "carbs": number,
+    "fat": number,
     "ingredients": [
       { "name": "string", "amount": "string", "missing": boolean,
         "pantryCategory": "produce" | "protein" | "dairy" | "grains" | "pantry" | "other" }
@@ -383,6 +392,30 @@ ${formatPantryShort(pantry)}
     "serving": "string"
   }
 }`;
+}
+
+// ─── Nutrition estimator ─────────────────────────────────────
+
+/**
+ * Estimate macros for a free-text food description.
+ * Used by the "Add food" manual entry flow.
+ */
+export function buildNutritionEstimatePrompt(foodDescription: string): string {
+  return `Estimate the nutritional content of this food or meal as described:
+"${foodDescription}"
+
+Return ONLY valid JSON with this exact shape:
+{"name":"string","calories":number,"protein":number,"carbs":number,"fat":number}
+
+Rules:
+- name: clean, readable short name for the food (e.g. "2 scrambled eggs on toast")
+- calories: total kcal for the described quantity
+- protein: grams of protein
+- carbs: grams of total carbohydrates
+- fat: grams of total fat
+- Base estimates on typical home-cooking portions and common ingredients
+- If multiple items described, sum all of them as a single entry
+- No explanation, no markdown, no code fences — just the JSON object`;
 }
 
 /** Plain-text substitution hints for ingredients the user lacks. */
