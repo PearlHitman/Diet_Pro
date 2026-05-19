@@ -53,7 +53,10 @@ export function RecipeDetailPage() {
             boxShadow: '0px 4px 12px rgba(124, 58, 237, 0.3)',
           }}
         >
-          🍳 {t('startCooking')}
+          <span style={{ fontSize: 18, lineHeight: 1, flexShrink: 0 }} aria-hidden="true">
+            🍳
+          </span>
+          <span>{t('startCooking')}</span>
         </button>
       </div>
     </Screen>

@@ -3,8 +3,11 @@
 // with a daily TTL so the feed loads instantly offline after first visit.
 
 import { get, set } from 'idb-keyval';
+import { FEED_DB_KEY } from './db';
 
-export const FEED_KEY = 'kitchen:feed:v1';
+// Re-exported under the historical name so any external callers / older
+// imports keep working. Source of truth is `FEED_DB_KEY` in db.ts.
+export const FEED_KEY = FEED_DB_KEY;
 
 // ─── Types ────────────────────────────────────────────────────────────────
 

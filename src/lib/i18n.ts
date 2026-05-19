@@ -639,37 +639,34 @@ const ES: Record<Keys, string> = {
   importNItems: 'Importar {n} elementos',
   selectAll: 'Seleccionar todo',
   deselectAll: 'Deseleccionar todo',
+
   confirmIngredient: 'Confirmar ingrediente',
   addToPantry: 'Añadir a la despensa',
   cameraPermissionDenied: 'Acceso a la cámara denegado. Permite la cámara en los ajustes del navegador.',
   cameraError: 'Error de cámara. Intenta subir una foto.',
   nothingDetected: 'No se detectó nada. Prueba con una foto más clara.',
 
-  // Feed
   recipeOfDay: 'Receta del Día',
   viewRecipe: 'Ver receta completa',
   foodFact: 'Dato Curioso',
   inSeason: 'De Temporada',
   refreshFeed: 'Actualizar',
+  loadingFeed: 'Cargando feed…',
+  noNetworkFeed: 'Sin conexión — mostrando contenido guardado',
+  tapToGenerate: 'Toca para generar',
+  seasonLabel: 'De temporada',
 
-  // Home — saludos por hora
   homeGreetingMorning: 'Buenos días',
   homeGreetingAfternoon: 'Buenas tardes',
   homeGreetingEvening: 'Buenas noches',
   homeSubtitleWhatsCooking: '¿Qué cocinamos hoy?',
-
-  // Pantry — additions
   pantryCardNeedMoreHint: 'Añade ingredientes para empezar',
-  pantryEditSheetTitle: 'Editar ingrediente',
-  pantrySearchClear: 'Borrar búsqueda',
+
   pantrySearchNoMatch: 'Ningún ingrediente coincide con "{q}".',
+  pantrySearchClear: 'Borrar búsqueda',
+  pantryEditSheetTitle: 'Editar ingrediente',
 
-  // Generate flow
-  tapToGenerate: 'Toca para generar',
-  seasonLabel: 'De temporada',
   dishGenerate: 'Generar',
-
-  // Dish flow (cont.)
   dishShoppingList: 'Lista de compra',
   dishCanSubstitute: '¿Puedo sustituirlo?',
   dishSubstitutionTitle: 'Sustituciones',
@@ -679,18 +676,15 @@ const ES: Record<Keys, string> = {
   chefTipsLabel: 'Consejos del chef',
   substitutionsLoading: 'Preguntando a Claude…',
   recipeDotLegend: 'Verde: ya en la despensa · Gris: lista de compra',
-  loadingFeed: 'Cargando feed…',
-  noNetworkFeed: 'Sin conexión — mostrando contenido guardado',
+
   expiryOptionalHint: 'Fecha de caducidad (opcional)',
 
-  // Errors
   errorTitle: 'Algo salió mal',
   errorNoKey: 'Configura tu clave API en Ajustes primero.',
   errorRate: 'Límite de Anthropic alcanzado. Inténtalo en un momento.',
   errorNetwork: 'Error de red. Comprueba tu conexión.',
   errorParse: 'Claude devolvió una respuesta inesperada. Inténtalo de nuevo.',
 
-  // Cook mode
   cookMode: 'Modo cocina',
   startCooking: 'Empezar a cocinar',
   exitCook: 'Salir',

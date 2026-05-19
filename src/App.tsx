@@ -6,7 +6,7 @@ import { AppProvider, useApp } from './lib/app-state';
 import { subscribeToUpdate } from './lib/pwa';
 import { T } from './tokens';
 
-// ─── Error boundary ───────────────────────────────────────────
+// ─── Error boundary ─────────────────────────────────
 // Without this, any unhandled render error wipes the entire UI
 // leaving a blank black screen with no indication of what went wrong.
 
@@ -128,34 +128,45 @@ function Routed() {
   }
   return (
     <>
-      <div key={location.pathname} className="page-enter">
+      {/*
+        Cook mode lives in its own Routes, completely outside the page-enter
+        div. That wrapper runs a CSS transform animation; on iOS Safari any
+        ancestor with a transform turns position:fixed descendants into
+        "fixed within that box" -- collapsing the fullscreen layout.
+        Rendering as a sibling eliminates the containing-block issue entirely.
+      */}
       <Routes>
-        <Route path="/" element={<HomePage />} />
-
-        <Route path="/pantry" element={<PantryPage />} />
-        <Route path="/pantry/add" element={<IngredientFormPage />} />
-        <Route path="/pantry/edit/:id" element={<IngredientFormPage />} />
-
-        <Route path="/profile" element={<ProfilePage />} />
-        <Route path="/settings" element={<SettingsPage />} />
-
-        <Route path="/generate" element={<MealTypePage />} />
-        <Route path="/generate/loading" element={<LoadingPage />} />
-        <Route path="/results" element={<ResultsPage />} />
         <Route path="/recipe/:id/cook" element={<CookModePage />} />
-        <Route path="/recipe/:id" element={<RecipeDetailPage />} />
-
-        <Route path="/dish" element={<DishPage />} />
-
-        <Route path="/history" element={<HistoryPage />} />
-        {/* Favorites is now a tab inside History (?view=favs). Redirect old links. */}
-        <Route path="/favorites" element={<Navigate to="/history?view=favs" replace />} />
-
-        {/* Fallback */}
-        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
-      </div>
-      {!isCook && <TabBar />}
+
+      {!isCook && (
+        <>
+          <div key={location.pathname} className="page-enter">
+            <Routes>
+              <Route path="/" element={<HomePage />} />
+
+              <Route path="/pantry" element={<PantryPage />} />
+              <Route path="/pantry/add" element={<IngredientFormPage />} />
+              <Route path="/pantry/edit/:id" element={<IngredientFormPage />} />
+
+              <Route path="/profile" element={<ProfilePage />} />
+              <Route path="/settings" element={<SettingsPage />} />
+
+              <Route path="/generate" element={<MealTypePage />} />
+              <Route path="/generate/loading" element={<LoadingPage />} />
+              <Route path="/results" element={<ResultsPage />} />
+              <Route path="/recipe/:id" element={<RecipeDetailPage />} />
+
+              <Route path="/dish" element={<DishPage />} />
+
+              <Route path="/history" element={<HistoryPage />} />
+              <Route path="/favorites" element={<Navigate to="/history?view=favs" replace />} />
+              <Route path="*" element={<Navigate to="/" replace />} />
+            </Routes>
+          </div>
+          <TabBar />
+        </>
+      )}
     </>
   );
 }

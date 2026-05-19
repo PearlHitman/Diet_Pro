@@ -8,6 +8,7 @@ import { Screen, SubHeader } from '../components/Chrome';
 import { Sliders } from '../components/Icons';
 import { CustomizationSheet } from '../components/CustomizationSheet';
 import { useApp } from '../lib/app-state';
+import { saveFlowState, clearFlowState } from '../lib/generate-flow';
 import { EMPTY_CUSTOMIZATION, type Customization, type MealType } from '../lib/types';
 
 interface Meal {
@@ -37,6 +38,9 @@ export function MealTypePage() {
   const activeCount = customization.mustInclude.length + customization.skip.length;
 
   function pick(meal: MealType) {
+    // Always start with a clean flow slate so an aborted previous attempt
+    // doesn't leak into this one.
+    clearFlowState();
     if (dishMode) {
       const trimmed = dishIdea.trim();
       if (!trimmed) {
@@ -44,12 +48,14 @@ export function MealTypePage() {
         return;
       }
       setDishErr(false);
-      navigate('/generate/loading', {
-        state: { mealType: meal, customization, dishIdea: trimmed },
-      });
+      const flow = { mealType: meal, customization, dishIdea: trimmed };
+      saveFlowState(flow);
+      navigate('/generate/loading', { state: flow });
       return;
     }
-    navigate('/generate/loading', { state: { mealType: meal, customization } });
+    const flow = { mealType: meal, customization };
+    saveFlowState(flow);
+    navigate('/generate/loading', { state: flow });
   }
 
   const subtitle = dishMode

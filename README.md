@@ -98,7 +98,8 @@ tap **Update now** to get the latest build instantly.
 - New deployments show an in-app update banner — no manual refresh needed.
 
 ### Internationalisation
-- Full English / Greek (Ελληνικά) support. Switch in Profile → Language.
+- Full English / Greek (Ελληνικά) / Spanish (Español) support. Switch in
+  Profile → Language.
 - Generated recipes respect the language setting.
 
 ---
@@ -113,21 +114,29 @@ src/
 ├── animations.css           keyframes + utility classes (fade-up, press, etc.)
 ├── vite-env.d.ts            virtual module type declarations
 ├── lib/
-│   ├── types.ts             TypeScript interfaces (Ingredient, Recipe, …)
+│   ├── types.ts             TypeScript interfaces + CATEGORIES constant
 │   ├── db.ts                IndexedDB persistence (idb-keyval wrapper)
 │   ├── claude.ts            Anthropic SDK wrapper + JSON parsing
 │   ├── prompts.ts           all AI prompts (recipe, product photo, receipt)
-│   ├── i18n.ts              EN + EL string tables
+│   ├── i18n.ts              EN + EL + ES string tables
 │   ├── app-state.tsx        React Context — single global store (useApp)
 │   ├── onboarding-state.ts  first-run flag stored in IndexedDB
 │   ├── personalization.ts   time-aware greetings, cuisine flag badges
+│   ├── pantry-match.ts      fuzzy "owned vs missing" name match
+│   ├── date.ts              date helpers (daysUntil) shared everywhere
+│   ├── feed.ts              TheMealDB meal-of-day, food facts, seasonal picks
+│   ├── generate-flow.ts     sessionStorage shim so /generate survives reload
+│   ├── theme.ts             system / light / dark theme application
 │   └── pwa.ts               pub/sub bridge for PWA update notifications
 ├── components/
-│   ├── Chrome.tsx           Screen, AppHeader, SubHeader, TabBar
-│   ├── Forms.tsx            Field, Input, Segmented, Stepper, buttons
-│   ├── Icons.tsx            inline SVG icons
-│   ├── RecipeCard.tsx       reused by Results & Detail pages
-│   └── CameraImport.tsx     photo/receipt capture → Claude vision → ingredient
+│   ├── Chrome.tsx              Screen, AppHeader, SubHeader, TabBar
+│   ├── Forms.tsx               Field, Input, Segmented, Stepper, buttons
+│   ├── Icons.tsx               inline SVG icons
+│   ├── RecipeCard.tsx          reused by Results & Detail pages
+│   ├── FeedCard.tsx            home-screen daily meal / fact / seasonal card
+│   ├── CustomizationSheet.tsx  must-include / skip pre-generation sheet
+│   ├── PantryIngredientDrawer.tsx  bottom drawer for pantry item edits
+│   └── CameraImport.tsx        photo/receipt capture → Claude vision → ingredient
 └── pages/
     ├── OnboardingPage.tsx          first-run multi-step setup
     ├── HomePage.tsx
@@ -139,6 +148,7 @@ src/
     ├── LoadingPage.tsx             fires the API call
     ├── ResultsPage.tsx
     ├── RecipeDetailPage.tsx
+    ├── DishPage.tsx                "I have a dish in mind" flow entry
     └── HistoryAndFavorites.tsx     two pages, one file
 ```
 
@@ -147,10 +157,14 @@ src/
 ## How data is stored
 
 Everything lives in your browser's **IndexedDB**. Keys under the `kitchen:` namespace:
-`pantry`, `profile`, `recipes`, `settings`, `onboarded`.
+`pantry`, `profile`, `recipes`, `settings`, `feed`, plus an `onboarded` flag.
 
 **This means:** wiping browser data wipes the app. There is no cloud sync —
 intentional for v1 (single-user, no auth, no privacy concerns).
+
+To move between browsers or devices, use **Settings → Export data** (saves
+a JSON file) and **Settings → Import data** on the other device. The export
+is also a useful manual backup.
 
 To reset: **Settings → Reset all data**.
 

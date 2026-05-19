@@ -14,7 +14,7 @@ import { ChefHat, ArrowRight, ArrowLeft, Sparkles, Check, X, AlertCircle } from 
 import { useApp } from '../lib/app-state';
 import { validateApiKey } from '../lib/claude';
 import { markOnboarded } from '../lib/onboarding-state';
-import type { Category, Ingredient, Language, Level } from '../lib/types';
+import { CATEGORIES, type Category, type Ingredient, type Language, type Level } from '../lib/types';
 
 // ─── Inline i18n for onboarding ──────────────────────────────
 
@@ -335,7 +335,7 @@ export function OnboardingPage({ onComplete }: { onComplete: () => void }) {
               <Field label={ob.name}><Input value={ingName} onChange={setIngName} placeholder="Chicken breast" autoFocus /></Field>
               <Field label={ob.category}>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-                  {(['produce','protein','dairy','grains','pantry','other'] as Category[]).map(c => (
+                  {CATEGORIES.map(c => (
                     <button key={c} type="button" onClick={() => setIngCat(c)} style={{
                       padding: '8px 14px', borderRadius: 999,
                       background: ingCat === c ? T.accentTint : T.surface,

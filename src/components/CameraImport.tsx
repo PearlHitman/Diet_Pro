@@ -12,7 +12,7 @@ import { Pencil } from 'lucide-react';
 import { T } from '../tokens';
 import { useApp } from '../lib/app-state';
 import { scanProductPhoto, scanReceipt, type ScannedIngredient } from '../lib/claude';
-import type { Category, Ingredient } from '../lib/types';
+import { CATEGORIES, type Category, type Ingredient } from '../lib/types';
 
 // ─── Types ───────────────────────────────────────────────────
 
@@ -31,7 +31,7 @@ interface Draft extends ScannedIngredient {
   expiresOn?: string | null;
 }
 
-const CATS: Category[] = ['produce', 'protein', 'dairy', 'grains', 'pantry', 'other'];
+const CATS: readonly Category[] = CATEGORIES;
 
 // ─── Helpers ─────────────────────────────────────────────────
 

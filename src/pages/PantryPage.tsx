@@ -24,17 +24,10 @@ import {
   DialogTitle,
 } from '../components/ui/dialog';
 import { useApp } from '../lib/app-state';
-import type { Category, Ingredient } from '../lib/types';
+import { daysUntil } from '../lib/date';
+import { CATEGORIES, type Category, type Ingredient } from '../lib/types';
 
-const CATEGORY_ORDER: Category[] = ['produce', 'protein', 'dairy', 'grains', 'pantry', 'other'];
-
-function daysUntil(iso: string | null): number | null {
-  if (!iso) return null;
-  const d = new Date(iso + 'T00:00:00');
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  return Math.round((d.getTime() - today.getTime()) / 86_400_000);
-}
+const CATEGORY_ORDER: readonly Category[] = CATEGORIES;
 
 interface FreshnessInfo {
   dot: string;

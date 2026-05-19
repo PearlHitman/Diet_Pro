@@ -7,16 +7,16 @@ import { Screen, SubHeader } from '../components/Chrome';
 import { Field, Input, PrimaryButton } from '../components/Forms';
 import { T } from '../tokens';
 import { useApp } from '../lib/app-state';
-import type { Category, Ingredient } from '../lib/types';
+import { CATEGORIES, isCategory, type Category, type Ingredient } from '../lib/types';
 
-const CATS: Category[] = ['produce', 'protein', 'dairy', 'grains', 'pantry', 'other'];
+const CATS: readonly Category[] = CATEGORIES;
 const LS_LAST_CATEGORY = 'mise:lastCategory';
 
 function readSavedCategory(edit?: Ingredient): Category {
   if (edit) return edit.category;
   if (typeof localStorage === 'undefined') return 'produce';
   const v = localStorage.getItem(LS_LAST_CATEGORY);
-  return typeof v === 'string' && CATS.includes(v as Category) ? (v as Category) : 'produce';
+  return isCategory(v) ? v : 'produce';
 }
 
 export function IngredientFormPage() {
