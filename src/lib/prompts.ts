@@ -44,7 +44,7 @@ export interface PromptInput {
   customization?: Customization;
   /** When set — user asked for variants around a concrete dish idea. */
   dishIdea?: string;
-  /** Fast mode: 2 compact recipes, shorter output. */
+  /** Fast mode: one compact recipe, shorter output. */
   speed?: boolean;
 }
 
@@ -55,7 +55,7 @@ export const RECIPE_SYSTEM_PROMPT = `You are a creative chef with deep knowledge
 You refuse to produce:
 - Vague titles like "Chicken Stir-Fry", "Pasta with Sauce", "Vegetable Rice Bowl", "Egg Scramble"
 - Steps written as bare instructions with no flavour or technique context ("cook the chicken")
-- Three recipes that are structurally the same (e.g. three protein + grain + sauce combos)
+- Generic protein + grain + sauce combos with no real point of view
 
 You always produce:
 - Specific, evocative names that hint at cuisine and technique ("Harissa-Braised Chickpeas with Whipped Feta" not "Chickpea Dish")
@@ -80,7 +80,7 @@ function buildRecipePromptBest({
 The user named a craving or dish they want to cook toward:
 "${trimmedDish}"
 
-Every recipe MUST clearly relate to this request — same culinary family,
+The recipe MUST clearly relate to this request — same culinary family,
 spirit, technique, or dish type (adapt names and flavours to match). Do NOT
 produce three unrelated generic meals. Stay honest about which ingredients are
 really in their pantry versus missing.`
@@ -99,7 +99,7 @@ really in their pantry versus missing.`
 The user explicitly wants these ingredients featured in EVERY recipe:
 ${mustInclude.map(n => `- ${n}`).join('\n')}
 
-This is non-negotiable. Each of the 3 recipes must use ALL of these
+This is non-negotiable. The recipe must use ALL of these
 ingredients in a meaningful way (not just as a garnish).`
     : '';
 
@@ -111,7 +111,7 @@ ${skip.map(n => `- ${n}`).join('\n')}
 NEVER include these ingredients in any recipe, even in trace amounts.`
     : '';
 
-  return `You are an expert kitchen assistant. Your job is to suggest 3 recipes the user can actually cook with what they have.
+  return `You are an expert kitchen assistant. Your job is to suggest 1 recipe the user can actually cook with what they have.
 
 ═══ HOW TO APPROACH THIS ═══
 This is a PANTRY-FIRST task. You are NOT generating recipes and checking
@@ -122,7 +122,7 @@ canvas.
 Before writing the JSON output, mentally:
 1. Scan the pantry for protein sources, vegetables, starches, fats, and seasonings.
 2. Consider the meal type and find combinations that work.
-3. Each recipe should be DOMINANTLY made from pantry items.
+3. The recipe should be DOMINANTLY made from pantry items.
 
 ═══ PANTRY (the user's available ingredients) ═══
 ${formatPantry(pantry)}
@@ -154,12 +154,12 @@ ${mustSection}${skipSection}
 3. ALLERGIES & SKIPS: Never use anything from the user's allergies list
    or from the SKIP list above. Non-negotiable, no exceptions.
 
-4. MUST-INCLUDE: If the user listed must-include ingredients above, ALL
-   3 recipes must feature ALL of them prominently.
+4. MUST-INCLUDE: If the user listed must-include ingredients above, the
+   recipe must feature ALL of them prominently.
 
 5. EXPIRY PRIORITY: When a pantry item is marked "expires TODAY" or
-   "prefer using", weight it heavily. At least 2 of the 3 recipes should
-   feature at least one such item.
+   "prefer using", weight it heavily. The recipe should feature at least
+   one such item when possible.
 
 6. LOOSE MATCHING: Match pantry items loosely. "chicken breast" in a
    recipe matches "chicken" in the pantry. "garlic clove" matches "garlic".
@@ -178,11 +178,10 @@ ${mustSection}${skipSection}
 
 9. SERVINGS: Exactly ${profile.servings} per recipe.
 
-10. DIVERSITY: The 3 recipes should be meaningfully different (different
-    proteins or cooking techniques or cuisine styles), unless must-include
-    constraints force similarity.
+10. DISTINCTIVENESS: The recipe should have a clear culinary identity,
+    a specific technique, and a memorable name.
     ${trimmedDish
-      ? '\nWhen the user named a DISH IN MIND: offer three substantive variations — e.g. different technique, richness level, or regional twist — not three copies of one recipe.'
+      ? '\nWhen the user named a DISH IN MIND: make the recipe clearly fit that dish or craving.'
       : ''
     }
 
@@ -214,7 +213,7 @@ Strict schema:
   ]
 }
 
-Generate the 3 recipes now.`;
+Generate exactly 1 recipe now.`;
 }
 
 function buildRecipePromptSpeed({
@@ -231,18 +230,18 @@ function buildRecipePromptSpeed({
   const skip = customization?.skip ?? [];
 
   const mustSection = mustInclude.length > 0
-    ? `\nMUST include in BOTH recipes: ${mustInclude.join(', ')}.`
+    ? `\nMUST include in the recipe: ${mustInclude.join(', ')}.`
     : '';
   const skipSection = skip.length > 0
     ? `\nNEVER use: ${skip.join(', ')}.`
     : '';
   const dishSection = trimmedDish
-    ? `\nUser wants dishes related to: "${trimmedDish}". Both recipes must fit.`
+    ? `\nUser wants a dish related to: "${trimmedDish}". The recipe must fit.`
     : '';
 
   const maxSteps = profile.level === 'Beginner' ? 4 : profile.level === 'Intermediate' ? 5 : 6;
 
-  return `Suggest exactly 2 recipes the user can cook from their pantry. FAST MODE — be concise.
+  return `Suggest exactly 1 recipe the user can cook from their pantry. FAST MODE — be concise.
 
 PANTRY:
 ${formatPantry(pantry)}
@@ -257,7 +256,7 @@ RULES:
 - Max ${maxSteps} steps per recipe; each step ≤120 characters.
 - Max 8 ingredients per recipe.
 - chefTips: 0 or 1 short tip per recipe (optional).
-- Names ≤60 characters. Two different proteins or techniques.
+- Name ≤60 characters. Give it a clear, specific identity.
 - ${langInstruction}
 
 JSON ONLY (no fences):
@@ -276,7 +275,7 @@ JSON ONLY (no fences):
   ]
 }
 
-Generate exactly 2 recipes now.`;
+Generate exactly 1 recipe now.`;
 }
 
 // ─── Vision: single product photo ────────────────────────────

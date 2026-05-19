@@ -24,9 +24,9 @@ const MODEL_ID: Record<Settings['model'], string> = {
 const DIFFICULTIES = new Set<Level>(['Beginner', 'Intermediate', 'Expert']);
 
 const HAIKU_MODEL = 'claude-haiku-4-5';
-const BEST_MAX_TOKENS = 4096;
-/** Fast mode: 2 compact recipes (~800–1200 output tokens typical). 2048 avoids truncation. */
-const FAST_MAX_TOKENS = 2048;
+const BEST_MAX_TOKENS = 3072;
+/** Fast mode: one compact recipe. 1536 avoids truncation while staying quick. */
+const FAST_MAX_TOKENS = 1536;
 /** Single dish in fast mode — one recipe, tighter cap. */
 const DISH_FAST_MAX_TOKENS = 1536;
 
@@ -101,7 +101,7 @@ export async function generateRecipes(input: GenerateInput): Promise<Recipe[]> {
 
   // Parse JSON, tolerating accidental markdown fences.
   const parsed = parseJsonLoose(textBlock.text);
-  if (!isValidAIResponse(parsed, fast ? { minRecipes: 1, maxRecipes: 2 } : { minRecipes: 1, maxRecipes: 3 })) {
+  if (!isValidAIResponse(parsed, { minRecipes: 1, maxRecipes: 1 })) {
     throw new ClaudeError('Claude returned malformed recipe data.', 'parse');
   }
 

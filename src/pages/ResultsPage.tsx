@@ -1,4 +1,4 @@
-// Results page — shows the 3 recipes just generated.
+// Results page — shows the recipe just generated.
 // We pass their IDs via location.state so we don't have to re-fetch or
 // re-derive which are "new" vs older history.
 
@@ -46,8 +46,40 @@ export function ResultsPage() {
         display: 'flex', flexDirection: 'column', gap: 14,
       }}>
         {shown.map((r, i) => (
-          <div key={r.id} className="fade-up" style={{ animationDelay: `${i * 30}ms` }}>
-            <RecipeCard recipe={r} expanded={i === 0} />
+          <div
+            key={r.id}
+            className="fade-up"
+            style={{
+              animationDelay: `${i * 30}ms`,
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 12,
+            }}
+          >
+            <RecipeCard recipe={r} expanded linkToDetail={false} showSteps={false} />
+            <button
+              className="press"
+              onClick={() => navigate(`/recipe/${r.id}/cook`)}
+              style={{
+                width: '100%',
+                height: 52,
+                borderRadius: 'var(--mise-radius-button)',
+                border: 'none',
+                background: 'var(--mise-primary)',
+                color: '#FFFFFF',
+                fontSize: 15,
+                fontWeight: 700,
+                cursor: 'pointer',
+                fontFamily: 'var(--mise-font-text)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 8,
+                boxShadow: '0px 4px 12px rgba(124, 58, 237, 0.3)',
+              }}
+            >
+              {t('startCooking')}
+            </button>
           </div>
         ))}
 
