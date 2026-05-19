@@ -1,9 +1,9 @@
 // Cook Mode — Option B "Scroll + Lock" layout.
 //
-// Completed steps  → collapsed single line, strikethrough, faded
-// Active step      → large hero card ("Now cooking")
-// Future steps     → small, dimmed preview
-// Sticky timer     → banner below header when a timer is running
+// Completed steps  -> collapsed single line, strikethrough, faded
+// Active step      -> large hero card ("Now cooking")
+// Future steps     -> small, dimmed preview (2-line clamp)
+// Sticky timer     -> banner below header when a timer is running
 //
 // Rendered OUTSIDE page-enter (see App.tsx) so position:fixed works
 // correctly on iOS Safari (no ancestor transform creates a containing block).
@@ -90,7 +90,7 @@ export function CookModePage() {
   const totalSteps = steps.length;
   const done       = stepIdx >= totalSteps - 1;
 
-  // ── Wake lock ───────────────────────────────────────────────
+  // ── Wake lock ────────────────────────────────────────────────
   useEffect(() => {
     if ('wakeLock' in navigator) {
       navigator.wakeLock.request('screen')
@@ -100,7 +100,7 @@ export function CookModePage() {
     return () => { wakeLockRef.current?.release().catch(() => {}); };
   }, []);
 
-  // ── Init timer for step ─────────────────────────────────────
+  // ── Init timer for current step ──────────────────────────────
   useEffect(() => {
     if (!steps[stepIdx] || timers[stepIdx] !== undefined) return;
     const secs = parseTimerSeconds(steps[stepIdx]);
@@ -108,7 +108,7 @@ export function CookModePage() {
       setTimers(p => ({ ...p, [stepIdx]: { total: secs, remaining: secs, running: false } }));
   }, [stepIdx, steps]);
 
-  // ── Timer tick ──────────────────────────────────────────────
+  // ── Timer tick ───────────────────────────────────────────────
   useEffect(() => {
     if (intervalRef.current) clearInterval(intervalRef.current);
     if (!timers[stepIdx]?.running) return;
@@ -135,7 +135,7 @@ export function CookModePage() {
     return () => { if (intervalRef.current) clearInterval(intervalRef.current); };
   }, [timers, stepIdx]);
 
-  // ── Toggle timer ────────────────────────────────────────────
+  // ── Toggle timer ─────────────────────────────────────────────
   const toggleTimer = useCallback(() => {
     setTimers(prev => {
       const cur = prev[stepIdx];
@@ -146,7 +146,7 @@ export function CookModePage() {
     });
   }, [stepIdx]);
 
-  // ── Voice ───────────────────────────────────────────────────
+  // ── Voice ─────────────────────────────────────────────────────
   const [voiceOn, setVoiceOn] = useState(false);
 
   const startVoice = useCallback(() => {
@@ -178,7 +178,7 @@ export function CookModePage() {
 
   useEffect(() => () => { recognitionRef.current?.stop(); }, []);
 
-  // ── Advance & scroll active step into view ──────────────────
+  // ── Advance + scroll active into view ────────────────────────
   const goNext = useCallback(() => {
     setStepIdx(i => Math.min(i + 1, totalSteps - 1));
   }, [totalSteps]);
@@ -187,7 +187,7 @@ export function CookModePage() {
     activeRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }, [stepIdx]);
 
-  // ── No recipe guard ─────────────────────────────────────────
+  // ── No recipe guard ───────────────────────────────────────────
   if (!recipe) {
     return (
       <div style={{
@@ -200,7 +200,7 @@ export function CookModePage() {
           style={{ padding: '12px 28px', borderRadius: 999,
             background: 'var(--mise-primary)', color: '#fff',
             border: 'none', cursor: 'pointer', fontSize: 15, fontWeight: 700 }}>
-          ← Back
+          Back
         </button>
       </div>
     );
@@ -208,36 +208,46 @@ export function CookModePage() {
 
   const timer = timers[stepIdx];
 
+  // ── Render ────────────────────────────────────────────────────
   return (
     <div style={{
+      // Fill the entire viewport. position:fixed + explicit TRBL=0 is the
+      // most reliable approach on every iPhone model and iOS Safari version.
       position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 200,
+      width: '100vw', maxWidth: '100vw',   // explicit: iOS Safari right:0 can latch to doc width
+      // Grid shell: header / timer / scrollable list / footer
       display: 'grid',
       gridTemplateRows: 'auto auto 1fr auto',
       background: 'var(--mise-background)',
       fontFamily: 'var(--mise-font-text)',
+      // Clip any child that would bleed past the viewport edge (e.g. long words)
+      overflow: 'hidden',
+      // Respect notch / Dynamic Island / home indicator safe areas
       paddingTop:    'env(safe-area-inset-top)',
       paddingBottom: 'env(safe-area-inset-bottom)',
       paddingLeft:   'env(safe-area-inset-left)',
       paddingRight:  'env(safe-area-inset-right)',
     }}>
 
-      {/* ── ROW 1: Header ── */}
+      {/* ── ROW 1: Header ─────────────────────────────────────── */}
       <div style={{
         display: 'flex', alignItems: 'center', gap: 10,
         padding: '12px 16px',
         borderBottom: '1px solid var(--mise-glass-border)',
         background: 'var(--mise-surface)',
       }}>
+        {/* Back */}
         <button onClick={() => navigate(-1)}
           style={{
-            width: 36, height: 36, borderRadius: 10,
+            width: 36, height: 36, borderRadius: 10, flexShrink: 0,
             border: '1px solid var(--mise-glass-border)',
             background: 'transparent',
             color: 'var(--mise-text-primary)', cursor: 'pointer',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontSize: 20, flexShrink: 0,
+            fontSize: 20,
           }}>‹</button>
 
+        {/* Title + step counter */}
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{
             fontSize: 14, fontWeight: 700, color: 'var(--mise-text-primary)',
@@ -248,11 +258,13 @@ export function CookModePage() {
           </div>
         </div>
 
-        {/* Mic toggle */}
+        {/* Mic */}
         <button onClick={voiceOn ? stopVoice : startVoice}
           style={{
             width: 36, height: 36, borderRadius: 10, flexShrink: 0,
-            border: voiceOn ? '2px solid var(--mise-primary)' : '1px solid var(--mise-glass-border)',
+            border: voiceOn
+              ? '2px solid var(--mise-primary)'
+              : '1px solid var(--mise-glass-border)',
             background: voiceOn ? 'rgba(124,58,237,0.12)' : 'transparent',
             color: voiceOn ? 'var(--mise-primary)' : 'var(--mise-text-secondary)',
             cursor: 'pointer', fontSize: 17,
@@ -261,11 +273,11 @@ export function CookModePage() {
           }}>🎤</button>
       </div>
 
-      {/* ── ROW 2: Sticky timer banner (only when timer exists for this step) ── */}
+      {/* ── ROW 2: Timer banner (only when step has a timer) ───── */}
       {timer && (
         <div style={{
           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-          padding: '10px 16px',
+          padding: '10px 16px', gap: 12,
           background: timer.remaining === 0
             ? 'rgba(16,185,129,0.12)'
             : timer.running
@@ -273,17 +285,17 @@ export function CookModePage() {
               : 'var(--mise-glass-elevated)',
           borderBottom: '1px solid var(--mise-glass-border)',
         }}>
-          <div>
-            <div style={{ fontSize: 11, color: 'var(--mise-text-secondary)', marginBottom: 2 }}>
+          {/* Label + progress bar */}
+          <div style={{ flexShrink: 0 }}>
+            <div style={{ fontSize: 11, color: 'var(--mise-text-secondary)', marginBottom: 4 }}>
               {timer.remaining === 0
                 ? '✓ Timer done'
                 : timer.running
                   ? `Running — step ${stepIdx + 1}`
                   : `Timer — step ${stepIdx + 1}`}
             </div>
-            {/* Progress bar */}
             <div style={{
-              width: 120, height: 3, borderRadius: 2,
+              width: 100, height: 3, borderRadius: 2,
               background: 'var(--mise-glass-border)', overflow: 'hidden',
             }}>
               <div style={{
@@ -295,20 +307,21 @@ export function CookModePage() {
             </div>
           </div>
 
+          {/* Countdown */}
           <div style={{
-            fontSize: 26, fontWeight: 800,
+            fontSize: 26, fontWeight: 800, letterSpacing: -1,
             fontVariantNumeric: 'tabular-nums',
             color: timer.remaining === 0 ? '#10B981' : 'var(--mise-text-primary)',
-            letterSpacing: -1,
+            flex: 1, textAlign: 'center',
           }}>
             {timer.remaining === 0 ? 'Done!' : fmt(timer.remaining)}
           </div>
 
+          {/* Pause / Resume / Restart */}
           <button onClick={toggleTimer}
             style={{
-              padding: '8px 16px', borderRadius: 999,
-              border: 'none', cursor: 'pointer',
-              fontSize: 13, fontWeight: 700,
+              flexShrink: 0, padding: '8px 14px', borderRadius: 999,
+              border: 'none', cursor: 'pointer', fontSize: 13, fontWeight: 700,
               background: timer.remaining === 0
                 ? 'rgba(16,185,129,0.15)'
                 : timer.running
@@ -331,67 +344,70 @@ export function CookModePage() {
         </div>
       )}
 
-      {/* ── ROW 3: Step list ── */}
+      {/* ── ROW 3: Scrollable step list ───────────────────────── */}
       <div style={{
         overflowY: 'auto',
+        overflowX: 'hidden',          // never allow horizontal scroll
         WebkitOverflowScrolling: 'touch',
-        minHeight: 0,
+        minHeight: 0,                  // required for grid 1fr to work correctly
         padding: '12px 16px 8px',
       }}>
         {steps.map((step, i) => {
-          const isDone    = i < stepIdx;
-          const isActive  = i === stepIdx;
-          const isFuture  = i > stepIdx;
+          const isDone   = i < stepIdx;
+          const isActive = i === stepIdx;
 
-          // ── Completed step: one-line strikethrough ──────────
+          // ── Completed: one-line strikethrough ──────────────
           if (isDone) {
             return (
-              <div key={i}
-                onClick={() => setStepIdx(i)}
+              <div key={i} onClick={() => setStepIdx(i)}
                 style={{
                   display: 'flex', alignItems: 'center', gap: 10,
-                  padding: '8px 4px',
+                  padding: '9px 4px',
                   cursor: 'pointer',
-                  opacity: 0.38,
+                  opacity: 0.4,
                   borderBottom: '1px solid var(--mise-glass-border)',
+                  overflow: 'hidden',   // belt-and-suspenders clip
                 }}>
+                {/* Check badge */}
                 <div style={{
                   width: 22, height: 22, borderRadius: 9999, flexShrink: 0,
                   background: 'var(--mise-primary)',
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                   fontSize: 11, color: '#fff', fontWeight: 700,
                 }}>✓</div>
+                {/* Truncated text */}
                 <div style={{
                   fontSize: 13, color: 'var(--mise-text-primary)',
                   textDecoration: 'line-through',
                   whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
-                  flex: 1,
+                  flex: 1, minWidth: 0,   // minWidth:0 is required for ellipsis in flex
                 }}>{step}</div>
               </div>
             );
           }
 
-          // ── Active step: big hero card ──────────────────────
+          // ── Active: large hero card ─────────────────────────
           if (isActive) {
             return (
               <div key={i} ref={activeRef}
                 style={{
+                  width: '100%', boxSizing: 'border-box',
                   borderRadius: 18,
                   border: '2px solid var(--mise-primary)',
                   background: 'rgba(124,58,237,0.07)',
                   padding: '18px 16px',
                   margin: '10px 0',
                   boxShadow: '0 6px 24px rgba(124,58,237,0.18)',
+                  overflow: 'hidden',
                 }}>
                 {/* "Now cooking" label */}
                 <div style={{
                   fontSize: 11, fontWeight: 700, letterSpacing: 0.8,
-                  color: 'var(--mise-primary)',
-                  textTransform: 'uppercase',
+                  color: 'var(--mise-primary)', textTransform: 'uppercase',
                   marginBottom: 8,
                 }}>{t('nowCooking')}</div>
 
-                {/* Step number */}
+                {/* Step number badge */}
                 <div style={{
                   width: 40, height: 40, borderRadius: 12,
                   background: 'var(--mise-primary)',
@@ -400,10 +416,11 @@ export function CookModePage() {
                   marginBottom: 12,
                 }}>{i + 1}</div>
 
-                {/* Step text */}
+                {/* Step text — wraps naturally, amber highlights on times */}
                 <div style={{
                   fontSize: 16, lineHeight: 1.65,
                   color: 'var(--mise-text-primary)', fontWeight: 500,
+                  wordBreak: 'break-word',
                 }}>
                   <HighStep text={step} />
                 </div>
@@ -411,17 +428,20 @@ export function CookModePage() {
             );
           }
 
-          // ── Future step: small dimmed preview ───────────────
+          // ── Future: small dimmed 2-line preview ─────────────
           return (
-            <div key={i}
-              onClick={() => setStepIdx(i)}
+            <div key={i} onClick={() => setStepIdx(i)}
               style={{
                 display: 'flex', alignItems: 'flex-start', gap: 10,
                 padding: '10px 4px',
                 cursor: 'pointer',
                 opacity: 0.55,
-                borderBottom: i < steps.length - 1 ? '1px solid var(--mise-glass-border)' : 'none',
+                borderBottom: i < steps.length - 1
+                  ? '1px solid var(--mise-glass-border)'
+                  : 'none',
+                overflow: 'hidden',
               }}>
+              {/* Step number circle */}
               <div style={{
                 width: 22, height: 22, borderRadius: 9999, flexShrink: 0,
                 border: '1.5px solid var(--mise-glass-border)',
@@ -429,10 +449,11 @@ export function CookModePage() {
                 fontSize: 11, color: 'var(--mise-text-secondary)', fontWeight: 700,
                 marginTop: 1,
               }}>{i + 1}</div>
+              {/* 2-line clamped text */}
               <div style={{
                 fontSize: 13, lineHeight: 1.5,
                 color: 'var(--mise-text-primary)',
-                // show at most 2 lines
+                flex: 1, minWidth: 0,               // allows flex item to shrink
                 display: '-webkit-box',
                 WebkitLineClamp: 2,
                 WebkitBoxOrient: 'vertical',
@@ -442,12 +463,10 @@ export function CookModePage() {
           );
         })}
 
-        {/* Completion message */}
-        {done && stepIdx === totalSteps - 1 && (
+        {/* Completion card */}
+        {done && (
           <div style={{
-            textAlign: 'center',
-            padding: '28px 16px',
-            marginTop: 8,
+            textAlign: 'center', padding: '28px 16px', marginTop: 8,
             borderRadius: 16,
             background: 'rgba(16,185,129,0.08)',
             border: '1px solid rgba(16,185,129,0.2)',
@@ -465,26 +484,32 @@ export function CookModePage() {
         <div style={{ height: 12 }} />
       </div>
 
-      {/* ── ROW 4: Footer ── */}
+      {/* ── ROW 4: Footer ─────────────────────────────────────── */}
       <div style={{
         borderTop: '1px solid var(--mise-glass-border)',
         background: 'var(--mise-surface)',
         padding: '12px 16px',
         display: 'flex', alignItems: 'center', gap: 10,
       }}>
-        <button onClick={() => setStepIdx(i => Math.max(i - 1, 0))}
+        {/* Back chevron */}
+        <button
+          onClick={() => setStepIdx(i => Math.max(i - 1, 0))}
           disabled={stepIdx === 0}
           style={{
             width: 44, height: 52, borderRadius: 12, flexShrink: 0,
             border: '1px solid var(--mise-glass-border)',
             background: 'transparent',
-            color: stepIdx === 0 ? 'var(--mise-glass-border)' : 'var(--mise-text-primary)',
+            color: stepIdx === 0
+              ? 'var(--mise-glass-border)'
+              : 'var(--mise-text-primary)',
             cursor: stepIdx === 0 ? 'default' : 'pointer',
             fontSize: 22,
             display: 'flex', alignItems: 'center', justifyContent: 'center',
           }}>‹</button>
 
-        <button onClick={done ? () => navigate(-1) : goNext}
+        {/* Main CTA */}
+        <button
+          onClick={done ? () => navigate(-1) : goNext}
           className="press"
           style={{
             flex: 1, height: 52,
@@ -498,10 +523,11 @@ export function CookModePage() {
               ? '0 4px 12px rgba(16,185,129,0.3)'
               : '0 4px 12px rgba(124,58,237,0.3)',
           }}>
-          {done ? `🎉 ${t('cookComplete')}` : t('markDoneNext')}
+          {done ? t('cookComplete') : t('markDoneNext')}
         </button>
       </div>
 
+      {/* Mic pulse animation */}
       <style>{`
         @keyframes micPulse {
           0%, 100% { box-shadow: 0 0 0 0 rgba(124,58,237,0.4); }
