@@ -37,8 +37,24 @@ export function RecipeDetailPage() {
           ><Star filled={recipe.starred} size={18} /></button>
         }
       />
-      <div style={{ padding: '14px 16px 28px' }}>
+      <div style={{ padding: '14px 16px 0' }}>
         <RecipeCard recipe={recipe} expanded linkToDetail={false} />
+      </div>
+      <div style={{ padding: '0 16px 28px' }}>
+        <button
+          className="press"
+          onClick={() => navigate(`/recipe/${recipe.id}/cook`)}
+          style={{
+            width: '100%', height: 52, borderRadius: 'var(--mise-radius-button)',
+            border: 'none', background: 'var(--mise-primary)',
+            color: '#FFFFFF', fontSize: 15, fontWeight: 700,
+            cursor: 'pointer', fontFamily: 'var(--mise-font-text)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+            boxShadow: '0px 4px 12px rgba(124, 58, 237, 0.3)',
+          }}
+        >
+          🍳 {t('startCooking')}
+        </button>
       </div>
     </Screen>
   );

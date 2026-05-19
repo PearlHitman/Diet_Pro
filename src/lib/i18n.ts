@@ -229,6 +229,21 @@ const EN = {
   errorRate: 'Anthropic rate limit hit. Try again in a moment.',
   errorNetwork: 'Network error. Check your connection.',
   errorParse: 'Claude returned an unexpected response. Try again.',
+
+  // Cook mode
+  cookMode: 'Cook Mode',
+  startCooking: 'Start Cooking',
+  exitCook: 'Exit',
+  markDoneNext: 'Mark done & next',
+  stepOf: 'Step {current} of {total}',
+  timerStart: 'Start',
+  timerPause: 'Pause',
+  timerResume: 'Resume',
+  timerDone: 'Done!',
+  cookComplete: 'All done!',
+  cookCompleteHint: "You've completed all the steps. Enjoy your meal!",
+  voiceHint: 'Say "next" to advance',
+  nowCooking: 'Now cooking',
 } as const;
 
 type Keys = keyof typeof EN;
@@ -443,6 +458,21 @@ const EL: Record<Keys, string> = {
   errorRate: 'Όριο ρυθμού Anthropic. Δοκίμασε σε λίγο.',
   errorNetwork: 'Πρόβλημα δικτύου. Έλεγξε τη σύνδεση.',
   errorParse: 'Ο Claude επέστρεψε απρόσμενη απάντηση. Δοκίμασε ξανά.',
+
+  // Cook mode
+  cookMode: 'Λειτουργία Μαγειρέματος',
+  startCooking: 'Ξεκίνα το μαγείρεμα',
+  exitCook: 'Έξοδος',
+  markDoneNext: 'Έτοιμο & επόμενο',
+  stepOf: 'Βήμα {current} από {total}',
+  timerStart: 'Έναρξη',
+  timerPause: 'Παύση',
+  timerResume: 'Συνέχεια',
+  timerDone: 'Τέλος!',
+  cookComplete: 'Όλα έτοιμα!',
+  cookCompleteHint: 'Ολοκλήρωσες όλα τα βήματα. Καλή όρεξη!',
+  voiceHint: 'Πες "επόμενο" για να προχωρήσεις',
+  nowCooking: 'Μαγειρεύεις τώρα',
 };
 
 const ES: Record<Keys, string> = {
@@ -639,23 +669,19 @@ const ES: Record<Keys, string> = {
   seasonLabel: 'De temporada',
   dishGenerate: 'Generar',
 
-  // Recipe detail
-  chefTipsLabel: 'Consejos del chef',
-  recipeDotLegend: 'Verde: ya en la despensa · Gris: lista de compra',
-  expiryOptionalHint: 'Fecha de caducidad (opcional)',
-
-  // Dish flow
+  // Dish flow (cont.)
   dishShoppingList: 'Lista de compra',
   dishCanSubstitute: '¿Puedo sustituirlo?',
   dishSubstitutionTitle: 'Sustituciones',
   dishSaveHistory: 'Guardar en historial',
   dishAddFavorites: 'Añadir a favoritos',
-  dishShoppingAllSet: 'Nada que comprar — tu despensa parece lista para este plato.',
+  dishShoppingAllSet: 'No hay que comprar nada — tu despensa parece estar lista.',
+  chefTipsLabel: 'Consejos del chef',
   substitutionsLoading: 'Preguntando a Claude…',
-
-  // Feed states
+  recipeDotLegend: 'Verde: ya en la despensa · Gris: lista de compra',
   loadingFeed: 'Cargando feed…',
-  noNetworkFeed: 'Sin conexión — mostrando contenido en caché',
+  noNetworkFeed: 'Sin conexión — mostrando contenido guardado',
+  expiryOptionalHint: 'Fecha de caducidad (opcional)',
 
   // Errors
   errorTitle: 'Algo salió mal',
@@ -663,18 +689,30 @@ const ES: Record<Keys, string> = {
   errorRate: 'Límite de Anthropic alcanzado. Inténtalo en un momento.',
   errorNetwork: 'Error de red. Comprueba tu conexión.',
   errorParse: 'Claude devolvió una respuesta inesperada. Inténtalo de nuevo.',
+
+  // Cook mode
+  cookMode: 'Modo cocina',
+  startCooking: 'Empezar a cocinar',
+  exitCook: 'Salir',
+  markDoneNext: 'Listo y siguiente',
+  stepOf: 'Paso {current} de {total}',
+  timerStart: 'Iniciar',
+  timerPause: 'Pausar',
+  timerResume: 'Reanudar',
+  timerDone: '¡Listo!',
+  cookComplete: '¡Todo listo!',
+  cookCompleteHint: 'Has completado todos los pasos. ¡Que aproveche!',
+  voiceHint: 'Di "siguiente" para avanzar',
+  nowCooking: 'Cocinando ahora',
 };
 
-const STRINGS = { EN, EL, ES } as const;
-
-export type I18nKey = Keys;
-
 export function t(lang: Language, key: Keys, vars?: Record<string, string | number>): string {
-  let s: string = STRINGS[lang][key];
+  const map: Record<Keys, string> = lang === 'EL' ? EL : lang === 'ES' ? ES : EN;
+  let str = (map[key] ?? (EN as Record<Keys, string>)[key] ?? key) as string;
   if (vars) {
     for (const [k, v] of Object.entries(vars)) {
-      s = s.replace(`{${k}}`, String(v));
+      str = str.replace(`{${k}}`, String(v));
     }
   }
-  return s;
+  return str;
 }

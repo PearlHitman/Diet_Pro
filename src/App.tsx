@@ -62,6 +62,7 @@ import { MealTypePage } from './pages/MealTypePage';
 import { LoadingPage } from './pages/LoadingPage';
 import { ResultsPage } from './pages/ResultsPage';
 import { RecipeDetailPage } from './pages/RecipeDetailPage';
+import { CookModePage } from './pages/CookModePage';
 import { HistoryPage } from './pages/HistoryAndFavorites';
 import { TabBar } from './components/Chrome';
 import { Toaster } from './components/ui/sonner';
@@ -113,6 +114,7 @@ function BrandedLoader() {
 function Routed() {
   const { ready } = useApp();
   const location = useLocation();
+  const isCook = location.pathname.endsWith('/cook');
   const [onboardChecked, setOnboardChecked] = useState(false);
   const [onboarded, setOnboarded] = useState(false);
   useEffect(() => {
@@ -140,6 +142,7 @@ function Routed() {
         <Route path="/generate" element={<MealTypePage />} />
         <Route path="/generate/loading" element={<LoadingPage />} />
         <Route path="/results" element={<ResultsPage />} />
+        <Route path="/recipe/:id/cook" element={<CookModePage />} />
         <Route path="/recipe/:id" element={<RecipeDetailPage />} />
 
         <Route path="/dish" element={<DishPage />} />
@@ -152,7 +155,7 @@ function Routed() {
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
       </div>
-      <TabBar />
+      {!isCook && <TabBar />}
     </>
   );
 }
