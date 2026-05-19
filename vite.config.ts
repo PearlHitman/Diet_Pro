@@ -45,4 +45,21 @@ export default defineConfig({
     host: true,
     allowedHosts: true,
   },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (!id.includes('node_modules')) return;
+          if (id.includes('lucide-react')) return 'lucide-icons';
+          if (id.includes('@radix-ui')) return 'radix-ui';
+          if (id.includes('@anthropic-ai')) return 'anthropic-sdk';
+          if (id.includes('react-router')) return 'react-router';
+          if (id.includes('react-dom') || id.includes('/react/'))
+            return 'react-core';
+        },
+      },
+    },
+    // All output chunks are split & stay under Vite’s default 500 kB; limit is a fallback.
+    chunkSizeWarningLimit: 700,
+  },
 });
