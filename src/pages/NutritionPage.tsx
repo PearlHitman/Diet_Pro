@@ -5,7 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import { Screen, SubHeader } from '../components/Chrome';
 import { useApp } from '../lib/app-state';
 import { buildNutritionEstimatePrompt } from '../lib/prompts';
-import { callClaude } from '../lib/claude';
+import { callClaude, parseJsonLoose, ClaudeError } from '../lib/claude';
 import {
   computeNutritionGoals, sumMeals, toDateStr, lastNDays,
   type DayTotals,
@@ -557,11 +557,27 @@ function AddFoodSheet({
       setError('');
       try {
         const prompt = buildNutritionEstimatePrompt(query);
-        const raw = await callClaude({ apiKey, model: 'claude-haiku-4-5', prompt, system: 'Return only valid JSON.' });
-        const parsed = JSON.parse(raw) as EstimatedMeal;
-        setEstimate(parsed);
-      } catch {
-        setError('Could not estimate — try rephrasing.');
+        const raw = await callClaude({ apiKey, model: 'claude-haiku-4-5', prompt, system: 'Return only valid JSON. No markdown fences.' });
+        const parsed = parseJsonLoose(raw) as EstimatedMeal;
+        if (
+          typeof parsed !== 'object' || parsed === null ||
+          typeof (parsed as any).calories !== 'number'
+        ) {
+          throw new Error('Unexpected response shape from Claude.');
+        }
+        setEstimate(parsed as EstimatedMeal);
+      } catch (err) {
+        if (err instanceof ClaudeError && err.kind === 'auth') {
+          setError('API key missing or invalid — check Settings.');
+        } else if (err instanceof ClaudeError && err.kind === 'rate') {
+          setError('Rate limit hit — wait a moment and try again.');
+        } else if (err instanceof ClaudeError && err.kind === 'parse') {
+          setError('Claude returned unexpected data — try rephrasing.');
+        } else if (err instanceof Error) {
+          setError(err.message);
+        } else {
+          setError('Something went wrong — try again.');
+        }
       } finally {
         setLoading(false);
       }
