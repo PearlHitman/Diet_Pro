@@ -27,6 +27,8 @@ interface CustomizationSheetProps {
   onApply: (next: Customization) => void;
 }
 
+// Protein-first on purpose — not the canonical CATEGORIES order in types.ts
+// (produce-first). Users almost always pick a protein for "must include".
 const CATEGORY_ORDER: Category[] = ['protein', 'produce', 'grains', 'dairy', 'pantry', 'other'];
 
 const CATEGORY_EMOJI: Record<Category, string> = {
