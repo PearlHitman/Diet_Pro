@@ -160,21 +160,18 @@ function validIngredient(x: unknown): boolean {
   return true;
 }
 
-export interface ValidateAIResponseOptions {
-  minRecipes?: number;
-  maxRecipes?: number;
-}
-
+// Optional bounds support future "one quick idea" (1 recipe) vs full runs (3).
 export function isValidAIResponse(
   x: unknown,
-  opts: ValidateAIResponseOptions = {},
+  opts?: { minRecipes?: number; maxRecipes?: number },
 ): x is AIResponse {
-  const minRecipes = opts.minRecipes ?? 1;
-  const maxRecipes = opts.maxRecipes ?? 3;
   if (!x || typeof x !== 'object') return false;
   const obj = x as Record<string, unknown>;
   if (!Array.isArray(obj.recipes)) return false;
-  if (obj.recipes.length < minRecipes || obj.recipes.length > maxRecipes) return false;
+  const count = obj.recipes.length;
+  const minRecipes = opts?.minRecipes ?? 1;
+  if (count < minRecipes) return false;
+  if (opts?.maxRecipes !== undefined && count > opts.maxRecipes) return false;
   return obj.recipes.every((r: unknown) => {
     if (!r || typeof r !== 'object') return false;
     const rr = r as Record<string, unknown>;
