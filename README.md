@@ -222,6 +222,13 @@ with your own icons. The SVG at `public/icons/icon.svg` is a placeholder.
 Open the app — if an update is ready, a gold banner shows at the top.
 Tap **Update now**. If no banner appears, force-close and reopen the app once.
 
+**Tests won't start on Linux CI (or after copying `node_modules` from Windows).**
+npm may skip platform-specific optional deps such as `@rollup/rollup-linux-x64-gnu`
+when `node_modules` was installed on another OS — Vitest then fails to load Rollup.
+Delete `node_modules` and `package-lock.json`, then run `npm ci` (or `npm install`)
+on the target machine so optional deps resolve for that platform. See
+[npm/cli#4828](https://github.com/npm/cli/issues/4828).
+
 ---
 
 ## Known gaps
