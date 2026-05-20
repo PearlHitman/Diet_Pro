@@ -216,12 +216,16 @@ const EN = {
   dishSubstitutionTitle: 'Substitutions',
   dishSaveHistory: 'Save to history',
   dishAddFavorites: 'Add to favorites',
+  starRecipe: 'Add recipe to favorites',
+  unstarRecipe: 'Remove recipe from favorites',
   dishShoppingAllSet: 'Nothing to buy — your pantry looks ready for this dish.',
   chefTipsLabel: 'Chef tips',
   substitutionsLoading: 'Asking Claude…',
   recipeDotLegend: 'Green: already in pantry · Grey: shopping list',
 
   expiryOptionalHint: 'Expiry date (optional)',
+  closeOverlay: 'Close',
+  toggleImportIngredient: 'Toggle including this ingredient in import',
 
   // Errors
   errorTitle: 'Something went wrong',
@@ -446,12 +450,16 @@ const EL: Record<Keys, string> = {
   dishSubstitutionTitle: 'Αντικαταστάσεις',
   dishSaveHistory: 'Αποθήκευση στο ιστορικό',
   dishAddFavorites: 'Προσθήκη στα αγαπημένα',
+  starRecipe: 'Προσθήκη συνταγής στα αγαπημένα',
+  unstarRecipe: 'Αφαίρεση συνταγής από τα αγαπημένα',
   dishShoppingAllSet: 'Δεν χρειάζονται αγορές — φαίνεται ότι τα έχεις όλα.',
   chefTipsLabel: 'Συμβουλές σεφ',
   substitutionsLoading: 'Ρωτάμε τον Claude…',
   recipeDotLegend: 'Πράσινο: στο ντουλάπι · Γκρι: αγορά',
 
   expiryOptionalHint: 'Ημερ. λήξης (προαιρετικό)',
+  closeOverlay: 'Κλείσιμο',
+  toggleImportIngredient: 'Εναλλαγή συμπερίληψης αυτού του υλικού στην εισαγωγή',
 
   errorTitle: 'Κάτι πήγε στραβά',
   errorNoKey: 'Όρισε πρώτα το API κλειδί στις Ρυθμίσεις.',
@@ -672,12 +680,16 @@ const ES: Record<Keys, string> = {
   dishSubstitutionTitle: 'Sustituciones',
   dishSaveHistory: 'Guardar en historial',
   dishAddFavorites: 'Añadir a favoritos',
+  starRecipe: 'Añadir receta a favoritos',
+  unstarRecipe: 'Quitar receta de favoritos',
   dishShoppingAllSet: 'No hay que comprar nada — tu despensa parece estar lista.',
   chefTipsLabel: 'Consejos del chef',
   substitutionsLoading: 'Preguntando a Claude…',
   recipeDotLegend: 'Verde: ya en la despensa · Gris: lista de compra',
 
   expiryOptionalHint: 'Fecha de caducidad (opcional)',
+  closeOverlay: 'Cerrar',
+  toggleImportIngredient: 'Alternar inclusión de este ingrediente',
 
   errorTitle: 'Algo salió mal',
   errorNoKey: 'Configura tu clave API en Ajustes primero.',

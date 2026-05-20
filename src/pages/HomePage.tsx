@@ -7,6 +7,53 @@ import { Refrigerator, Lightbulb, ChevronRight, AlertCircle } from 'lucide-react
 import { Screen, AppHeader } from '../components/Chrome';
 import { useApp } from '../lib/app-state';
 import { computeNutritionGoals, sumMeals, toDateStr } from '../lib/nutrition';
+import { prefersReducedMotion } from '../lib/motion';
+import type { DayTotals } from '../lib/nutrition';
+import type { NutritionGoals } from '../lib/types';
+
+const ctaCardBtn: React.CSSProperties = {
+  all: 'unset',
+  display: 'flex',
+  alignItems: 'center',
+  gap: 16,
+  padding: 20,
+  background: 'var(--mise-glass-fill)',
+  backdropFilter: 'blur(20px) saturate(180%)',
+  WebkitBackdropFilter: 'blur(20px) saturate(180%)',
+  border: '1px solid var(--mise-glass-border)',
+  borderRadius: 'var(--mise-radius-card)',
+  boxShadow: 'var(--mise-shadow-glass)',
+  cursor: 'pointer',
+  transition: 'transform 0.3s var(--mise-ease-apple), box-shadow 0.3s var(--mise-ease-apple)',
+  boxSizing: 'border-box',
+  width: '100%',
+};
+const ctaCardIconWrap: React.CSSProperties = {
+  width: 48,
+  height: 48,
+  borderRadius: 12,
+  background: 'rgba(124, 58, 237, 0.10)',
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  flexShrink: 0,
+};
+const ctaCardTextCol: React.CSSProperties = { flex: 1, minWidth: 0 };
+const ctaCardTitle: React.CSSProperties = {
+  fontSize: 17,
+  fontWeight: 600,
+  lineHeight: '24px',
+  color: 'var(--mise-text-primary)',
+  fontFamily: 'var(--mise-font-text)',
+  marginBottom: 2,
+};
+const ctaCardSubtitle: React.CSSProperties = {
+  fontSize: 15,
+  lineHeight: '20px',
+  color: 'var(--mise-text-secondary)',
+  fontFamily: 'var(--mise-font-text)',
+};
+const ctaCardChevron: React.CSSProperties = { color: 'var(--mise-text-tertiary)', flexShrink: 0 };
 
 function greetingKey(): 'homeGreetingMorning' | 'homeGreetingAfternoon' | 'homeGreetingEvening' {
   const h = new Date().getHours();
@@ -35,13 +82,17 @@ export function HomePage() {
   const gk = greetingKey();
   const greetLine =
     `${t(gk)}${profile.name.trim() ? `, ${profile.name.trim()}` : ''}`;
+  const reduceMotion = prefersReducedMotion();
 
   return (
     <Screen>
       <AppHeader />
 
       <div style={{ padding: '8px 20px 28px' }}>
-        <div className="fade-up" style={{ animationDelay: '0ms', marginBottom: 28 }}>
+        <div
+          className={reduceMotion ? undefined : 'fade-up'}
+          style={{ ...(!reduceMotion ? { animationDelay: '0ms' } : {}), marginBottom: 28 }}
+        >
           <h1
             style={{
               fontSize: 32,
@@ -69,9 +120,9 @@ export function HomePage() {
         </div>
 
         <div
-          className="fade-up"
+          className={reduceMotion ? undefined : 'fade-up'}
           style={{
-            animationDelay: '60ms',
+            ...(!reduceMotion ? { animationDelay: '60ms' } : {}),
             display: 'flex',
             flexDirection: 'column',
             gap: 16,
@@ -102,9 +153,9 @@ export function HomePage() {
         {needsKey && (
           <Link to="/settings" style={{ textDecoration: 'none', display: 'block', marginBottom: 16 }}>
             <div
-              className="fade-up"
+              className={reduceMotion ? undefined : 'fade-up'}
               style={{
-                animationDelay: '120ms',
+                ...(!reduceMotion ? { animationDelay: '120ms' } : {}),
                 padding: '14px 16px',
                 background: 'rgba(245, 158, 11, 0.10)',
                 border: '1px solid rgba(245, 158, 11, 0.25)',
@@ -128,9 +179,6 @@ export function HomePage() {
   );
 }
 
-import type { DayTotals } from '../lib/nutrition';
-import type { NutritionGoals } from '../lib/types';
-
 function NutritionCard({
   goals,
   totals,
@@ -140,6 +188,7 @@ function NutritionCard({
   totals: DayTotals;
   onClick: () => void;
 }) {
+  const reduceMotion = prefersReducedMotion();
   const today = new Date();
   const dateLabel = today.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' });
 
@@ -250,7 +299,7 @@ function NutritionCard({
                   <div style={{
                     width: `${pct}%`, height: '100%',
                     borderRadius: 99, background: m.color,
-                    transition: 'width 0.4s ease',
+                    ...(reduceMotion ? { transition: 'none' } : { transition: 'width 0.4s ease' }),
                   }} />
                 </div>
                 <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--mise-text-primary)', width: 34, textAlign: 'right', flexShrink: 0 }}>
@@ -280,68 +329,29 @@ function CTACard({
   subtitle: string;
   onClick: () => void;
 }) {
+  const reduceMotion = prefersReducedMotion();
   return (
     <button
       type="button"
       onClick={onClick}
       className="press"
       style={{
-        all: 'unset',
-        display: 'flex',
-        alignItems: 'center',
-        gap: 16,
-        padding: 20,
-        background: 'var(--mise-glass-fill)',
-        backdropFilter: 'blur(20px) saturate(180%)',
-        WebkitBackdropFilter: 'blur(20px) saturate(180%)',
-        border: '1px solid var(--mise-glass-border)',
-        borderRadius: 'var(--mise-radius-card)',
-        boxShadow: 'var(--mise-shadow-glass)',
-        cursor: 'pointer',
-        transition: 'transform 0.3s var(--mise-ease-apple), box-shadow 0.3s var(--mise-ease-apple)',
-        boxSizing: 'border-box',
-        width: '100%',
+        ...ctaCardBtn,
+        ...(reduceMotion ? { transition: 'none' } : {}),
       }}
     >
-      <div
-        style={{
-          width: 48,
-          height: 48,
-          borderRadius: 12,
-          background: 'rgba(124, 58, 237, 0.10)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          flexShrink: 0,
-        }}
-      >
+      <div style={ctaCardIconWrap}>
         {icon}
       </div>
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <div
-          style={{
-            fontSize: 17,
-            fontWeight: 600,
-            lineHeight: '24px',
-            color: 'var(--mise-text-primary)',
-            fontFamily: 'var(--mise-font-text)',
-            marginBottom: 2,
-          }}
-        >
+      <div style={ctaCardTextCol}>
+        <div style={ctaCardTitle}>
           {title}
         </div>
-        <div
-          style={{
-            fontSize: 15,
-            lineHeight: '20px',
-            color: 'var(--mise-text-secondary)',
-            fontFamily: 'var(--mise-font-text)',
-          }}
-        >
+        <div style={ctaCardSubtitle}>
           {subtitle}
         </div>
       </div>
-      <ChevronRight size={20} style={{ color: 'var(--mise-text-tertiary)', flexShrink: 0 }} />
+      <ChevronRight size={20} style={ctaCardChevron} />
     </button>
   );
 }

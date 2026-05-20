@@ -8,9 +8,12 @@ import { T } from '../tokens';
 import { useApp } from '../lib/app-state';
 import { ClaudeError, generateDishRecipe, suggestSubstitutions } from '../lib/claude';
 import { pantryMatchesName } from '../lib/pantry-match';
+import { t as translate } from '../lib/i18n';
 import type { Category, Recipe, RecipeIngredient, Ingredient } from '../lib/types';
 
 const CATEGORY_ORDER: Category[] = ['produce', 'protein', 'dairy', 'grains', 'pantry', 'other'];
+
+type TKey = Parameters<typeof translate>[1];
 
 export function DishPage() {
   const navigate = useNavigate();
@@ -365,7 +368,7 @@ function DishRecipeWithDots({
 }: {
   recipe: Recipe;
   pantry: Ingredient[];
-  t: (k: any, v?: any) => string;
+  t: (k: TKey, v?: Record<string, string | number>) => string;
 }) {
   const ingBlock = (
     <div style={{ marginTop: 14 }}>

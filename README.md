@@ -187,6 +187,12 @@ To tune AI behaviour, edit **`src/lib/prompts.ts`** — all prompts live there.
 
 ---
 
+## Build analysis
+
+After **`npm run analyze`** (production build plus opening the report), inspect **`dist/stats.html`**: it is an interactive treemap with raw, gzip, and brotli sizes. Use it to find chunks larger than about **200 KB gzipped** before changing code; typical heavy pieces in this app are **`@anthropic-ai/sdk`** and **`lucide-react`**, which show up as their own Rollup chunks.
+
+---
+
 ## Deployment
 
 The app is deployed at **[diet-pro-sigma.vercel.app](https://diet-pro-sigma.vercel.app)**.

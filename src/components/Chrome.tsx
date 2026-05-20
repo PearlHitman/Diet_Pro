@@ -5,6 +5,7 @@ import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { ChefHat, Home, Package, Clock, User, ArrowLeft, Globe, Settings as SettingsIcon } from 'lucide-react';
 import { useApp } from '../lib/app-state';
+import { prefersReducedMotion } from '../lib/motion';
 
 export const SCREEN_PAD_TOP = 'max(54px, env(safe-area-inset-top))';
 
@@ -94,24 +95,26 @@ export function AppHeader({
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <LangPill lang={profile.language} />
           <button
+            type="button"
             aria-label={t('settings')}
             onClick={() => navigate('/settings')}
             className="press"
             style={{
-              width: 36,
-              height: 36,
+              minWidth: 44,
+              minHeight: 44,
               borderRadius: 'var(--mise-radius-button)',
               border: '1px solid var(--mise-glass-border)',
               background: 'var(--mise-glass-fill)',
               backdropFilter: 'blur(20px) saturate(180%)',
               WebkitBackdropFilter: 'blur(20px) saturate(180%)',
               color: 'var(--mise-text-secondary)',
-              display: 'flex',
+              display: 'inline-flex',
               alignItems: 'center',
               justifyContent: 'center',
               cursor: 'pointer',
               padding: 0,
               boxShadow: 'var(--mise-shadow-sm)',
+              boxSizing: 'border-box',
             }}
           >
             <SettingsIcon size={18} />
@@ -158,6 +161,7 @@ export function SubHeader({
   right?: React.ReactNode;
 }) {
   const navigate = useNavigate();
+  const { t } = useApp();
   const handleBack = onBack ?? (() => navigate(-1));
   return (
     <div
@@ -176,21 +180,23 @@ export function SubHeader({
       }}
     >
       <button
-        aria-label="Back"
+        aria-label={t('back')}
+        type="button"
         onClick={handleBack}
         className="press"
         style={{
-          width: 36,
-          height: 36,
+          minWidth: 44,
+          minHeight: 44,
           borderRadius: 'var(--mise-radius-button)',
           border: '1px solid var(--mise-glass-border)',
           background: 'rgba(255,255,255,0.5)',
           color: 'var(--mise-text-primary)',
           cursor: 'pointer',
-          display: 'flex',
+          display: 'inline-flex',
           alignItems: 'center',
           justifyContent: 'center',
           padding: 0,
+          boxSizing: 'border-box',
         }}
       >
         <ArrowLeft size={18} />
@@ -208,7 +214,7 @@ export function SubHeader({
       >
         {title}
       </div>
-      <div style={{ minWidth: 36, display: 'flex', justifyContent: 'flex-end' }}>{right}</div>
+      <div style={{ minWidth: 44, display: 'flex', justifyContent: 'flex-end' }}>{right}</div>
     </div>
   );
 }
@@ -245,6 +251,7 @@ export function TabBar() {
   const location = useLocation();
   const navigate = useNavigate();
   const { t } = useApp();
+  const reduceMotion = prefersReducedMotion();
 
   if (!TAB_ROUTES.includes(location.pathname)) return null;
 
@@ -297,7 +304,9 @@ export function TabBar() {
               cursor: 'pointer',
               color: active ? 'var(--mise-primary)' : 'var(--mise-text-secondary)',
               fontFamily: 'var(--mise-font-text)',
-              transition: 'background-color 0.2s ease, color 0.2s ease',
+              ...(reduceMotion
+                ? { transition: 'none' }
+                : { transition: 'background-color 0.2s ease, color 0.2s ease' }),
             }}
           >
             <Icon size={22} />

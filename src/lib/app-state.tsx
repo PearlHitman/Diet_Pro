@@ -9,6 +9,7 @@ import * as db from './db';
 import { t as translate } from './i18n';
 import { applyTheme } from './theme';
 
+/* eslint-disable react-refresh/only-export-components */
 interface AppState {
   // Data
   pantry: Ingredient[];

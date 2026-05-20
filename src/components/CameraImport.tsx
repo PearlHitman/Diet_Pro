@@ -11,8 +11,12 @@ import { createPortal } from 'react-dom';
 import { Pencil } from 'lucide-react';
 import { T } from '../tokens';
 import { useApp } from '../lib/app-state';
+import { t as translate } from '../lib/i18n';
 import { scanProductPhoto, scanReceipt, type ScannedIngredient } from '../lib/claude';
+import { prepareImageForVision } from '../lib/image';
 import { CATEGORIES, type Category, type Ingredient } from '../lib/types';
+
+type TKey = Parameters<typeof translate>[1];
 
 // ─── Types ───────────────────────────────────────────────────
 
@@ -34,20 +38,6 @@ interface Draft extends ScannedIngredient {
 const CATS: readonly Category[] = CATEGORIES;
 
 // ─── Helpers ─────────────────────────────────────────────────
-
-function fileToBase64(file: File): Promise<{ data: string; mediaType: string }> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => {
-      const result = reader.result as string;
-      const [header, data] = result.split(',');
-      const mediaType = header.match(/data:(.*);base64/)?.[1] ?? 'image/jpeg';
-      resolve({ data, mediaType });
-    };
-    reader.onerror = reject;
-    reader.readAsDataURL(file);
-  });
-}
 
 function makePantryItem(draft: Draft): Ingredient {
   const ex = draft.expiresOn;
@@ -80,7 +70,7 @@ export function CameraImport({ file, mode, onClose }: Props) {
 
     (async () => {
       try {
-        const { data, mediaType } = await fileToBase64(file);
+        const { data, mediaType } = await prepareImageForVision(file);
 
         if (mode === 'photo') {
           const result = await scanProductPhoto(data, mediaType, profile.language, settings);
@@ -94,8 +84,9 @@ export function CameraImport({ file, mode, onClose }: Props) {
             setStep({ name: 'review-bulk', items: results.map(r => ({ ...r, selected: true })) });
           }
         }
-      } catch (e: any) {
-        if (!cancelled) setStep({ name: 'error', message: e?.message ?? t('cameraError') });
+      } catch (e: unknown) {
+        const message = e instanceof Error ? e.message : undefined;
+        if (!cancelled) setStep({ name: 'error', message: message ?? t('cameraError') });
       }
     })();
 
@@ -206,7 +197,7 @@ function ReviewSingleView({ item, onConfirm, onCancel, t }: {
   item: Draft;
   onConfirm: (d: Draft) => void;
   onCancel: () => void;
-  t: (k: any, v?: any) => string;
+  t: (k: TKey, v?: Record<string, string | number>) => string;
 }) {
   const [name, setName] = useState(item.name);
   const [amount, setAmount] = useState(item.amount ?? '');
@@ -286,7 +277,7 @@ function ReviewBulkView({ items, onChange, onConfirm, onCancel, t }: {
   onChange: (items: Draft[]) => void;
   onConfirm: (items: Draft[]) => void;
   onCancel: () => void;
-  t: (k: any, v?: any) => string;
+  t: (k: TKey, v?: Record<string, string | number>) => string;
 }) {
   const selected = items.filter(i => i.selected).length;
   const allSelected = selected === items.length;
@@ -373,23 +364,39 @@ function ReviewBulkView({ items, onChange, onConfirm, onCancel, t }: {
                 <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
                   <button
                     type="button"
+                    role="checkbox"
+                    aria-checked={it.selected}
+                    aria-label={appT('toggleImportIngredient')}
                     onClick={() => onChange(items.map((x, i) => (i === idx ? { ...x, selected: !x.selected } : x)))}
                     style={{
                       all: 'unset',
-                      width: 18,
-                      height: 18,
-                      borderRadius: 5,
+                      minWidth: 44,
+                      minHeight: 44,
                       flexShrink: 0,
                       marginTop: 3,
-                      border: `2px solid ${it.selected ? T.accent : T.mute2}`,
-                      background: it.selected ? T.accent : 'transparent',
-                      display: 'flex',
+                      display: 'inline-flex',
                       alignItems: 'center',
                       justifyContent: 'center',
                       cursor: 'pointer',
+                      boxSizing: 'border-box',
                     }}
                   >
-                    {it.selected && <span style={{ fontSize: 11, color: '#1a1208', fontWeight: 900 }}>✓</span>}
+                    <span
+                      aria-hidden
+                      style={{
+                        width: 18,
+                        height: 18,
+                        borderRadius: 5,
+                        border: `2px solid ${it.selected ? T.accent : T.mute2}`,
+                        background: it.selected ? T.accent : 'transparent',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        boxSizing: 'border-box',
+                      }}
+                    >
+                      {it.selected ? <span style={{ fontSize: 11, color: '#1a1208', fontWeight: 900 }}>✓</span> : null}
+                    </span>
                   </button>
 
                   <div style={{ flex: 1, minWidth: 0 }}>
@@ -467,21 +474,22 @@ function ReviewBulkView({ items, onChange, onConfirm, onCancel, t }: {
                       className="press"
                       style={{
                         all: 'unset',
-                        width: 32,
-                        height: 32,
+                        minWidth: 44,
+                        minHeight: 44,
                         borderRadius: 8,
-                        display: 'flex',
+                        display: 'inline-flex',
                         alignItems: 'center',
                         justifyContent: 'center',
                         color: T.text2,
                         cursor: 'pointer',
                         flexShrink: 0,
+                        boxSizing: 'border-box',
                       }}
                     >
                       <Pencil size={17} strokeWidth={2} />
                     </button>
                   ) : (
-                    <div style={{ width: 32 }} />
+                    <div style={{ width: 44, flexShrink: 0 }} />
                   )}
                 </div>
               </div>
@@ -519,7 +527,7 @@ function ReviewBulkView({ items, onChange, onConfirm, onCancel, t }: {
 
 function ErrorView({ message, onClose, onRetry, t }: {
   message: string; onClose: () => void; onRetry: () => void;
-  t: (k: any) => string;
+  t: (k: TKey, v?: Record<string, string | number>) => string;
 }) {
   return (
     <div style={{ padding: '32px 20px 28px', textAlign: 'center' }}>
@@ -537,16 +545,33 @@ function ErrorView({ message, onClose, onRetry, t }: {
 // ─── Shared ───────────────────────────────────────────────────
 
 function SheetHeader({ title, onClose }: { title: string; onClose: () => void }) {
+  const { t } = useApp();
   return (
     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
       <div style={{ fontSize: 17, fontWeight: 700, color: T.text }}>{title}</div>
-      <button onClick={onClose} style={{
-        width: 30, height: 30, borderRadius: 999,
-        border: 'none', background: T.surface, color: T.text2,
-        cursor: 'pointer', fontSize: 16,
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        fontFamily: T.font,
-      }}>✕</button>
+      <button
+        type="button"
+        aria-label={t('closeOverlay')}
+        onClick={onClose}
+        style={{
+          minWidth: 44,
+          minHeight: 44,
+          borderRadius: 999,
+          border: 'none',
+          background: T.surface,
+          color: T.text2,
+          cursor: 'pointer',
+          fontSize: 16,
+          display: 'inline-flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          fontFamily: T.font,
+          padding: 0,
+          boxSizing: 'border-box',
+        }}
+      >
+        <span aria-hidden>✕</span>
+      </button>
     </div>
   );
 }

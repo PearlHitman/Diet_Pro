@@ -1,10 +1,11 @@
 // Nutrition page — Today / Week / Month tabs + Add Food sheet.
 
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Screen, SubHeader } from '../components/Chrome';
 import { useApp } from '../lib/app-state';
 import { buildNutritionEstimatePrompt } from '../lib/prompts';
+import { prefersReducedMotion } from '../lib/motion';
 import { callClaude, parseJsonLoose, ClaudeError } from '../lib/claude';
 import {
   computeNutritionGoals, sumMeals, toDateStr, lastNDays,
@@ -37,6 +38,8 @@ export function NutritionPage() {
   const todayMeals = useMemo(() => nutritionLog.filter(m => m.date === today), [nutritionLog, today]);
   const todayTotals = useMemo(() => sumMeals(todayMeals), [todayMeals]);
 
+  const reduceMotion = prefersReducedMotion();
+
   return (
     <Screen>
       <SubHeader title="Nutrition" onBack={() => navigate(-1)} />
@@ -58,7 +61,7 @@ export function NutritionPage() {
                 fontSize: 14, fontWeight: 600, fontFamily: 'var(--mise-font-text)',
                 background: tab === t ? 'var(--mise-primary)' : 'transparent',
                 color: tab === t ? '#fff' : 'var(--mise-text-secondary)',
-                transition: 'background 0.2s ease, color 0.2s ease',
+                ...(reduceMotion ? { transition: 'none' } : { transition: 'background 0.2s ease, color 0.2s ease' }),
               }}
             >
               {t.charAt(0).toUpperCase() + t.slice(1)}
@@ -239,7 +242,6 @@ function TodayTab({
 function MealRow({ meal, onRemove }: { meal: LoggedMeal; onRemove: (id: string) => void }) {
   const SOURCE_EMOJI: Record<LoggedMeal['source'], string> = { recipe: '🍳', manual: '✏️' };
   const SOURCE_LABEL: Record<LoggedMeal['source'], string> = { recipe: 'from recipe', manual: 'manual entry' };
-  const mealTime = new Date(meal.id.slice(-8) ? Date.now() : Date.now()); // fallback
 
   return (
     <div style={{
@@ -561,7 +563,7 @@ function AddFoodSheet({
         const parsed = parseJsonLoose(raw) as EstimatedMeal;
         if (
           typeof parsed !== 'object' || parsed === null ||
-          typeof (parsed as any).calories !== 'number'
+          typeof (parsed as { calories?: unknown }).calories !== 'number'
         ) {
           throw new Error('Unexpected response shape from Claude.');
         }

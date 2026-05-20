@@ -12,6 +12,7 @@ import { T } from '../tokens';
 import { Check, X } from './Icons';
 import { PrimaryButton, GhostButton } from './Forms';
 import { useApp } from '../lib/app-state';
+import { prefersReducedMotion } from '../lib/motion';
 import {
   EMPTY_CUSTOMIZATION,
   type Category,
@@ -84,6 +85,7 @@ function Chip({
   onClick: () => void;
 }) {
   const isShaking = shakeTarget === name.toLowerCase();
+  const reduceMotion = prefersReducedMotion();
 
   const base: React.CSSProperties = {
     padding: '8px 13px',
@@ -99,7 +101,9 @@ function Chip({
     lineHeight: 1.1,
     opacity: disabled ? 0.45 : 1,
     // 2. Smooth color transitions between states
-    transition: 'background 0.15s ease, border-color 0.15s ease, color 0.15s ease',
+    ...(reduceMotion ? { transition: 'none' } : {
+      transition: 'background 0.15s ease, border-color 0.15s ease, color 0.15s ease',
+    }),
   };
 
   let styled: React.CSSProperties;
@@ -114,17 +118,17 @@ function Chip({
   return (
     <button
       type="button"
-      className={`press${isShaking ? ' shake' : ''}`}
+      className={`press${isShaking && !reduceMotion ? ' shake' : ''}`}
       onClick={onClick}
       disabled={disabled}
       style={styled}
     >
       {/* 5. Icon pops in on state entry — key change causes remount → re-animation */}
       {state === 'must' && (
-        <span key="must" className="icon-pop"><Check size={12} /></span>
+        <span key="must" className={reduceMotion ? undefined : 'icon-pop'}><Check size={12} /></span>
       )}
       {state === 'skip' && (
-        <span key="skip" className="icon-pop"><X size={12} /></span>
+        <span key="skip" className={reduceMotion ? undefined : 'icon-pop'}><X size={12} /></span>
       )}
       <span>{name}</span>
     </button>
@@ -137,6 +141,7 @@ export function CustomizationSheet({
   open, onClose, pantry, initial, onApply,
 }: CustomizationSheetProps) {
   const { t } = useApp();
+  const reduceMotion = prefersReducedMotion();
   const [draft, setDraft] = useState<Customization>(initial);
 
   // 1. Entrance / exit: rendered gates the DOM node; visible drives the
@@ -230,7 +235,7 @@ export function CustomizationSheet({
           WebkitBackdropFilter: 'blur(8px)',
           zIndex: 50,
           opacity: visible ? 1 : 0,
-          transition: 'opacity 0.25s ease',
+          ...(reduceMotion ? { transition: 'none' } : { transition: 'opacity 0.25s ease' }),
         }}
       />
 
@@ -250,7 +255,9 @@ export function CustomizationSheet({
           boxShadow: '0 -20px 40px rgba(0,0,0,0.4)',
           fontFamily: T.font,
           transform: visible ? 'translateY(0)' : 'translateY(100%)',
-          transition: 'transform 0.32s cubic-bezier(0.2, 0.8, 0.2, 1)',
+          ...(reduceMotion ? { transition: 'none' } : {
+            transition: 'transform 0.32s cubic-bezier(0.2, 0.8, 0.2, 1)',
+          }),
         }}
       >
         {/* Drag handle indicator */}
@@ -276,16 +283,17 @@ export function CustomizationSheet({
           </div>
           <button
             type="button"
-            aria-label="Close"
+            aria-label={t('closeOverlay')}
             className="press"
             onClick={onClose}
             style={{
-              width: 32, height: 32, borderRadius: 8,
+              minWidth: 44, minHeight: 44, borderRadius: 8,
               border: 'none', background: 'transparent', color: T.text2,
               cursor: 'pointer', padding: 0,
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+              boxSizing: 'border-box',
             }}
-          ><X size={18} /></button>
+          ><span aria-hidden><X size={18} /></span></button>
         </div>
 
         {/* Scrollable content */}
@@ -318,7 +326,7 @@ export function CustomizationSheet({
                   {/* 4. key={used} causes remount on count change → bump animation replays */}
                   <div
                     key={used}
-                    className={used > 0 ? 'bump' : ''}
+                    className={!reduceMotion && used > 0 ? 'bump' : ''}
                     style={{
                       fontSize: 11, fontWeight: 600,
                       color: used >= cap ? T.accent : T.mute2,
@@ -373,7 +381,7 @@ export function CustomizationSheet({
                 <GhostButton onClick={() => setDraft(EMPTY_CUSTOMIZATION)}>{t('reset')}</GhostButton>
                 {/* 6. Glow pulse on Apply when there are uncommitted changes */}
                 <PrimaryButton
-                  className={hasChanges ? 'glow' : undefined}
+                  className={hasChanges && !reduceMotion ? 'glow' : undefined}
                   onClick={() => { onApply(draft); onClose(); }}
                 >{t('apply')}</PrimaryButton>
               </>

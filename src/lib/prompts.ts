@@ -16,6 +16,40 @@ const MEAL_DESC: Record<MealType, string> = {
   festive:  'Festive — impressive presentation, suitable for sharing or special occasions.',
 };
 
+/** Stable empty fallback for optional customization lists (never mutate). */
+const EMPTY_STRING_LIST: readonly string[] = [];
+
+const RECIPE_PROMPT_BEST_OUTPUT_FORMAT = `═══ OUTPUT FORMAT ═══
+Respond with ONLY valid JSON. No prose, no markdown, no code fences.
+Strict schema:
+
+{
+  "recipes": [
+    {
+      "name": "string — descriptive recipe title",
+      "cookTime": number — total minutes from start to plating,
+      "difficulty": "Beginner" | "Intermediate" | "Expert",
+      "calories": number — estimated kcal per serving,
+      "protein": number — estimated grams of protein per serving,
+      "carbs": number — estimated grams of carbohydrates per serving,
+      "fat": number — estimated grams of fat per serving,
+      "ingredients": [
+        {
+          "name": "string",
+          "amount": "string e.g. '200g' or '2 cloves'",
+          "missing": boolean,
+          "pantryCategory": "produce" | "protein" | "dairy" | "grains" | "pantry" | "other"
+        }
+      ],
+      "steps": ["string — one step per array element, imperative voice"],
+      "chefTips": ["string — short practical tips for best results"],
+      "serving": "string — e.g. 'Serves 4' matching the user's servings preference"
+    }
+  ]
+}
+
+Generate exactly 1 recipe now.`;
+
 // ─── Helpers ─────────────────────────────────────────────────
 
 function formatPantry(pantry: Ingredient[]): string {
@@ -91,8 +125,8 @@ really in their pantry versus missing.`
     : 'Output language: English.';
 
   // Build constraint sections only if non-empty
-  const mustInclude = customization?.mustInclude ?? [];
-  const skip = customization?.skip ?? [];
+  const mustInclude = customization?.mustInclude ?? EMPTY_STRING_LIST;
+  const skip = customization?.skip ?? EMPTY_STRING_LIST;
 
   const mustSection = mustInclude.length > 0
     ? `\n═══ USER REQUIREMENTS — MUST INCLUDE ═══
@@ -187,36 +221,7 @@ ${mustSection}${skipSection}
 
 11. ${langInstruction}
 
-═══ OUTPUT FORMAT ═══
-Respond with ONLY valid JSON. No prose, no markdown, no code fences.
-Strict schema:
-
-{
-  "recipes": [
-    {
-      "name": "string — descriptive recipe title",
-      "cookTime": number — total minutes from start to plating,
-      "difficulty": "Beginner" | "Intermediate" | "Expert",
-      "calories": number — estimated kcal per serving,
-      "protein": number — estimated grams of protein per serving,
-      "carbs": number — estimated grams of carbohydrates per serving,
-      "fat": number — estimated grams of fat per serving,
-      "ingredients": [
-        {
-          "name": "string",
-          "amount": "string e.g. '200g' or '2 cloves'",
-          "missing": boolean,
-          "pantryCategory": "produce" | "protein" | "dairy" | "grains" | "pantry" | "other"
-        }
-      ],
-      "steps": ["string — one step per array element, imperative voice"],
-      "chefTips": ["string — short practical tips for best results"],
-      "serving": "string — e.g. 'Serves 4' matching the user's servings preference"
-    }
-  ]
-}
-
-Generate exactly 1 recipe now.`;
+${RECIPE_PROMPT_BEST_OUTPUT_FORMAT}`;
 }
 
 function buildRecipePromptSpeed({
@@ -229,8 +234,8 @@ function buildRecipePromptSpeed({
       ? 'OUTPUT LANGUAGE: Spanish (Español) for all text fields.'
       : 'OUTPUT LANGUAGE: English.';
 
-  const mustInclude = customization?.mustInclude ?? [];
-  const skip = customization?.skip ?? [];
+  const mustInclude = customization?.mustInclude ?? EMPTY_STRING_LIST;
+  const skip = customization?.skip ?? EMPTY_STRING_LIST;
 
   const mustSection = mustInclude.length > 0
     ? `\nMUST include in the recipe: ${mustInclude.join(', ')}.`

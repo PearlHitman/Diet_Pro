@@ -49,7 +49,7 @@ export function IngredientFormPage() {
       setAmount('');
       setCategory(readSavedCategory(undefined));
     }
-  }, [id, editing?.id]);
+  }, [id, editing]);
 
   const canSave = name.trim().length > 0;
 

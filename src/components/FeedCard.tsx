@@ -5,6 +5,7 @@
 import React, { useState } from 'react';
 import { T } from '../tokens';
 import type { MealOfDay, FoodFact, SeasonalPick } from '../lib/feed';
+import { prefersReducedMotion } from '../lib/motion';
 
 // ─── Generic shell ────────────────────────────────────────────────────────
 
@@ -25,11 +26,12 @@ export function FeedCard({
   children,
   index = 0,
 }: FeedCardProps) {
+  const reduceMotion = prefersReducedMotion();
   return (
     <div
-      className="fade-up"
+      className={reduceMotion ? undefined : 'fade-up'}
       style={{
-        animationDelay: `${index * 60}ms`,
+        ...(!reduceMotion ? { animationDelay: `${index * 60}ms` } : {}),
         background: 'var(--mise-glass-fill)',
         backdropFilter: 'blur(20px) saturate(180%)',
         WebkitBackdropFilter: 'blur(20px) saturate(180%)',
@@ -62,7 +64,7 @@ export function FeedCard({
               color: T.muted, lineHeight: 1,
               display: 'flex', alignItems: 'center',
               opacity: refreshing ? 0.4 : 1,
-              transition: 'opacity 0.15s',
+              ...(reduceMotion ? { transition: 'none' } : { transition: 'opacity 0.15s' }),
             }}
           >
             <RefreshIcon size={14} spinning={refreshing} />
@@ -77,11 +79,12 @@ export function FeedCard({
 // ─── Skeleton placeholder (while network call is in-flight) ───────────────
 
 export function SkeletonCard({ index = 0 }: { index?: number }) {
+  const reduceMotion = prefersReducedMotion();
   return (
     <div
-      className="fade-up"
+      className={reduceMotion ? undefined : 'fade-up'}
       style={{
-        animationDelay: `${index * 60}ms`,
+        ...(!reduceMotion ? { animationDelay: `${index * 60}ms` } : {}),
         background: 'var(--mise-glass-fill)',
         backdropFilter: 'blur(20px) saturate(180%)',
         WebkitBackdropFilter: 'blur(20px) saturate(180%)',
@@ -257,6 +260,7 @@ interface SeasonalCardProps {
 
 export function SeasonalCard({ season, picks, badge, seasonLabel, index = 0 }: SeasonalCardProps) {
   const [selected, setSelected] = useState<number | null>(null);
+  const reduceMotion = prefersReducedMotion();
 
   return (
     <FeedCard badge={badge} badgeColor={T.warning} index={index}>
@@ -296,7 +300,9 @@ export function SeasonalCard({ season, picks, badge, seasonLabel, index = 0 }: S
               color: selected === i ? T.warning : T.text2,
               fontSize: 13, fontWeight: 500,
               cursor: 'pointer', fontFamily: T.font,
-              transition: 'background 0.15s, border-color 0.15s, color 0.15s',
+              ...(reduceMotion ? { transition: 'none' } : {
+                transition: 'background 0.15s, border-color 0.15s, color 0.15s',
+              }),
             }}
           >
             <span style={{ fontSize: 15 }}>{pick.emoji}</span>
@@ -308,7 +314,7 @@ export function SeasonalCard({ season, picks, badge, seasonLabel, index = 0 }: S
       {/* Expandable note */}
       {selected !== null && picks[selected] && (
         <div
-          className="fade-up"
+          className={reduceMotion ? undefined : 'fade-up'}
           style={{
             marginTop: 10,
             padding: '9px 12px',

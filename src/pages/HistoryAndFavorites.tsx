@@ -8,6 +8,7 @@ import { RecipeCard } from '../components/RecipeCard';
 import { BookOpen } from '../components/Icons';
 import { useApp } from '../lib/app-state';
 import type { Recipe } from '../lib/types';
+import { prefersReducedMotion } from '../lib/motion';
 
 type View = 'all' | 'favs';
 
@@ -27,6 +28,8 @@ export function HistoryPage() {
     else updated.set('view', next);
     setParams(updated, { replace: true });
   };
+
+  const reduceMotion = prefersReducedMotion();
 
   return (
     <Screen>
@@ -74,7 +77,11 @@ export function HistoryPage() {
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
             {list.map((r, i) => (
-              <div key={r.id} className="fade-up" style={{ animationDelay: `${i * 30}ms` }}>
+              <div
+                key={r.id}
+                className={reduceMotion ? undefined : 'fade-up'}
+                style={!reduceMotion ? { animationDelay: `${i * 30}ms` } : {}}
+              >
                 <RecipeCard recipe={r} />
               </div>
             ))}
@@ -96,6 +103,7 @@ function SegBtn({
   label: string;
   count: number;
 }) {
+  const reduceMotion = prefersReducedMotion();
   return (
     <button
       type="button"
@@ -117,7 +125,7 @@ function SegBtn({
         display: 'inline-flex',
         alignItems: 'center',
         gap: 6,
-        transition: 'background 0.2s, color 0.2s',
+        ...(reduceMotion ? { transition: 'none' } : { transition: 'background 0.2s, color 0.2s' }),
       }}
     >
       {label}

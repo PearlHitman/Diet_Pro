@@ -7,9 +7,12 @@ import { Field, Input, Segmented, PrimaryButton, GhostButton } from '../componen
 import { Check, X, AlertCircle, Trash } from '../components/Icons';
 import { useApp } from '../lib/app-state';
 import { validateApiKey } from '../lib/claude';
+import { t as translate } from '../lib/i18n';
 import type { ClaudeModel, RecipeSpeed, ThemePref } from '../lib/types';
 
 type KeyState = 'unchecked' | 'checking' | 'valid' | 'invalid';
+
+type TKey = Parameters<typeof translate>[1];
 
 function downloadJson(filename: string, data: unknown): void {
   const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
@@ -237,7 +240,7 @@ export function SettingsPage() {
   );
 }
 
-function KeyStatusBadge({ state, t }: { state: KeyState; t: (k: any) => string }) {
+function KeyStatusBadge({ state, t }: { state: KeyState; t: (k: TKey, v?: Record<string, string | number>) => string }) {
   if (state === 'unchecked' || state === 'checking') return null;
   if (state === 'valid') {
     return (

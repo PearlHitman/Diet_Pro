@@ -17,7 +17,7 @@ export const T = {
   borderHi:  'var(--mise-glass-border)',
   borderAcc: 'rgba(124,58,237,0.5)',
 
-  // Text
+  // Text (muted / text2 follow --mise-text-secondary • theme.css contrast tuning)
   text:      'var(--mise-text-primary)',
   text2:     'var(--mise-text-secondary)',
   muted:     'var(--mise-text-secondary)',

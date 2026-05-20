@@ -3,6 +3,7 @@
 // touch targets and SF Pro typography per Guidelines.md.
 
 import React from 'react';
+import { prefersReducedMotion } from '../lib/motion';
 
 export function Field({
   label,
@@ -58,6 +59,7 @@ export function Input({
   type?: 'text' | 'date' | 'number' | 'password';
   autoFocus?: boolean;
 }) {
+  const reduceMotion = prefersReducedMotion();
   return (
     <input
       type={type}
@@ -79,7 +81,7 @@ export function Input({
         outline: 'none',
         boxSizing: 'border-box',
         boxShadow: 'var(--mise-shadow-sm)',
-        transition: 'border-color 0.2s, box-shadow 0.2s',
+        ...(reduceMotion ? { transition: 'none' } : { transition: 'border-color 0.2s, box-shadow 0.2s' }),
       }}
       onFocus={e => {
         e.currentTarget.style.borderColor = 'var(--mise-primary)';
@@ -102,6 +104,7 @@ export function Segmented<V extends string>({
   value: V;
   onChange: (v: V) => void;
 }) {
+  const reduceMotion = prefersReducedMotion();
   return (
     <div
       style={{
@@ -135,7 +138,7 @@ export function Segmented<V extends string>({
               letterSpacing: -0.1,
               fontFamily: 'var(--mise-font-text)',
               cursor: 'pointer',
-              transition: 'background 0.2s, color 0.2s',
+              ...(reduceMotion ? { transition: 'none' } : { transition: 'background 0.2s, color 0.2s' }),
             }}
           >
             {o.label}
@@ -247,6 +250,7 @@ export function PrimaryButton({
   icon?: React.ReactNode;
   className?: string;
 }) {
+  const reduceMotion = prefersReducedMotion();
   return (
     <button
       type="button"
@@ -270,7 +274,9 @@ export function PrimaryButton({
         gap: 8,
         letterSpacing: -0.1,
         boxShadow: disabled ? 'none' : '0px 4px 12px rgba(124, 58, 237, 0.3)',
-        transition: 'transform 0.12s, box-shadow 0.2s, background 0.2s',
+        ...(reduceMotion
+          ? { transition: 'none' }
+          : { transition: 'transform 0.12s, box-shadow 0.2s, background 0.2s' }),
       }}
     >
       {icon}

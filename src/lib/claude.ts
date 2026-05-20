@@ -86,11 +86,12 @@ export async function generateRecipes(input: GenerateInput): Promise<Recipe[]> {
       system: fast ? RECIPE_SYSTEM_PROMPT_SPEED : RECIPE_SYSTEM_PROMPT,
       messages: [{ role: 'user', content: prompt }],
     });
-  } catch (e: any) {
-    if (e?.status === 401) throw new ClaudeError('Invalid API key.', 'auth');
-    if (e?.status === 429) throw new ClaudeError('Rate limit hit. Try again in a moment.', 'rate');
-    if (e?.status >= 500) throw new ClaudeError('Anthropic service error. Try again.', 'network');
-    throw new ClaudeError(e?.message ?? 'Network error', 'network');
+  } catch (e: unknown) {
+    const err = e as { status?: number; message?: string } | null;
+    if (err?.status === 401) throw new ClaudeError('Invalid API key.', 'auth');
+    if (err?.status === 429) throw new ClaudeError('Rate limit hit. Try again in a moment.', 'rate');
+    if ((err?.status ?? 0) >= 500) throw new ClaudeError('Anthropic service error. Try again.', 'network');
+    throw new ClaudeError(err?.message ?? 'Network error', 'network');
   }
 
   // Extract text block.
@@ -248,11 +249,12 @@ export async function generateDishRecipe(input: {
         : `${RECIPE_SYSTEM_PROMPT}\n\n${DISH_SYSTEM_PROMPT}`,
       messages: [{ role: 'user', content: prompt }],
     });
-  } catch (e: any) {
-    if (e?.status === 401) throw new ClaudeError('Invalid API key.', 'auth');
-    if (e?.status === 429) throw new ClaudeError('Rate limit hit. Try again in a moment.', 'rate');
-    if (e?.status >= 500) throw new ClaudeError('Anthropic service error. Try again.', 'network');
-    throw new ClaudeError(e?.message ?? 'Network error', 'network');
+  } catch (e: unknown) {
+    const err = e as { status?: number; message?: string } | null;
+    if (err?.status === 401) throw new ClaudeError('Invalid API key.', 'auth');
+    if (err?.status === 429) throw new ClaudeError('Rate limit hit. Try again in a moment.', 'rate');
+    if ((err?.status ?? 0) >= 500) throw new ClaudeError('Anthropic service error. Try again.', 'network');
+    throw new ClaudeError(err?.message ?? 'Network error', 'network');
   }
 
   const textBlock = response.content.find(b => b.type === 'text');
@@ -338,11 +340,12 @@ export async function suggestSubstitutions(input: {
       max_tokens: 1024,
       messages: [{ role: 'user', content: user }],
     });
-  } catch (e: any) {
-    if (e?.status === 401) throw new ClaudeError('Invalid API key.', 'auth');
-    if (e?.status === 429) throw new ClaudeError('Rate limit hit. Try again in a moment.', 'rate');
-    if (e?.status >= 500) throw new ClaudeError('Anthropic service error. Try again.', 'network');
-    throw new ClaudeError(e?.message ?? 'Network error', 'network');
+  } catch (e: unknown) {
+    const err = e as { status?: number; message?: string } | null;
+    if (err?.status === 401) throw new ClaudeError('Invalid API key.', 'auth');
+    if (err?.status === 429) throw new ClaudeError('Rate limit hit. Try again in a moment.', 'rate');
+    if ((err?.status ?? 0) >= 500) throw new ClaudeError('Anthropic service error. Try again.', 'network');
+    throw new ClaudeError(err?.message ?? 'Network error', 'network');
   }
 
   const textBlock = response.content.find(b => b.type === 'text');
@@ -400,10 +403,11 @@ async function visionCall(
         ],
       }],
     });
-  } catch (e: any) {
-    if (e?.status === 401) throw new ClaudeError('Invalid API key.', 'auth');
-    if (e?.status === 429) throw new ClaudeError('Rate limit hit. Try again in a moment.', 'rate');
-    throw new ClaudeError(e?.message ?? 'Network error', 'network');
+  } catch (e: unknown) {
+    const err = e as { status?: number; message?: string } | null;
+    if (err?.status === 401) throw new ClaudeError('Invalid API key.', 'auth');
+    if (err?.status === 429) throw new ClaudeError('Rate limit hit. Try again in a moment.', 'rate');
+    throw new ClaudeError(err?.message ?? 'Network error', 'network');
   }
   const block = response.content.find(b => b.type === 'text');
   if (!block || block.type !== 'text') throw new ClaudeError('Empty vision response.', 'parse');
@@ -419,14 +423,18 @@ export async function scanProductPhoto(
 ): Promise<ScannedIngredient> {
   const client = makeClient(settings);
   const text = await visionCall(client, buildProductPhotoPrompt(language), imageBase64, mediaType);
-  const parsed = parseJsonLoose(text) as any;
-  if (!parsed || typeof parsed.name !== 'string' || !parsed.name.trim()) {
+  const parsed = parseJsonLoose(text) as unknown;
+  if (!parsed || typeof parsed !== 'object') {
+    throw new ClaudeError('Could not identify ingredient from photo.', 'parse');
+  }
+  const maybe = parsed as { name?: unknown; amount?: unknown; category?: unknown };
+  if (typeof maybe.name !== 'string' || !maybe.name.trim()) {
     throw new ClaudeError('Could not identify ingredient from photo.', 'parse');
   }
   return {
-    name: parsed.name.trim(),
-    amount: typeof parsed.amount === 'string' ? parsed.amount.trim() || undefined : undefined,
-    category: coerceCategory(parsed.category),
+    name: maybe.name.trim(),
+    amount: typeof maybe.amount === 'string' ? maybe.amount.trim() || undefined : undefined,
+    category: coerceCategory(maybe.category),
   };
 }
 
@@ -439,17 +447,21 @@ export async function scanReceipt(
 ): Promise<ScannedIngredient[]> {
   const client = makeClient(settings);
   const text = await visionCall(client, buildReceiptPrompt(language), imageBase64, mediaType);
-  const parsed = parseJsonLoose(text) as any;
-  if (!parsed || !Array.isArray(parsed.ingredients)) {
+  const parsed = parseJsonLoose(text) as unknown;
+  if (!parsed || typeof parsed !== 'object' || !Array.isArray((parsed as { ingredients?: unknown }).ingredients)) {
     throw new ClaudeError('Could not parse receipt.', 'parse');
   }
-  return (parsed.ingredients as any[])
-    .filter(i => typeof i?.name === 'string' && i.name.trim())
-    .map(i => ({
-      name: i.name.trim(),
-      amount: typeof i.amount === 'string' ? i.amount.trim() || undefined : undefined,
-      category: coerceCategory(i.category),
-    }));
+  const items = (parsed as { ingredients: unknown[] }).ingredients;
+  return items
+    .filter(i => typeof (i as { name?: unknown }).name === 'string' && String((i as { name?: unknown }).name).trim())
+    .map(i => {
+      const ing = i as { name: string; amount?: unknown; category?: unknown };
+      return {
+        name: ing.name.trim(),
+        amount: typeof ing.amount === 'string' ? ing.amount.trim() || undefined : undefined,
+        category: coerceCategory(ing.category),
+      };
+    });
 }
 
 // ─── Generic text call (used by nutrition estimator) ─────────
@@ -481,10 +493,11 @@ export async function callClaude({
       ...(system ? { system } : {}),
       messages: [{ role: 'user', content: prompt }],
     });
-  } catch (e: any) {
-    if (e?.status === 401) throw new ClaudeError('Invalid API key.', 'auth');
-    if (e?.status === 429) throw new ClaudeError('Rate limit hit.', 'rate');
-    throw new ClaudeError(e?.message ?? 'Network error', 'network');
+  } catch (e: unknown) {
+    const err = e as { status?: number; message?: string } | null;
+    if (err?.status === 401) throw new ClaudeError('Invalid API key.', 'auth');
+    if (err?.status === 429) throw new ClaudeError('Rate limit hit.', 'rate');
+    throw new ClaudeError(err?.message ?? 'Network error', 'network');
   }
   const block = response.content.find(b => b.type === 'text');
   if (!block || block.type !== 'text') throw new ClaudeError('No text in response.', 'parse');
@@ -506,8 +519,9 @@ export async function validateApiKey(apiKey: string): Promise<{ ok: true } | { o
       messages: [{ role: 'user', content: 'hi' }],
     });
     return { ok: true };
-  } catch (e: any) {
-    if (e?.status === 401) return { ok: false, reason: 'Key is invalid or revoked.' };
-    return { ok: false, reason: e?.message ?? 'Validation failed.' };
+  } catch (e: unknown) {
+    const err = e as { status?: number; message?: string } | null;
+    if (err?.status === 401) return { ok: false, reason: 'Key is invalid or revoked.' };
+    return { ok: false, reason: err?.message ?? 'Validation failed.' };
   }
 }

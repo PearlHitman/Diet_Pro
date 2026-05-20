@@ -11,6 +11,7 @@ import { Sparkles } from '../components/Icons';
 import { T } from '../tokens';
 import { useApp } from '../lib/app-state';
 import { loadResultIds, clearFlowState } from '../lib/generate-flow';
+import { prefersReducedMotion } from '../lib/motion';
 
 interface LocationState { ids?: string[] }
 
@@ -22,6 +23,7 @@ export function ResultsPage() {
   const navIds = (location.state as LocationState | null)?.ids ?? [];
   const ids = navIds.length > 0 ? navIds : loadResultIds();
   const shown = recipes.filter(r => ids.includes(r.id));
+  const reduceMotion = prefersReducedMotion();
 
   function exitFlow() {
     clearFlowState();
@@ -48,9 +50,9 @@ export function ResultsPage() {
         {shown.map((r, i) => (
           <div
             key={r.id}
-            className="fade-up"
+            className={reduceMotion ? undefined : 'fade-up'}
             style={{
-              animationDelay: `${i * 30}ms`,
+              ...(!reduceMotion ? { animationDelay: `${i * 30}ms` } : {}),
               display: 'flex',
               flexDirection: 'column',
               gap: 12,

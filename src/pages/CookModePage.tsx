@@ -1,8 +1,9 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ArrowLeft, ArrowRight, Check, TimerReset } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useApp } from '../lib/app-state';
 import { toDateStr } from '../lib/nutrition';
+import { prefersReducedMotion } from '../lib/motion';
 
 interface TimerState {
   total: number;
@@ -73,11 +74,13 @@ export function CookModePage() {
   const recipe = recipes.find(r => r.id === id);
   const [mealLogged, setMealLogged] = useState(false);
 
-  const steps = recipe?.steps ?? [];
+  const steps = useMemo(() => recipe?.steps ?? [], [recipe]);
   const totalSteps = steps.length;
 
   const [completedCount, setCompletedCount] = useState(0);
   const [timers, setTimers] = useState<Record<number, TimerState>>({});
+
+  const reduceMotion = prefersReducedMotion();
 
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const wakeLockRef = useRef<WakeLockSentinel | null>(null);
@@ -357,7 +360,7 @@ export function CookModePage() {
                 width: `${timerProgress}%`,
                 height: '100%',
                 background: timer.remaining === 0 ? 'var(--mise-success)' : 'var(--mise-warning)',
-                transition: 'width 1s linear',
+                ...(reduceMotion ? { transition: 'none' } : { transition: 'width 1s linear' }),
               }} />
             </div>
           </div>

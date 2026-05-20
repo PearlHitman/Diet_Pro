@@ -32,7 +32,7 @@ export function PantryIngredientDrawer({
     setCategory(item.category);
     setExpiresOn(item.expiresOn ?? '');
     setAmount(item.amount ?? '');
-  }, [item?.id]);
+  }, [item]);
 
   const canSave = name.trim().length > 0;
 

@@ -4,8 +4,9 @@ import path from 'node:path';
 import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
 import { VitePWA } from 'vite-plugin-pwa';
+import { visualizer } from 'rollup-plugin-visualizer';
 
-export default defineConfig({
+export default defineConfig(({ command }) => ({
   // Test config — run with `npm test` (watch) or `npm run test:run` (once).
   test: {
     environment: 'jsdom',
@@ -39,6 +40,16 @@ export default defineConfig({
         ],
       },
     }),
+    ...(command === 'build'
+      ? [
+          visualizer({
+            filename: 'dist/stats.html',
+            gzipSize: true,
+            brotliSize: true,
+            template: 'treemap',
+          }),
+        ]
+      : []),
   ],
   server: {
     port: 5173,
@@ -62,4 +73,4 @@ export default defineConfig({
     // All output chunks are split & stay under Vite’s default 500 kB; limit is a fallback.
     chunkSizeWarningLimit: 700,
   },
-});
+}));

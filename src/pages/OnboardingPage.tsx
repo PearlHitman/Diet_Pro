@@ -14,6 +14,7 @@ import { ChefHat, ArrowRight, ArrowLeft, Sparkles, Check, X, AlertCircle } from 
 import { useApp } from '../lib/app-state';
 import { validateApiKey } from '../lib/claude';
 import { markOnboarded } from '../lib/onboarding-state';
+import { prefersReducedMotion } from '../lib/motion';
 import { CATEGORIES, type Category, type Ingredient, type Language, type Level } from '../lib/types';
 
 // ─── Inline i18n for onboarding ──────────────────────────────
@@ -171,6 +172,8 @@ export function OnboardingPage({ onComplete }: { onComplete: () => void }) {
   const [ingCat, setIngCat] = useState<Category>('produce');
   const [ingExpiry, setIngExpiry] = useState('');
 
+  const reduceMotion = prefersReducedMotion();
+
   async function chooseLanguage(lang: Language) {
     setLanguage(lang);
     await saveProfile({ ...profile, language: lang });
@@ -222,7 +225,7 @@ export function OnboardingPage({ onComplete }: { onComplete: () => void }) {
               <div key={i} style={{
                 flex: 1, height: 3, borderRadius: 999,
                 background: i + 1 <= step ? T.accent : 'rgba(255,255,255,0.08)',
-                transition: 'background 0.2s',
+                ...(reduceMotion ? { transition: 'none' } : { transition: 'background 0.2s' }),
               }}/>
             ))}
           </div>

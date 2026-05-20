@@ -25,9 +25,91 @@ import {
 } from '../components/ui/dialog';
 import { useApp } from '../lib/app-state';
 import { daysUntil } from '../lib/date';
+import { prefersReducedMotion } from '../lib/motion';
+import { t as translate } from '../lib/i18n';
 import { CATEGORIES, type Category, type Ingredient } from '../lib/types';
 
 const CATEGORY_ORDER: readonly Category[] = CATEGORIES;
+
+const pantryCategoryHeaderStyle: React.CSSProperties = {
+  fontSize: 13,
+  fontWeight: 600,
+  letterSpacing: 0.5,
+  textTransform: 'uppercase',
+  color: 'var(--mise-text-tertiary)',
+  marginBottom: 12,
+  fontFamily: 'var(--mise-font-text)',
+};
+
+const pantryColumnGap: React.CSSProperties = { display: 'flex', flexDirection: 'column', gap: 12 };
+
+const pantryIngredientRowShell: React.CSSProperties = {
+  display: 'flex',
+  alignItems: 'center',
+  gap: 16,
+  padding: 16,
+  background: 'var(--mise-glass-fill)',
+  backdropFilter: 'blur(20px) saturate(180%)',
+  WebkitBackdropFilter: 'blur(20px) saturate(180%)',
+  border: '1px solid var(--mise-glass-border)',
+  borderRadius: 'var(--mise-radius-button)',
+  boxShadow: 'var(--mise-shadow-glass)',
+};
+
+const pantryFreshDotShape: React.CSSProperties = {
+  width: 12,
+  height: 12,
+  borderRadius: '50%',
+  flexShrink: 0,
+};
+
+const pantryRowEditBtn: React.CSSProperties = {
+  all: 'unset',
+  flex: 1,
+  minWidth: 0,
+  textAlign: 'left',
+  cursor: 'pointer',
+  fontFamily: 'var(--mise-font-text)',
+};
+
+const pantryRowName: React.CSSProperties = {
+  fontSize: 17,
+  fontWeight: 600,
+  lineHeight: '24px',
+  color: 'var(--mise-text-primary)',
+  marginBottom: 2,
+  overflow: 'hidden',
+  textOverflow: 'ellipsis',
+  whiteSpace: 'nowrap',
+};
+
+const pantryRowAmount: React.CSSProperties = {
+  fontSize: 15,
+  lineHeight: '20px',
+  color: 'var(--mise-text-secondary)',
+};
+
+const pantryExpiryLayout: React.CSSProperties = {
+  fontSize: 15,
+  fontWeight: 500,
+  lineHeight: '20px',
+  flexShrink: 0,
+  marginRight: 4,
+};
+
+const pantryRowDeleteBtn: React.CSSProperties = {
+  all: 'unset',
+  minWidth: 44,
+  minHeight: 44,
+  borderRadius: 8,
+  display: 'inline-flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  color: 'var(--mise-text-tertiary)',
+  cursor: 'pointer',
+  flexShrink: 0,
+  boxSizing: 'border-box',
+};
 
 interface FreshnessInfo {
   dot: string;
@@ -35,7 +117,10 @@ interface FreshnessInfo {
   textColor: string;
 }
 
-function freshnessFor(item: Ingredient, t: (k: any, v?: any) => string): FreshnessInfo {
+function freshnessFor(
+  item: Ingredient,
+  t: (key: Parameters<typeof translate>[1], vars?: Record<string, string | number>) => string,
+): FreshnessInfo {
   const d = daysUntil(item.expiresOn);
   if (d === null) {
     return { dot: '#94A3B8', text: '', textColor: 'var(--mise-text-tertiary)' };
@@ -229,21 +314,11 @@ export function PantryPage() {
             {CATEGORY_ORDER.map(cat =>
               grouped[cat].length === 0 ? null : (
                 <div key={cat}>
-                  <div
-                    style={{
-                      fontSize: 13,
-                      fontWeight: 600,
-                      letterSpacing: 0.5,
-                      textTransform: 'uppercase',
-                      color: 'var(--mise-text-tertiary)',
-                      marginBottom: 12,
-                      fontFamily: 'var(--mise-font-text)',
-                    }}
-                  >
+                  <div style={pantryCategoryHeaderStyle}>
                     {catLabel[cat]}
                   </div>
 
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                  <div style={pantryColumnGap}>
                     {grouped[cat].map(it => (
                       <IngredientRow
                         key={it.id}
@@ -331,34 +406,23 @@ function IngredientRow({
 }) {
   const { t } = useApp();
   const fresh = freshnessFor(item, t);
+  const reduceMotion = prefersReducedMotion();
 
   return (
     <div
-      className="fade-up"
+      className={reduceMotion ? undefined : 'fade-up'}
       style={{
-        animationDelay: `${fadeIdx * 30}ms`,
-        display: 'flex',
-        alignItems: 'center',
-        gap: 16,
-        padding: 16,
-        background: 'var(--mise-glass-fill)',
-        backdropFilter: 'blur(20px) saturate(180%)',
-        WebkitBackdropFilter: 'blur(20px) saturate(180%)',
-        border: '1px solid var(--mise-glass-border)',
-        borderRadius: 'var(--mise-radius-button)',
-        boxShadow: 'var(--mise-shadow-glass)',
+        ...pantryIngredientRowShell,
+        ...(!reduceMotion ? { animationDelay: `${fadeIdx * 30}ms` } : {}),
       }}
     >
       {/* Freshness dot */}
       <div
         aria-hidden
         style={{
-          width: 12,
-          height: 12,
-          borderRadius: '50%',
+          ...pantryFreshDotShape,
           background: fresh.dot,
           boxShadow: `0 0 8px ${fresh.dot}40`,
-          flexShrink: 0,
         }}
       />
 
@@ -366,37 +430,13 @@ function IngredientRow({
       <button
         type="button"
         onClick={onEdit}
-        style={{
-          all: 'unset',
-          flex: 1,
-          minWidth: 0,
-          textAlign: 'left',
-          cursor: 'pointer',
-          fontFamily: 'var(--mise-font-text)',
-        }}
+        style={pantryRowEditBtn}
       >
-        <div
-          style={{
-            fontSize: 17,
-            fontWeight: 600,
-            lineHeight: '24px',
-            color: 'var(--mise-text-primary)',
-            marginBottom: 2,
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
-            whiteSpace: 'nowrap',
-          }}
-        >
+        <div style={pantryRowName}>
           {item.name}
         </div>
         {item.amount && (
-          <div
-            style={{
-              fontSize: 15,
-              lineHeight: '20px',
-              color: 'var(--mise-text-secondary)',
-            }}
-          >
+          <div style={pantryRowAmount}>
             {item.amount}
           </div>
         )}
@@ -406,12 +446,8 @@ function IngredientRow({
       {fresh.text && (
         <div
           style={{
-            fontSize: 15,
-            fontWeight: 500,
-            lineHeight: '20px',
+            ...pantryExpiryLayout,
             color: fresh.textColor,
-            flexShrink: 0,
-            marginRight: 4,
           }}
         >
           {fresh.text}
@@ -420,21 +456,11 @@ function IngredientRow({
 
       {/* Trash */}
       <button
+        type="button"
         aria-label={t('delete')}
         onClick={onDelete}
         className="press"
-        style={{
-          all: 'unset',
-          width: 32,
-          height: 32,
-          borderRadius: 8,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          color: 'var(--mise-text-tertiary)',
-          cursor: 'pointer',
-          flexShrink: 0,
-        }}
+        style={pantryRowDeleteBtn}
       >
         <Trash2 size={20} />
       </button>

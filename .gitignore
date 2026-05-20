@@ -1,5 +1,7 @@
 node_modules
 dist
+# Bundle treemap from rollup-plugin-visualizer (`npm run analyze` / `npm run build`)
+dist/stats.html
 dist-ssr
 *.local
 

@@ -1,6 +1,6 @@
 // Top-level app shell + routes.
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, lazy, Suspense } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AppProvider, useApp } from './lib/app-state';
 import { subscribeToUpdate } from './lib/pwa';
@@ -55,22 +55,23 @@ class ErrorBoundary extends React.Component<{ children: React.ReactNode }, EBSta
 
 import { HomePage } from './pages/HomePage';
 import { PantryPage } from './pages/PantryPage';
-import { IngredientFormPage } from './pages/IngredientFormPage';
-import { ProfilePage } from './pages/ProfilePage';
-import { SettingsPage } from './pages/SettingsPage';
-import { MealTypePage } from './pages/MealTypePage';
-import { LoadingPage } from './pages/LoadingPage';
-import { ResultsPage } from './pages/ResultsPage';
-import { RecipeDetailPage } from './pages/RecipeDetailPage';
 import { CookModePage } from './pages/CookModePage';
-import { HistoryPage } from './pages/HistoryAndFavorites';
+import { NutritionPage } from './pages/NutritionPage';
 import { TabBar } from './components/Chrome';
 import { Toaster } from './components/ui/sonner';
 import { ChefHat } from './components/Icons';
 import { isOnboarded } from './lib/onboarding-state';
-import { OnboardingPage } from './pages/OnboardingPage';
-import { DishPage } from './pages/DishPage';
-import { NutritionPage } from './pages/NutritionPage';
+
+const OnboardingPage = lazy(() => import('./pages/OnboardingPage').then(m => ({ default: m.OnboardingPage })));
+const IngredientFormPage = lazy(() => import('./pages/IngredientFormPage').then(m => ({ default: m.IngredientFormPage })));
+const RecipeDetailPage = lazy(() => import('./pages/RecipeDetailPage').then(m => ({ default: m.RecipeDetailPage })));
+const DishPage = lazy(() => import('./pages/DishPage').then(m => ({ default: m.DishPage })));
+const SettingsPage = lazy(() => import('./pages/SettingsPage').then(m => ({ default: m.SettingsPage })));
+const MealTypePage = lazy(() => import('./pages/MealTypePage').then(m => ({ default: m.MealTypePage })));
+const LoadingPage = lazy(() => import('./pages/LoadingPage').then(m => ({ default: m.LoadingPage })));
+const ResultsPage = lazy(() => import('./pages/ResultsPage').then(m => ({ default: m.ResultsPage })));
+const HistoryPage = lazy(() => import('./pages/HistoryAndFavorites').then(m => ({ default: m.HistoryPage })));
+const ProfilePage = lazy(() => import('./pages/ProfilePage').then(m => ({ default: m.ProfilePage })));
 
 function BrandedLoader() {
   const [visible, setVisible] = useState(false);
@@ -124,52 +125,55 @@ function Routed() {
   if (!ready || !onboardChecked) {
     return <BrandedLoader />;
   }
-  if (!onboarded) {
-    return <OnboardingPage onComplete={() => setOnboarded(true)} />;
-  }
   return (
-    <>
-      {/*
-        Cook mode lives in its own Routes, completely outside the page-enter
-        div. That wrapper runs a CSS transform animation; on iOS Safari any
-        ancestor with a transform turns position:fixed descendants into
-        "fixed within that box" -- collapsing the fullscreen layout.
-        Rendering as a sibling eliminates the containing-block issue entirely.
-      */}
-      <Routes>
-        <Route path="/recipe/:id/cook" element={<CookModePage />} />
-      </Routes>
-
-      {!isCook && (
+    <Suspense fallback={<BrandedLoader />}>
+      {!onboarded ? (
+        <OnboardingPage onComplete={() => setOnboarded(true)} />
+      ) : (
         <>
-          <div key={location.pathname} className="page-enter">
-            <Routes>
-              <Route path="/" element={<HomePage />} />
+          {/*
+            Cook mode lives in its own Routes, completely outside the page-enter
+            div. That wrapper runs a CSS transform animation; on iOS Safari any
+            ancestor with a transform turns position:fixed descendants into
+            "fixed within that box" -- collapsing the fullscreen layout.
+            Rendering as a sibling eliminates the containing-block issue entirely.
+          */}
+          <Routes>
+            <Route path="/recipe/:id/cook" element={<CookModePage />} />
+          </Routes>
 
-              <Route path="/pantry" element={<PantryPage />} />
-              <Route path="/pantry/add" element={<IngredientFormPage />} />
-              <Route path="/pantry/edit/:id" element={<IngredientFormPage />} />
+          {!isCook && (
+            <>
+              <div key={location.pathname} className="page-enter">
+                <Routes>
+                  <Route path="/" element={<HomePage />} />
 
-              <Route path="/profile" element={<ProfilePage />} />
-              <Route path="/settings" element={<SettingsPage />} />
+                  <Route path="/pantry" element={<PantryPage />} />
+                  <Route path="/pantry/add" element={<IngredientFormPage />} />
+                  <Route path="/pantry/edit/:id" element={<IngredientFormPage />} />
 
-              <Route path="/generate" element={<MealTypePage />} />
-              <Route path="/generate/loading" element={<LoadingPage />} />
-              <Route path="/results" element={<ResultsPage />} />
-              <Route path="/recipe/:id" element={<RecipeDetailPage />} />
+                  <Route path="/profile" element={<ProfilePage />} />
+                  <Route path="/settings" element={<SettingsPage />} />
 
-              <Route path="/dish" element={<DishPage />} />
-              <Route path="/nutrition" element={<NutritionPage />} />
+                  <Route path="/generate" element={<MealTypePage />} />
+                  <Route path="/generate/loading" element={<LoadingPage />} />
+                  <Route path="/results" element={<ResultsPage />} />
+                  <Route path="/recipe/:id" element={<RecipeDetailPage />} />
 
-              <Route path="/history" element={<HistoryPage />} />
-              <Route path="/favorites" element={<Navigate to="/history?view=favs" replace />} />
-              <Route path="*" element={<Navigate to="/" replace />} />
-            </Routes>
-          </div>
-          <TabBar />
+                  <Route path="/dish" element={<DishPage />} />
+                  <Route path="/nutrition" element={<NutritionPage />} />
+
+                  <Route path="/history" element={<HistoryPage />} />
+                  <Route path="/favorites" element={<Navigate to="/history?view=favs" replace />} />
+                  <Route path="*" element={<Navigate to="/" replace />} />
+                </Routes>
+              </div>
+              <TabBar />
+            </>
+          )}
         </>
       )}
-    </>
+    </Suspense>
   );
 }
 
