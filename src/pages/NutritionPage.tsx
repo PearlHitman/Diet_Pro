@@ -6,6 +6,7 @@ import { Screen, SubHeader } from '../components/Chrome';
 import { useApp } from '../lib/app-state';
 import { buildNutritionEstimatePrompt } from '../lib/prompts';
 import { prefersReducedMotion } from '../lib/motion';
+import { T } from '../tokens';
 import { callClaude, parseJsonLoose, ClaudeError } from '../lib/claude';
 import {
   computeNutritionGoals, sumMeals, toDateStr, lastNDays,
@@ -58,7 +59,7 @@ export function NutritionPage() {
               style={{
                 flex: 1, padding: '8px 0', border: 'none',
                 borderRadius: 11, cursor: 'pointer',
-                fontSize: 14, fontWeight: 600, fontFamily: 'var(--mise-font-text)',
+                fontSize: T.fontSize.body, fontWeight: 600, fontFamily: 'var(--mise-font-text)',
                 background: tab === t ? 'var(--mise-primary)' : 'transparent',
                 color: tab === t ? '#fff' : 'var(--mise-text-secondary)',
                 ...(reduceMotion ? { transition: 'none' } : { transition: 'background 0.2s ease, color 0.2s ease' }),
@@ -118,14 +119,14 @@ function TodayTab({
     return (
       <div style={{
         padding: '32px 16px', textAlign: 'center',
-        color: 'var(--mise-text-secondary)', fontSize: 15, lineHeight: 1.6,
+        color: 'var(--mise-text-secondary)', fontSize: T.fontSize.bodyLg, lineHeight: 1.6,
       }}>
         Set up your body stats in{' '}
         <button
           onClick={() => navigate('/profile')}
           style={{
             background: 'none', border: 'none', cursor: 'pointer',
-            color: 'var(--mise-primary)', fontWeight: 600, fontSize: 15,
+            color: 'var(--mise-primary)', fontWeight: 600, fontSize: T.fontSize.bodyLg,
             fontFamily: 'var(--mise-font-text)', padding: 0,
           }}
         >
@@ -165,11 +166,11 @@ function TodayTab({
           position: 'absolute', top: '50%', left: '50%',
           transform: 'translate(-50%,-50%)', textAlign: 'center',
         }}>
-          <div style={{ fontSize: 28, fontWeight: 700, color: 'var(--mise-text-primary)', lineHeight: 1 }}>
+          <div style={{ fontSize: T.fontSize.display, fontWeight: 700, color: 'var(--mise-text-primary)', lineHeight: 1 }}>
             {totals.calories.toLocaleString()}
           </div>
-          <div style={{ fontSize: 11, color: 'var(--mise-text-secondary)', marginTop: 3 }}>kcal consumed</div>
-          <div style={{ fontSize: 13, color: 'var(--mise-primary)', marginTop: 4, fontWeight: 500 }}>
+          <div style={{ fontSize: T.fontSize.tiny, color: 'var(--mise-text-secondary)', marginTop: 3 }}>kcal consumed</div>
+          <div style={{ fontSize: T.fontSize.small, color: 'var(--mise-primary)', marginTop: 4, fontWeight: 500 }}>
             {remaining.toLocaleString()} remaining
           </div>
         </div>
@@ -184,9 +185,9 @@ function TodayTab({
               background: 'var(--mise-glass-fill)', border: '1px solid var(--mise-glass-border)',
               borderRadius: 14, padding: '12px 10px', textAlign: 'center',
             }}>
-              <div style={{ fontSize: 20, fontWeight: 700, color: m.color, lineHeight: 1 }}>{m.value}</div>
-              <div style={{ fontSize: 10, color: 'var(--mise-text-secondary)', marginTop: 2 }}>g / {m.goal}g</div>
-              <div style={{ fontSize: 11, fontWeight: 600, color: m.color, marginTop: 4 }}>{m.label}</div>
+              <div style={{ fontSize: T.fontSize.h2, fontWeight: 700, color: m.color, lineHeight: 1 }}>{m.value}</div>
+              <div style={{ fontSize: T.fontSize.meta, color: 'var(--mise-text-secondary)', marginTop: 2 }}>g / {m.goal}g</div>
+              <div style={{ fontSize: T.fontSize.tiny, fontWeight: 600, color: m.color, marginTop: 4 }}>{m.label}</div>
               <div style={{
                 height: 4, borderRadius: 99, marginTop: 6,
                 background: 'rgba(255,255,255,0.08)', overflow: 'hidden',
@@ -199,14 +200,14 @@ function TodayTab({
       </div>
 
       {/* Meals list */}
-      <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--mise-text-tertiary)', letterSpacing: 0.5, marginBottom: 10 }}>
+      <div style={{ fontSize: T.fontSize.caption, fontWeight: 600, color: 'var(--mise-text-tertiary)', letterSpacing: 0.5, marginBottom: 10 }}>
         TODAY'S MEALS
       </div>
 
       {meals.length === 0 && (
         <div style={{
           padding: '20px 0', textAlign: 'center',
-          fontSize: 14, color: 'var(--mise-text-tertiary)',
+          fontSize: T.fontSize.body, color: 'var(--mise-text-tertiary)',
         }}>
           No meals logged yet
         </div>
@@ -226,7 +227,7 @@ function TodayTab({
           border: '1px dashed rgba(124,58,237,0.35)',
           borderRadius: 14, cursor: 'pointer',
           display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-          color: 'var(--mise-primary)', fontSize: 14, fontWeight: 600,
+          color: 'var(--mise-primary)', fontSize: T.fontSize.body, fontWeight: 600,
           fontFamily: 'var(--mise-font-text)',
         }}
       >
@@ -252,22 +253,22 @@ function MealRow({ meal, onRemove }: { meal: LoggedMeal; onRemove: (id: string) 
       <div style={{
         width: 38, height: 38, borderRadius: 10, flexShrink: 0,
         background: meal.source === 'recipe' ? 'rgba(124,58,237,0.12)' : 'rgba(245,158,11,0.12)',
-        display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18,
+        display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: T.fontSize.title,
       }}>
         {SOURCE_EMOJI[meal.source]}
       </div>
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{
-          fontSize: 13, fontWeight: 600, color: 'var(--mise-text-primary)',
+          fontSize: T.fontSize.small, fontWeight: 600, color: 'var(--mise-text-primary)',
           marginBottom: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
         }}>
           {meal.name}
         </div>
-        <div style={{ fontSize: 11, color: 'var(--mise-text-tertiary)' }}>
+        <div style={{ fontSize: T.fontSize.tiny, color: 'var(--mise-text-tertiary)' }}>
           {SOURCE_LABEL[meal.source]} · P {Math.round(meal.protein * meal.servings)}g · C {Math.round(meal.carbs * meal.servings)}g · F {Math.round(meal.fat * meal.servings)}g
         </div>
       </div>
-      <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--mise-primary)', flexShrink: 0, marginRight: 8 }}>
+      <div style={{ fontSize: T.fontSize.small, fontWeight: 600, color: 'var(--mise-primary)', flexShrink: 0, marginRight: 8 }}>
         {Math.round(meal.calories * meal.servings)} kcal
       </div>
       <button
@@ -317,7 +318,7 @@ function WeekTab({ goals, log }: { goals: NutritionGoals | null; log: LoggedMeal
         background: 'var(--mise-glass-fill)', border: '1px solid var(--mise-glass-border)',
         borderRadius: 18, padding: 16, marginBottom: 14,
       }}>
-        <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--mise-text-tertiary)', letterSpacing: 0.5, marginBottom: 14 }}>
+        <div style={{ fontSize: T.fontSize.caption, fontWeight: 600, color: 'var(--mise-text-tertiary)', letterSpacing: 0.5, marginBottom: 14 }}>
           DAILY CALORIES VS TARGET
         </div>
 
@@ -347,7 +348,7 @@ function WeekTab({ goals, log }: { goals: NutritionGoals | null; log: LoggedMeal
                   }} />
                 </div>
                 <div style={{
-                  fontSize: 10, color: d.isToday ? 'var(--mise-primary)' : 'var(--mise-text-tertiary)',
+                  fontSize: T.fontSize.meta, color: d.isToday ? 'var(--mise-primary)' : 'var(--mise-text-tertiary)',
                   fontWeight: d.isToday ? 600 : 400,
                 }}>
                   {d.label}
@@ -360,7 +361,7 @@ function WeekTab({ goals, log }: { goals: NutritionGoals | null; log: LoggedMeal
         {/* Legend */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 6 }}>
           <div style={{ width: 20, height: 2, background: 'rgba(124,58,237,0.4)', borderRadius: 99 }} />
-          <span style={{ fontSize: 10, color: 'var(--mise-text-tertiary)' }}>{target.toLocaleString()} kcal target</span>
+          <span style={{ fontSize: T.fontSize.meta, color: 'var(--mise-text-tertiary)' }}>{target.toLocaleString()} kcal target</span>
         </div>
       </div>
 
@@ -385,9 +386,9 @@ function StatCard({ label, value, sub, subColor }: { label: string; value: strin
       background: 'var(--mise-glass-fill)', border: '1px solid var(--mise-glass-border)',
       borderRadius: 14, padding: 14,
     }}>
-      <div style={{ fontSize: 11, color: 'var(--mise-text-tertiary)', marginBottom: 4 }}>{label}</div>
-      <div style={{ fontSize: 20, fontWeight: 700, color: 'var(--mise-text-primary)' }}>{value}</div>
-      <div style={{ fontSize: 11, color: subColor, marginTop: 4 }}>{sub}</div>
+      <div style={{ fontSize: T.fontSize.tiny, color: 'var(--mise-text-tertiary)', marginBottom: 4 }}>{label}</div>
+      <div style={{ fontSize: T.fontSize.h2, fontWeight: 700, color: 'var(--mise-text-primary)' }}>{value}</div>
+      <div style={{ fontSize: T.fontSize.tiny, color: subColor, marginTop: 4 }}>{sub}</div>
     </div>
   );
 }
@@ -441,14 +442,14 @@ function MonthTab({ goals, log }: { goals: NutritionGoals | null; log: LoggedMea
 
   return (
     <>
-      <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--mise-text-primary)', marginBottom: 12 }}>
+      <div style={{ fontSize: T.fontSize.small, fontWeight: 600, color: 'var(--mise-text-primary)', marginBottom: 12 }}>
         {monthName}
       </div>
 
       {/* Day-of-week headers */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7,1fr)', gap: 4, marginBottom: 4 }}>
         {['Su','Mo','Tu','We','Th','Fr','Sa'].map(d => (
-          <div key={d} style={{ textAlign: 'center', fontSize: 10, color: 'var(--mise-text-tertiary)', paddingBottom: 2 }}>{d}</div>
+          <div key={d} style={{ textAlign: 'center', fontSize: T.fontSize.meta, color: 'var(--mise-text-tertiary)', paddingBottom: 2 }}>{d}</div>
         ))}
       </div>
 
@@ -466,7 +467,7 @@ function MonthTab({ goals, log }: { goals: NutritionGoals | null; log: LoggedMea
               aspectRatio: '1', borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center',
               background: cellColor(day),
               border: isToday ? '1.5px solid var(--mise-primary)' : 'none',
-              fontSize: 11, fontWeight: isToday ? 700 : 400,
+              fontSize: T.fontSize.tiny, fontWeight: isToday ? 700 : 400,
               color: textColor(day),
             }}>
               {day}
@@ -484,7 +485,7 @@ function MonthTab({ goals, log }: { goals: NutritionGoals | null; log: LoggedMea
         ].map(l => (
           <div key={l.label} style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
             <div style={{ width: 10, height: 10, borderRadius: 3, background: l.color }} />
-            <span style={{ fontSize: 11, color: 'var(--mise-text-tertiary)' }}>{l.label}</span>
+            <span style={{ fontSize: T.fontSize.tiny, color: 'var(--mise-text-tertiary)' }}>{l.label}</span>
           </div>
         ))}
       </div>
@@ -494,7 +495,7 @@ function MonthTab({ goals, log }: { goals: NutritionGoals | null; log: LoggedMea
         background: 'var(--mise-glass-fill)', border: '1px solid var(--mise-glass-border)',
         borderRadius: 14, padding: 14,
       }}>
-        <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--mise-text-tertiary)', letterSpacing: 0.5, marginBottom: 10 }}>
+        <div style={{ fontSize: T.fontSize.tiny, fontWeight: 600, color: 'var(--mise-text-tertiary)', letterSpacing: 0.5, marginBottom: 10 }}>
           MONTH SUMMARY
         </div>
         {[
@@ -507,8 +508,8 @@ function MonthTab({ goals, log }: { goals: NutritionGoals | null; log: LoggedMea
             padding: '8px 0',
             borderBottom: i < arr.length - 1 ? '1px solid var(--mise-glass-border)' : 'none',
           }}>
-            <span style={{ fontSize: 13, color: 'var(--mise-text-secondary)' }}>{row.label}</span>
-            <span style={{ fontSize: 13, fontWeight: 600, color: row.color }}>{row.value}</span>
+            <span style={{ fontSize: T.fontSize.small, color: 'var(--mise-text-secondary)' }}>{row.label}</span>
+            <span style={{ fontSize: T.fontSize.small, fontWeight: 600, color: row.color }}>{row.value}</span>
           </div>
         ))}
       </div>
@@ -625,7 +626,7 @@ function AddFoodSheet({
           <div style={{ width: 36, height: 4, borderRadius: 99, background: 'var(--mise-glass-border)' }} />
         </div>
 
-        <div style={{ fontSize: 17, fontWeight: 600, color: 'var(--mise-text-primary)', marginBottom: 16 }}>
+        <div style={{ fontSize: T.fontSize.lead, fontWeight: 600, color: 'var(--mise-text-primary)', marginBottom: 16 }}>
           Add food
         </div>
 
@@ -642,21 +643,21 @@ function AddFoodSheet({
             border: '1px solid var(--mise-glass-border)',
             background: 'var(--mise-glass-fill)',
             color: 'var(--mise-text-primary)',
-            fontSize: 15, fontFamily: 'var(--mise-font-text)',
+            fontSize: T.fontSize.bodyLg, fontFamily: 'var(--mise-font-text)',
             resize: 'none', outline: 'none',
           }}
         />
 
         {/* Loading */}
         {loading && (
-          <div style={{ fontSize: 13, color: 'var(--mise-text-tertiary)', marginTop: 10, textAlign: 'center' }}>
+          <div style={{ fontSize: T.fontSize.small, color: 'var(--mise-text-tertiary)', marginTop: 10, textAlign: 'center' }}>
             Estimating…
           </div>
         )}
 
         {/* Error */}
         {error && (
-          <div style={{ fontSize: 13, color: 'var(--mise-error)', marginTop: 10 }}>{error}</div>
+          <div style={{ fontSize: T.fontSize.small, color: 'var(--mise-error)', marginTop: 10 }}>{error}</div>
         )}
 
         {/* Estimate result */}
@@ -667,7 +668,7 @@ function AddFoodSheet({
             border: '1px solid rgba(124,58,237,0.2)',
             borderRadius: 14,
           }}>
-            <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--mise-text-primary)', marginBottom: 8 }}>
+            <div style={{ fontSize: T.fontSize.body, fontWeight: 600, color: 'var(--mise-text-primary)', marginBottom: 8 }}>
               {estimate.name}
             </div>
             <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginBottom: 12 }}>
@@ -679,7 +680,7 @@ function AddFoodSheet({
 
             {/* Servings */}
             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              <span style={{ fontSize: 13, color: 'var(--mise-text-secondary)' }}>Servings:</span>
+              <span style={{ fontSize: T.fontSize.small, color: 'var(--mise-text-secondary)' }}>Servings:</span>
               {[0.5, 1, 1.5, 2].map(s => (
                 <button
                   key={s}
@@ -690,7 +691,7 @@ function AddFoodSheet({
                     border: `1px solid ${servings === s ? 'var(--mise-primary)' : 'var(--mise-glass-border)'}`,
                     background: servings === s ? 'rgba(124,58,237,0.15)' : 'transparent',
                     color: servings === s ? 'var(--mise-primary)' : 'var(--mise-text-secondary)',
-                    fontSize: 13, fontWeight: 600, fontFamily: 'var(--mise-font-text)',
+                    fontSize: T.fontSize.small, fontWeight: 600, fontFamily: 'var(--mise-font-text)',
                   }}
                 >
                   ×{s}
@@ -710,7 +711,7 @@ function AddFoodSheet({
               border: '1px solid var(--mise-glass-border)',
               background: 'transparent',
               color: 'var(--mise-text-secondary)',
-              fontSize: 15, fontWeight: 600, cursor: 'pointer',
+              fontSize: T.fontSize.bodyLg, fontWeight: 600, cursor: 'pointer',
               fontFamily: 'var(--mise-font-text)',
             }}
           >
@@ -725,7 +726,7 @@ function AddFoodSheet({
               border: 'none',
               background: estimate && !loading ? 'var(--mise-primary)' : 'rgba(124,58,237,0.3)',
               color: '#fff',
-              fontSize: 15, fontWeight: 700, cursor: estimate ? 'pointer' : 'default',
+              fontSize: T.fontSize.bodyLg, fontWeight: 700, cursor: estimate ? 'pointer' : 'default',
               fontFamily: 'var(--mise-font-text)',
               boxShadow: estimate ? '0 4px 12px rgba(124,58,237,0.3)' : 'none',
             }}
@@ -742,8 +743,8 @@ function MacroLine({ label, value, unit, color }: { label: string; value: number
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
       <div style={{ width: 6, height: 6, borderRadius: 99, background: color, flexShrink: 0 }} />
-      <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--mise-text-primary)' }}>{value}{unit}</span>
-      <span style={{ fontSize: 11, color: 'var(--mise-text-tertiary)' }}>{label}</span>
+      <span style={{ fontSize: T.fontSize.caption, fontWeight: 600, color: 'var(--mise-text-primary)' }}>{value}{unit}</span>
+      <span style={{ fontSize: T.fontSize.tiny, color: 'var(--mise-text-tertiary)' }}>{label}</span>
     </div>
   );
 }

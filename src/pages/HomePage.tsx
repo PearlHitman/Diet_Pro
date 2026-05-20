@@ -5,6 +5,7 @@ import React, { useMemo } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Refrigerator, Lightbulb, ChevronRight, AlertCircle } from 'lucide-react';
 import { Screen, AppHeader } from '../components/Chrome';
+import { T } from '../tokens';
 import { useApp } from '../lib/app-state';
 import { computeNutritionGoals, sumMeals, toDateStr } from '../lib/nutrition';
 import { prefersReducedMotion } from '../lib/motion';
@@ -40,16 +41,16 @@ const ctaCardIconWrap: React.CSSProperties = {
 };
 const ctaCardTextCol: React.CSSProperties = { flex: 1, minWidth: 0 };
 const ctaCardTitle: React.CSSProperties = {
-  fontSize: 17,
+  fontSize: T.fontSize.lead,
   fontWeight: 600,
-  lineHeight: '24px',
+  lineHeight: 1.412,
   color: 'var(--mise-text-primary)',
   fontFamily: 'var(--mise-font-text)',
   marginBottom: 2,
 };
 const ctaCardSubtitle: React.CSSProperties = {
-  fontSize: 15,
-  lineHeight: '20px',
+  fontSize: T.fontSize.bodyLg,
+  lineHeight: 1.333,
   color: 'var(--mise-text-secondary)',
   fontFamily: 'var(--mise-font-text)',
 };
@@ -95,9 +96,9 @@ export function HomePage() {
         >
           <h1
             style={{
-              fontSize: 32,
+              fontSize: T.fontSize.displayXl,
               fontWeight: 600,
-              lineHeight: '40px',
+              lineHeight: 1.25,
               letterSpacing: -0.6,
               color: 'var(--mise-text-primary)',
               fontFamily: 'var(--mise-font-display)',
@@ -108,8 +109,8 @@ export function HomePage() {
           </h1>
           <p
             style={{
-              fontSize: 17,
-              lineHeight: '24px',
+              fontSize: T.fontSize.lead,
+              lineHeight: 1.412,
               color: 'var(--mise-text-secondary)',
               fontFamily: 'var(--mise-font-text)',
               margin: 0,
@@ -164,7 +165,7 @@ export function HomePage() {
                 alignItems: 'center',
                 gap: 12,
                 color: 'var(--mise-text-primary)',
-                fontSize: 14,
+                fontSize: T.fontSize.body,
                 boxShadow: 'var(--mise-shadow-sm)',
               }}
             >
@@ -209,10 +210,10 @@ function NutritionCard({
           textAlign: 'left',
         }}
       >
-        <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--mise-primary)', marginBottom: 4, letterSpacing: 0.3 }}>
+        <div style={{ fontSize: T.fontSize.small, fontWeight: 600, color: 'var(--mise-primary)', marginBottom: 4, letterSpacing: 0.3 }}>
           TODAY'S NUTRITION
         </div>
-        <div style={{ fontSize: 14, color: 'var(--mise-text-secondary)', lineHeight: 1.4 }}>
+        <div style={{ fontSize: T.fontSize.body, color: 'var(--mise-text-secondary)', lineHeight: 1.4 }}>
           Set up your body stats in Profile to track daily nutrition goals →
         </div>
       </button>
@@ -247,11 +248,11 @@ function NutritionCard({
     >
       {/* Header row */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
-        <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--mise-primary)', letterSpacing: 0.3 }}>
+        <div style={{ fontSize: T.fontSize.small, fontWeight: 600, color: 'var(--mise-primary)', letterSpacing: 0.3 }}>
           TODAY'S NUTRITION
         </div>
         <div style={{
-          fontSize: 11, color: 'var(--mise-primary)',
+          fontSize: T.fontSize.tiny, color: 'var(--mise-primary)',
           background: 'rgba(124,58,237,0.15)', padding: '3px 8px', borderRadius: 99,
         }}>
           {dateLabel}
@@ -275,10 +276,10 @@ function NutritionCard({
             position: 'absolute', top: '50%', left: '50%',
             transform: 'translate(-50%,-50%)', textAlign: 'center',
           }}>
-            <div style={{ fontSize: calPct >= 0.1 ? 13 : 11, fontWeight: 700, color: 'var(--mise-text-primary)', lineHeight: 1 }}>
+            <div style={{ fontSize: calPct >= 0.1 ? T.fontSize.small : T.fontSize.tiny, fontWeight: 700, color: 'var(--mise-text-primary)', lineHeight: 1 }}>
               {totals.calories.toLocaleString()}
             </div>
-            <div style={{ fontSize: 9, color: 'var(--mise-text-secondary)', marginTop: 2 }}>
+            <div style={{ fontSize: T.fontSize.micro, color: 'var(--mise-text-secondary)', marginTop: 2 }}>
               of {goals.calories.toLocaleString()}
             </div>
           </div>
@@ -290,7 +291,7 @@ function NutritionCard({
             const pct = Math.min((m.value / m.goal) * 100, 100);
             return (
               <div key={m.label} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <div style={{ fontSize: 11, color: m.color, width: 44, flexShrink: 0 }}>{m.label}</div>
+                <div style={{ fontSize: T.fontSize.tiny, color: m.color, width: 44, flexShrink: 0 }}>{m.label}</div>
                 <div style={{
                   flex: 1, height: 5, borderRadius: 99,
                   background: 'rgba(255,255,255,0.08)',
@@ -302,8 +303,8 @@ function NutritionCard({
                     ...(reduceMotion ? { transition: 'none' } : { transition: 'width 0.4s ease' }),
                   }} />
                 </div>
-                <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--mise-text-primary)', width: 34, textAlign: 'right', flexShrink: 0 }}>
-                  {m.value}<span style={{ fontSize: 9, color: 'var(--mise-text-secondary)' }}>g</span>
+                <div style={{ fontSize: T.fontSize.tiny, fontWeight: 600, color: 'var(--mise-text-primary)', width: 34, textAlign: 'right', flexShrink: 0 }}>
+                  {m.value}<span style={{ fontSize: T.fontSize.micro, color: 'var(--mise-text-secondary)' }}>g</span>
                 </div>
               </div>
             );
@@ -311,7 +312,7 @@ function NutritionCard({
         </div>
       </div>
 
-      <div style={{ fontSize: 11, color: 'var(--mise-primary)', textAlign: 'center', marginTop: 12, opacity: 0.8 }}>
+      <div style={{ fontSize: T.fontSize.tiny, color: 'var(--mise-primary)', textAlign: 'center', marginTop: 12, opacity: 0.8 }}>
         Tap for full breakdown →
       </div>
     </button>

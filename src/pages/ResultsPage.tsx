@@ -58,7 +58,7 @@ export function ResultsPage() {
               gap: 12,
             }}
           >
-            <RecipeCard recipe={r} expanded linkToDetail={false} showSteps={false} />
+            <RecipeCard recipe={r} />
             <button
               className="press"
               onClick={() => navigate(`/recipe/${r.id}/cook`)}
@@ -69,7 +69,7 @@ export function ResultsPage() {
                 border: 'none',
                 background: 'var(--mise-primary)',
                 color: '#FFFFFF',
-                fontSize: 15,
+                fontSize: T.fontSize.bodyLg,
                 fontWeight: 700,
                 cursor: 'pointer',
                 fontFamily: 'var(--mise-font-text)',

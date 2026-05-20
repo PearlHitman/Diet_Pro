@@ -5,7 +5,8 @@
 
 import React, { useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Search, Trash2, Pencil, Camera, Receipt, Package } from 'lucide-react';
+import { Plus, Search, Trash2, Pencil, Camera, Receipt, Package, X } from 'lucide-react';
+import { toast } from 'sonner';
 import { Screen } from '../components/Chrome';
 import { CameraImport, type CameraMode } from '../components/CameraImport';
 import { PantryIngredientDrawer } from '../components/PantryIngredientDrawer';
@@ -15,24 +16,17 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '../components/ui/dropdown-menu';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '../components/ui/dialog';
 import { useApp } from '../lib/app-state';
 import { daysUntil } from '../lib/date';
 import { prefersReducedMotion } from '../lib/motion';
 import { t as translate } from '../lib/i18n';
 import { CATEGORIES, type Category, type Ingredient } from '../lib/types';
+import { T } from '../tokens';
 
 const CATEGORY_ORDER: readonly Category[] = CATEGORIES;
 
 const pantryCategoryHeaderStyle: React.CSSProperties = {
-  fontSize: 13,
+  fontSize: T.fontSize.small,
   fontWeight: 600,
   letterSpacing: 0.5,
   textTransform: 'uppercase',
@@ -73,9 +67,9 @@ const pantryRowEditBtn: React.CSSProperties = {
 };
 
 const pantryRowName: React.CSSProperties = {
-  fontSize: 17,
+  fontSize: T.fontSize.lead,
   fontWeight: 600,
-  lineHeight: '24px',
+  lineHeight: 1.412,
   color: 'var(--mise-text-primary)',
   marginBottom: 2,
   overflow: 'hidden',
@@ -84,15 +78,15 @@ const pantryRowName: React.CSSProperties = {
 };
 
 const pantryRowAmount: React.CSSProperties = {
-  fontSize: 15,
-  lineHeight: '20px',
+  fontSize: T.fontSize.bodyLg,
+  lineHeight: 1.333,
   color: 'var(--mise-text-secondary)',
 };
 
 const pantryExpiryLayout: React.CSSProperties = {
-  fontSize: 15,
+  fontSize: T.fontSize.bodyLg,
   fontWeight: 500,
-  lineHeight: '20px',
+  lineHeight: 1.333,
   flexShrink: 0,
   marginRight: 4,
 };
@@ -146,10 +140,9 @@ function freshnessFor(
 }
 
 export function PantryPage() {
-  const { pantry, removeIngredient, t } = useApp();
+  const { pantry, removeIngredient, restoreIngredientAt, t } = useApp();
   const navigate = useNavigate();
 
-  const [confirming, setConfirming] = useState<string | null>(null);
   const [query, setQuery] = useState('');
   const [captured, setCaptured] = useState<{ file: File; mode: CameraMode } | null>(null);
   const [sheetId, setSheetId] = useState<string | null>(null);
@@ -212,9 +205,9 @@ export function PantryPage() {
         >
           <h1
             style={{
-              fontSize: 32,
+              fontSize: T.fontSize.displayXl,
               fontWeight: 600,
-              lineHeight: '40px',
+              lineHeight: 1.25,
               letterSpacing: -0.6,
               color: 'var(--mise-text-primary)',
               fontFamily: 'var(--mise-font-display)',
@@ -296,12 +289,34 @@ export function PantryPage() {
               background: 'transparent',
               border: 'none',
               outline: 'none',
-              fontSize: 17,
-              lineHeight: '24px',
+              fontSize: T.fontSize.lead,
+              lineHeight: 1.412,
               color: 'var(--mise-text-primary)',
               fontFamily: 'var(--mise-font-text)',
             }}
           />
+          {query.trim().length > 0 && (
+            <button
+              type="button"
+              aria-label={t('pantrySearchClear')}
+              onClick={() => setQuery('')}
+              className="press"
+              style={{
+                all: 'unset',
+                minWidth: 36,
+                minHeight: 36,
+                borderRadius: 10,
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer',
+                color: 'var(--mise-text-tertiary)',
+                flexShrink: 0,
+              }}
+            >
+              <X size={16} />
+            </button>
+          )}
         </div>
 
         {/* ── Categories or empty state ────────────────────── */}
@@ -324,7 +339,26 @@ export function PantryPage() {
                         key={it.id}
                         item={it}
                         onEdit={() => setSheetId(it.id)}
-                        onDelete={() => setConfirming(it.id)}
+                        onDelete={() => {
+                          const idx = pantry.findIndex(p => p.id === it.id);
+                          if (idx === -1) return;
+                          const removed = pantry[idx];
+                          if (sheetId === it.id) setSheetId(null);
+                          removeIngredient(it.id).catch(() => {});
+
+                          let restored = false;
+                          toast(t('ingredientRemoved'), {
+                            duration: 5000,
+                            action: {
+                              label: t('undo'),
+                              onClick: () => {
+                                if (restored) return;
+                                restored = true;
+                                restoreIngredientAt(idx, removed).catch(() => {});
+                              },
+                            },
+                          });
+                        }}
                         fadeIdx={fadeIndex[it.id]}
                       />
                     ))}
@@ -374,18 +408,6 @@ export function PantryPage() {
         item={sheetItem}
         open={sheetItem !== null}
         onOpenChange={open => { if (!open) setSheetId(null); }}
-      />
-
-      <DeleteConfirmDialog
-        open={confirming !== null}
-        onOpenChange={open => { if (!open) setConfirming(null); }}
-        onConfirm={async () => {
-          if (confirming) {
-            if (sheetId === confirming) setSheetId(null);
-            await removeIngredient(confirming);
-            setConfirming(null);
-          }
-        }}
       />
     </Screen>
   );
@@ -488,7 +510,7 @@ function MenuRow({
         gap: 12,
         padding: '12px 14px',
         borderRadius: 10,
-        fontSize: 15,
+        fontSize: T.fontSize.bodyLg,
         fontWeight: 500,
         color: 'var(--mise-text-primary)',
         cursor: 'pointer',
@@ -523,7 +545,7 @@ function EmptyState({ onAdd }: { onAdd: () => void }) {
       </div>
       <div
         style={{
-          fontSize: 20,
+          fontSize: T.fontSize.h2,
           fontWeight: 600,
           color: 'var(--mise-text-primary)',
           marginBottom: 8,
@@ -534,7 +556,7 @@ function EmptyState({ onAdd }: { onAdd: () => void }) {
       </div>
       <div
         style={{
-          fontSize: 15,
+          fontSize: T.fontSize.bodyLg,
           color: 'var(--mise-text-secondary)',
           lineHeight: 1.5,
           marginBottom: 24,
@@ -552,7 +574,7 @@ function EmptyState({ onAdd }: { onAdd: () => void }) {
           color: '#FFFFFF',
           border: 'none',
           cursor: 'pointer',
-          fontSize: 15,
+          fontSize: T.fontSize.bodyLg,
           fontWeight: 500,
           fontFamily: 'var(--mise-font-text)',
           boxShadow: '0px 4px 12px rgba(124, 58, 237, 0.3)',
@@ -568,7 +590,7 @@ function NoResults({ query, onClear }: { query: string; onClear: () => void }) {
   const { t } = useApp();
   return (
     <div style={{ padding: '40px 20px', textAlign: 'center' }}>
-      <div style={{ fontSize: 15, color: 'var(--mise-text-secondary)', marginBottom: 16 }}>
+      <div style={{ fontSize: T.fontSize.bodyLg, color: 'var(--mise-text-secondary)', marginBottom: 16 }}>
         {t('pantrySearchNoMatch', { q: query })}
       </div>
       <button
@@ -582,7 +604,7 @@ function NoResults({ query, onClear }: { query: string; onClear: () => void }) {
           border: '1px solid var(--mise-glass-border)',
           color: 'var(--mise-primary)',
           cursor: 'pointer',
-          fontSize: 14,
+          fontSize: T.fontSize.body,
           fontWeight: 600,
           fontFamily: 'var(--mise-font-text)',
         }}
@@ -590,81 +612,5 @@ function NoResults({ query, onClear }: { query: string; onClear: () => void }) {
         {t('pantrySearchClear')}
       </button>
     </div>
-  );
-}
-
-/* ─── Delete confirm dialog ─────────────────────────────── */
-
-function DeleteConfirmDialog({
-  open,
-  onOpenChange,
-  onConfirm,
-}: {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  onConfirm: () => void;
-}) {
-  const { t } = useApp();
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent
-        style={{
-          background: 'var(--mise-glass-elevated)',
-          backdropFilter: 'blur(40px) saturate(180%)',
-          WebkitBackdropFilter: 'blur(40px) saturate(180%)',
-          border: '1px solid var(--mise-glass-border)',
-          borderRadius: 'var(--mise-radius-card)',
-          boxShadow: 'var(--mise-shadow-xl)',
-          padding: 24,
-        }}
-      >
-        <DialogHeader>
-          <DialogTitle style={{ fontSize: 18, fontWeight: 600, color: 'var(--mise-text-primary)', fontFamily: 'var(--mise-font-display)' }}>
-            {t('deleteConfirmTitle')}
-          </DialogTitle>
-          <DialogDescription style={{ fontSize: 14, color: 'var(--mise-text-secondary)', lineHeight: 1.5 }}>
-            {t('deleteConfirmBody')}
-          </DialogDescription>
-        </DialogHeader>
-        <DialogFooter style={{ marginTop: 16, gap: 8 }}>
-          <button
-            onClick={() => onOpenChange(false)}
-            className="press"
-            style={{
-              flex: 1,
-              padding: '12px',
-              borderRadius: 'var(--mise-radius-button)',
-              background: 'var(--mise-glass-fill)',
-              border: '1px solid var(--mise-glass-border)',
-              color: 'var(--mise-text-primary)',
-              cursor: 'pointer',
-              fontSize: 15,
-              fontWeight: 500,
-              fontFamily: 'var(--mise-font-text)',
-            }}
-          >
-            {t('cancel')}
-          </button>
-          <button
-            onClick={onConfirm}
-            className="press"
-            style={{
-              flex: 1,
-              padding: '12px',
-              borderRadius: 'var(--mise-radius-button)',
-              background: 'var(--mise-error)',
-              border: 'none',
-              color: '#FFFFFF',
-              cursor: 'pointer',
-              fontSize: 15,
-              fontWeight: 500,
-              fontFamily: 'var(--mise-font-text)',
-            }}
-          >
-            {t('delete')}
-          </button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
   );
 }

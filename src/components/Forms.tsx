@@ -4,6 +4,7 @@
 
 import React from 'react';
 import { prefersReducedMotion } from '../lib/motion';
+import { T } from '../tokens';
 
 export function Field({
   label,
@@ -18,7 +19,7 @@ export function Field({
     <div style={{ marginBottom: 22 }}>
       <div
         style={{
-          fontSize: 13,
+          fontSize: T.fontSize.small,
           fontWeight: 600,
           letterSpacing: 0.4,
           color: 'var(--mise-text-tertiary)',
@@ -32,7 +33,7 @@ export function Field({
       {hint && (
         <div
           style={{
-            fontSize: 12,
+            fontSize: T.fontSize.caption,
             color: 'var(--mise-text-tertiary)',
             marginTop: 8,
             lineHeight: 1.5,
@@ -76,7 +77,7 @@ export function Input({
         border: '1px solid var(--mise-glass-border)',
         borderRadius: 'var(--mise-radius-input)',
         color: 'var(--mise-text-primary)',
-        fontSize: 15,
+        fontSize: T.fontSize.bodyLg,
         fontFamily: 'var(--mise-font-text)',
         outline: 'none',
         boxSizing: 'border-box',
@@ -133,7 +134,7 @@ export function Segmented<V extends string>({
               border: 'none',
               background: active ? 'var(--mise-primary)' : 'transparent',
               color: active ? 'var(--mise-text-on-primary)' : 'var(--mise-text-secondary)',
-              fontSize: 13,
+              fontSize: T.fontSize.small,
               fontWeight: 600,
               letterSpacing: -0.1,
               fontFamily: 'var(--mise-font-text)',
@@ -188,7 +189,7 @@ export function Stepper({
           background: 'transparent',
           color: 'var(--mise-text-primary)',
           cursor: 'pointer',
-          fontSize: 20,
+          fontSize: T.fontSize.h2,
           fontFamily: 'var(--mise-font-text)',
           display: 'flex',
           alignItems: 'center',
@@ -201,7 +202,7 @@ export function Stepper({
         style={{
           flex: 1,
           textAlign: 'center',
-          fontSize: 17,
+          fontSize: T.fontSize.lead,
           fontWeight: 600,
           color: 'var(--mise-text-primary)',
           letterSpacing: -0.3,
@@ -222,7 +223,7 @@ export function Stepper({
           background: 'rgba(124, 58, 237, 0.10)',
           color: 'var(--mise-primary)',
           cursor: 'pointer',
-          fontSize: 20,
+          fontSize: T.fontSize.h2,
           fontFamily: 'var(--mise-font-text)',
           display: 'flex',
           alignItems: 'center',
@@ -264,7 +265,7 @@ export function PrimaryButton({
         color: disabled ? 'var(--mise-text-tertiary)' : '#FFFFFF',
         border: disabled ? '1px solid var(--mise-glass-border)' : 'none',
         borderRadius: 'var(--mise-radius-button)',
-        fontSize: 15,
+        fontSize: T.fontSize.bodyLg,
         fontWeight: 600,
         fontFamily: 'var(--mise-font-text)',
         cursor: disabled ? 'not-allowed' : 'pointer',
@@ -310,7 +311,7 @@ export function GhostButton({
         color: 'var(--mise-primary)',
         border: '1px solid var(--mise-glass-border)',
         borderRadius: 'var(--mise-radius-button)',
-        fontSize: 14,
+        fontSize: T.fontSize.body,
         fontWeight: 600,
         fontFamily: 'var(--mise-font-text)',
         cursor: 'pointer',

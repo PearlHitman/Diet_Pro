@@ -27,12 +27,12 @@ class ErrorBoundary extends React.Component<{ children: React.ReactNode }, EBSta
         alignItems: 'center', justifyContent: 'center',
         padding: 32, fontFamily: T.font, textAlign: 'center',
       }}>
-        <div style={{ fontSize: 36, marginBottom: 16 }}>⚠️</div>
-        <div style={{ fontSize: 17, fontWeight: 700, color: T.text, marginBottom: 8 }}>
+        <div style={{ fontSize: T.fontSize.hero, marginBottom: 16 }}>⚠️</div>
+        <div style={{ fontSize: T.fontSize.lead, fontWeight: 700, color: T.text, marginBottom: 8 }}>
           Something went wrong
         </div>
         <div style={{
-          fontSize: 12, color: T.muted, marginBottom: 24,
+          fontSize: T.fontSize.caption, color: T.muted, marginBottom: 24,
           maxWidth: 320, wordBreak: 'break-all', lineHeight: 1.6,
         }}>
           {error.message}
@@ -42,7 +42,7 @@ class ErrorBoundary extends React.Component<{ children: React.ReactNode }, EBSta
           style={{
             padding: '12px 24px', borderRadius: 'var(--mise-radius-button)', border: 'none',
             background: 'var(--mise-primary)', color: '#FFFFFF',
-            fontSize: 14, fontWeight: 600, cursor: 'pointer', fontFamily: T.font,
+            fontSize: T.fontSize.body, fontWeight: 600, cursor: 'pointer', fontFamily: T.font,
             boxShadow: '0px 4px 12px rgba(124, 58, 237, 0.3)',
           }}
         >
@@ -100,8 +100,8 @@ function BrandedLoader() {
       >
         <ChefHat size={32} />
       </div>
-      <div style={{ fontSize: 22, fontWeight: 700, color: T.text, letterSpacing: -0.4 }}>Mise</div>
-      <div style={{ fontSize: 12, color: T.muted }}>Loading…</div>
+      <div style={{ fontSize: T.fontSize.heading, fontWeight: 700, color: T.text, letterSpacing: -0.4 }}>Mise</div>
+      <div style={{ fontSize: T.fontSize.caption, color: T.muted }}>Loading…</div>
       <style>{`
         @keyframes misePulse {
           0%, 100% { opacity: 0.6; transform: scale(1); }
@@ -187,7 +187,7 @@ function UpdateBanner({ onUpdate }: { onUpdate: () => void }) {
       paddingBottom: '10px',
       paddingLeft: '16px',
       paddingRight: '16px',
-      fontFamily: T.font, fontSize: 13, fontWeight: 600,
+      fontFamily: T.font, fontSize: T.fontSize.small, fontWeight: 600,
       boxShadow: '0px 4px 12px rgba(124, 58, 237, 0.3)',
     }}>
       <span>A new version is available</span>
@@ -198,7 +198,7 @@ function UpdateBanner({ onUpdate }: { onUpdate: () => void }) {
           padding: '6px 14px', borderRadius: 999,
           background: 'rgba(255,255,255,0.20)', color: '#FFFFFF',
           border: '1px solid rgba(255,255,255,0.30)',
-          cursor: 'pointer', fontSize: 12, fontWeight: 600,
+          cursor: 'pointer', fontSize: T.fontSize.caption, fontWeight: 600,
           fontFamily: T.font,
         }}
       >

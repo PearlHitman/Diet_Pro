@@ -4,6 +4,7 @@
 import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { ChefHat, Home, Package, Clock, User, ArrowLeft, Globe, Settings as SettingsIcon } from 'lucide-react';
+import { T } from '../tokens';
 import { useApp } from '../lib/app-state';
 import { prefersReducedMotion } from '../lib/motion';
 
@@ -81,7 +82,7 @@ export function AppHeader({
         </div>
         <div
           style={{
-            fontSize: 15,
+            fontSize: T.fontSize.bodyLg,
             fontWeight: 600,
             letterSpacing: -0.2,
             color: 'var(--mise-text-primary)',
@@ -139,7 +140,7 @@ function LangPill({ lang }: { lang: 'EN' | 'EL' | 'ES' }) {
         WebkitBackdropFilter: 'blur(12px)',
         border: '1px solid var(--mise-glass-border)',
         color: 'var(--mise-text-secondary)',
-        fontSize: 11,
+        fontSize: T.fontSize.tiny,
         fontWeight: 600,
         letterSpacing: 0.3,
         boxShadow: 'var(--mise-shadow-sm)',
@@ -205,7 +206,7 @@ export function SubHeader({
         style={{
           flex: 1,
           textAlign: 'center',
-          fontSize: 17,
+          fontSize: T.fontSize.lead,
           fontWeight: 600,
           letterSpacing: -0.3,
           color: 'var(--mise-text-primary)',
@@ -229,7 +230,7 @@ export function SectionLabel({
   return (
     <div
       style={{
-        fontSize: 13,
+        fontSize: T.fontSize.small,
         fontWeight: 600,
         letterSpacing: 0.5,
         color: color ?? 'var(--mise-text-tertiary)',
@@ -312,7 +313,7 @@ export function TabBar() {
             <Icon size={22} />
             <span
               style={{
-                fontSize: 11,
+                fontSize: T.fontSize.tiny,
                 fontWeight: 500,
                 color: active ? 'var(--mise-primary)' : 'var(--mise-text-secondary)',
               }}

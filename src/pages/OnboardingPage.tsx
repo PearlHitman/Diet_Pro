@@ -229,7 +229,7 @@ export function OnboardingPage({ onComplete }: { onComplete: () => void }) {
               }}/>
             ))}
           </div>
-          <div style={{ fontSize: 11, color: T.muted, fontVariantNumeric: 'tabular-nums', minWidth: 36, textAlign: 'right' }}>
+          <div style={{ fontSize: T.fontSize.tiny, color: T.muted, fontVariantNumeric: 'tabular-nums', minWidth: 36, textAlign: 'right' }}>
             {step}/{STEPS_TOTAL - 1}
           </div>
         </div>
@@ -247,13 +247,13 @@ export function OnboardingPage({ onComplete }: { onComplete: () => void }) {
               background: T.accentTint, border: `1px solid ${T.borderAcc}`, color: T.accent,
               display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 28,
             }}><ChefHat size={36} /></div>
-            <div style={{ fontSize: 28, fontWeight: 700, color: T.text, letterSpacing: -0.6, marginBottom: 8 }}>
+            <div style={{ fontSize: T.fontSize.display, fontWeight: 700, color: T.text, letterSpacing: -0.6, marginBottom: 8 }}>
               {ob.welcomeTitle}
             </div>
-            <div style={{ fontSize: 14, color: T.accent, fontStyle: 'italic', marginBottom: 22, letterSpacing: 0.3 }}>
+            <div style={{ fontSize: T.fontSize.body, color: T.accent, fontStyle: 'italic', marginBottom: 22, letterSpacing: 0.3 }}>
               {ob.tagline}
             </div>
-            <div style={{ fontSize: 14, color: T.text2, lineHeight: 1.6, maxWidth: 320, marginBottom: 40 }}>
+            <div style={{ fontSize: T.fontSize.body, color: T.text2, lineHeight: 1.6, maxWidth: 320, marginBottom: 40 }}>
               {ob.welcomeBody}
             </div>
             <PrimaryButton onClick={goNext} icon={<ArrowRight size={16} />}>{ob.getStarted}</PrimaryButton>
@@ -286,22 +286,22 @@ export function OnboardingPage({ onComplete }: { onComplete: () => void }) {
                   {keyState === 'checking' ? ob.validating : ob.testKey}
                 </PrimaryButton>
                 {keyState === 'valid' && (
-                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '6px 10px', borderRadius: 999, background: T.successTint, border: `1px solid ${T.successBord}`, color: T.success, fontSize: 11, fontWeight: 600 }}>
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '6px 10px', borderRadius: 999, background: T.successTint, border: `1px solid ${T.successBord}`, color: T.success, fontSize: T.fontSize.tiny, fontWeight: 600 }}>
                     <Check size={12} />{ob.keyValid}
                   </span>
                 )}
                 {keyState === 'invalid' && (
-                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '6px 10px', borderRadius: 999, background: T.dangerTint, border: '1px solid rgba(248,113,113,0.3)', color: T.danger, fontSize: 11, fontWeight: 600 }}>
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '6px 10px', borderRadius: 999, background: T.dangerTint, border: '1px solid rgba(248,113,113,0.3)', color: T.danger, fontSize: T.fontSize.tiny, fontWeight: 600 }}>
                     <X size={12} />{ob.keyInvalid}
                   </span>
                 )}
               </div>
               {keyError && (
-                <div style={{ marginTop: 12, fontSize: 12, color: T.danger, display: 'flex', alignItems: 'center', gap: 6 }}>
+                <div style={{ marginTop: 12, fontSize: T.fontSize.caption, color: T.danger, display: 'flex', alignItems: 'center', gap: 6 }}>
                   <AlertCircle size={13} color={T.danger} />{keyError}
                 </div>
               )}
-              <a href="https://console.anthropic.com/settings/keys" target="_blank" rel="noreferrer" style={{ display: 'inline-block', marginTop: 18, color: T.accent, fontSize: 13, textDecoration: 'none' }}>→ {ob.getKey}</a>
+              <a href="https://console.anthropic.com/settings/keys" target="_blank" rel="noreferrer" style={{ display: 'inline-block', marginTop: 18, color: T.accent, fontSize: T.fontSize.small, textDecoration: 'none' }}>→ {ob.getKey}</a>
             </div>
             <div style={{ marginTop: 'auto', paddingTop: 32 }}>
               <PrimaryButton onClick={goNext} disabled={keyState !== 'valid'} fullWidth icon={<ArrowRight size={16} />}>{ob.continue}</PrimaryButton>
@@ -344,7 +344,7 @@ export function OnboardingPage({ onComplete }: { onComplete: () => void }) {
                       background: ingCat === c ? T.accentTint : T.surface,
                       border: `1px solid ${ingCat === c ? T.borderAcc : T.border}`,
                       color: ingCat === c ? T.accent : T.text2,
-                      fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: T.font,
+                      fontSize: T.fontSize.caption, fontWeight: 600, cursor: 'pointer', fontFamily: T.font,
                     }}>{ob[`cat_${c}` as const]}</button>
                   ))}
                 </div>
@@ -373,10 +373,10 @@ function LangTile({ flag, label, sub, selected, onClick }: { flag: string; label
       borderRadius: 14, cursor: 'pointer',
       display: 'flex', alignItems: 'center', gap: 14, textAlign: 'left', fontFamily: T.font,
     }}>
-      <div style={{ fontSize: 28 }}>{flag}</div>
+      <div style={{ fontSize: T.fontSize.display }}>{flag}</div>
       <div style={{ flex: 1 }}>
-        <div style={{ fontSize: 16, fontWeight: 700, color: selected ? T.accent : T.text }}>{label}</div>
-        <div style={{ fontSize: 12, color: T.muted, marginTop: 2 }}>{sub}</div>
+        <div style={{ fontSize: T.fontSize.base, fontWeight: 700, color: selected ? T.accent : T.text }}>{label}</div>
+        <div style={{ fontSize: T.fontSize.caption, color: T.muted, marginTop: 2 }}>{sub}</div>
       </div>
       {selected && <Check size={18} color={T.accent} />}
     </button>
@@ -386,8 +386,8 @@ function LangTile({ flag, label, sub, selected, onClick }: { flag: string; label
 function StepHeader({ title, hint }: { title: string; hint?: string }) {
   return (
     <div>
-      <div style={{ fontSize: 24, fontWeight: 700, color: T.text, letterSpacing: -0.5, marginBottom: 8 }}>{title}</div>
-      {hint && <div style={{ fontSize: 14, color: T.text2, lineHeight: 1.55 }}>{hint}</div>}
+      <div style={{ fontSize: T.fontSize.section, fontWeight: 700, color: T.text, letterSpacing: -0.5, marginBottom: 8 }}>{title}</div>
+      {hint && <div style={{ fontSize: T.fontSize.body, color: T.text2, lineHeight: 1.55 }}>{hint}</div>}
     </div>
   );
 }

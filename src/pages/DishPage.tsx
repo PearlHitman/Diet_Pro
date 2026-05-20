@@ -132,7 +132,7 @@ export function DishPage() {
 
         <div style={{ padding: '16px 20px 28px', display: 'flex', flexDirection: 'column', gap: 20 }}>
           {err && (
-            <div style={{ fontSize: 14, color: 'var(--mise-error)', lineHeight: 1.45 }}>{err}</div>
+            <div style={{ fontSize: T.fontSize.body, color: 'var(--mise-error)', lineHeight: 1.45 }}>{err}</div>
           )}
 
           <input
@@ -151,7 +151,7 @@ export function DishPage() {
               border: '1px solid var(--mise-glass-border)',
               borderRadius: 'var(--mise-radius-input)',
               color: 'var(--mise-text-primary)',
-              fontSize: 16,
+              fontSize: T.fontSize.base,
               fontFamily: 'var(--mise-font-text)',
               boxSizing: 'border-box',
             }}
@@ -169,7 +169,7 @@ export function DishPage() {
               border: 'none',
               background: dishQuery.trim() && !busy ? 'var(--mise-primary)' : 'var(--mise-text-tertiary)',
               color: '#FFFFFF',
-              fontSize: 16,
+              fontSize: T.fontSize.base,
               fontWeight: 600,
               cursor: dishQuery.trim() && !busy ? 'pointer' : 'not-allowed',
               fontFamily: 'var(--mise-font-text)',
@@ -196,7 +196,7 @@ export function DishPage() {
               >
                 <Sparkles size={26} color={T.accent} />
               </div>
-              <div style={{ fontSize: 14, color: 'var(--mise-text-secondary)' }}>{t('generating')}</div>
+              <div style={{ fontSize: T.fontSize.body, color: 'var(--mise-text-secondary)' }}>{t('generating')}</div>
             </div>
           )}
         </div>
@@ -209,7 +209,7 @@ export function DishPage() {
       <SubHeader title={t('recipe')} onBack={() => backToInput()} />
 
       <div style={{ padding: '14px 16px 32px', display: 'flex', flexDirection: 'column', gap: 22 }}>
-        {err && <div style={{ fontSize: 14, color: 'var(--mise-error)', lineHeight: 1.45 }}>{err}</div>}
+        {err && <div style={{ fontSize: T.fontSize.body, color: 'var(--mise-error)', lineHeight: 1.45 }}>{err}</div>}
 
         <DishRecipeWithDots recipe={recipe} pantry={pantry} t={t} />
 
@@ -217,7 +217,7 @@ export function DishPage() {
         <div style={{ marginTop: 8 }}>
           <SectionLabel>{t('dishShoppingList')}</SectionLabel>
           {missingList.length === 0 ? (
-            <div style={{ fontSize: 14, color: 'var(--mise-text-secondary)', marginTop: 8 }}>
+            <div style={{ fontSize: T.fontSize.body, color: 'var(--mise-text-secondary)', marginTop: 8 }}>
               {t('dishShoppingAllSet')}
             </div>
           ) : (
@@ -226,7 +226,7 @@ export function DishPage() {
                 <div key={cat} style={{ marginBottom: 16 }}>
                   <div
                     style={{
-                      fontSize: 12,
+                      fontSize: T.fontSize.caption,
                       fontWeight: 700,
                       letterSpacing: 0.6,
                       textTransform: 'uppercase',
@@ -248,7 +248,7 @@ export function DishPage() {
                           background: 'var(--mise-glass-fill)',
                           border: '1px solid var(--mise-glass-border)',
                           borderRadius: 'var(--mise-radius-button)',
-                          fontSize: 15,
+                          fontSize: T.fontSize.bodyLg,
                           color: 'var(--mise-text-primary)',
                           fontFamily: 'var(--mise-font-text)',
                           cursor: 'pointer',
@@ -261,7 +261,7 @@ export function DishPage() {
                           style={{ width: 20, height: 20 }}
                         />
                         <span style={{ flex: 1 }}>
-                          <span style={{ fontSize: 12, color: 'var(--mise-text-tertiary)', marginRight: 8 }}>
+                          <span style={{ fontSize: T.fontSize.caption, color: 'var(--mise-text-tertiary)', marginRight: 8 }}>
                             {it.amount}
                           </span>
                           {it.name}
@@ -288,7 +288,7 @@ export function DishPage() {
                 border: '1px solid var(--mise-glass-border)',
                 background: 'var(--mise-glass-fill)',
                 color: 'var(--mise-primary)',
-                fontSize: 15,
+                fontSize: T.fontSize.bodyLg,
                 fontWeight: 600,
                 cursor: busySubs ? 'wait' : 'pointer',
                 fontFamily: 'var(--mise-font-text)',
@@ -305,7 +305,7 @@ export function DishPage() {
                 style={{
                   whiteSpace: 'pre-wrap',
                   wordBreak: 'break-word',
-                  fontSize: 14,
+                  fontSize: T.fontSize.body,
                   lineHeight: 1.55,
                   color: 'var(--mise-text-secondary)',
                   margin: '10px 0 0',
@@ -330,7 +330,7 @@ export function DishPage() {
               border: 'none',
               background: 'var(--mise-primary)',
               color: '#FFFFFF',
-              fontSize: 15,
+              fontSize: T.fontSize.bodyLg,
               fontWeight: 600,
               fontFamily: 'var(--mise-font-text)',
               boxShadow: '0px 4px 12px rgba(124, 58, 237, 0.3)',
@@ -348,7 +348,7 @@ export function DishPage() {
               border: '1px solid var(--mise-glass-border)',
               background: 'var(--mise-glass-fill)',
               color: 'var(--mise-text-primary)',
-              fontSize: 15,
+              fontSize: T.fontSize.bodyLg,
               fontWeight: 600,
               fontFamily: 'var(--mise-font-text)',
             }}
@@ -379,7 +379,7 @@ function DishRecipeWithDots({
           return (
             <div
               key={idx}
-              style={{ display: 'flex', alignItems: 'baseline', gap: 10, fontSize: 13, color: T.text }}
+              style={{ display: 'flex', alignItems: 'baseline', gap: 10, fontSize: T.fontSize.small, color: T.text }}
             >
               <span
                 aria-hidden
@@ -392,13 +392,13 @@ function DishRecipeWithDots({
                   marginTop: 4,
                 }}
               />
-              <span style={{ fontSize: 11, color: T.mute2, minWidth: 40 }}>{ing.amount}</span>
+              <span style={{ fontSize: T.fontSize.tiny, color: T.mute2, minWidth: 40 }}>{ing.amount}</span>
               <span style={{ flex: 1 }}>{ing.name}</span>
             </div>
           );
         })}
       </div>
-      <div style={{ marginTop: 8, fontSize: 12, color: 'var(--mise-text-tertiary)' }}>
+      <div style={{ marginTop: 8, fontSize: T.fontSize.caption, color: 'var(--mise-text-tertiary)' }}>
         {t('recipeDotLegend')}
       </div>
     </div>
@@ -416,7 +416,7 @@ function DishRecipeWithDots({
         gap: 12,
       }}>
         {recipe.steps.map((step, i) => (
-          <li key={i} style={{ display: 'flex', gap: 12, alignItems: 'flex-start', fontSize: 13.5, color: T.text2 }}>
+          <li key={i} style={{ display: 'flex', gap: 12, alignItems: 'flex-start', fontSize: T.fontSize.bodySm, color: T.text2 }}>
             <div style={{
               flex: 'none',
               width: 22,
@@ -428,7 +428,7 @@ function DishRecipeWithDots({
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              fontSize: 11,
+              fontSize: T.fontSize.tiny,
               fontWeight: 700,
             }}>
               {i + 1}
@@ -444,7 +444,7 @@ function DishRecipeWithDots({
     recipe.chefTips && recipe.chefTips.length > 0 ? (
       <div style={{ marginTop: 18 }}>
         <SectionLabel>{t('chefTipsLabel')}</SectionLabel>
-        <ul style={{ margin: '10px 0 0', paddingLeft: 18, fontSize: 13.5, color: T.text2, lineHeight: 1.5 }}>
+        <ul style={{ margin: '10px 0 0', paddingLeft: 18, fontSize: T.fontSize.bodySm, color: T.text2, lineHeight: 1.5 }}>
           {recipe.chefTips.map((tip, i) => (
             <li key={i}>{tip}</li>
           ))}
@@ -456,7 +456,7 @@ function DishRecipeWithDots({
     <div>
       <div style={{ marginBottom: 8 }}>
         <div style={{
-          fontSize: 20,
+          fontSize: T.fontSize.h2,
           fontWeight: 700,
           color: T.text,
           letterSpacing: -0.3,
@@ -464,7 +464,7 @@ function DishRecipeWithDots({
         }}>
           {recipe.name}
         </div>
-        <div style={{ marginTop: 6, fontSize: 14, color: T.text2 }}>{recipe.serving}</div>
+        <div style={{ marginTop: 6, fontSize: T.fontSize.body, color: T.text2 }}>{recipe.serving}</div>
       </div>
       {ingBlock}
       {stepsBlock}

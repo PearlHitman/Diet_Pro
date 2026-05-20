@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ArrowLeft, ArrowRight, Check, TimerReset } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { T } from '../tokens';
 import { useApp } from '../lib/app-state';
 import { toDateStr } from '../lib/nutrition';
 import { prefersReducedMotion } from '../lib/motion';
@@ -178,7 +179,7 @@ export function CookModePage() {
             color: '#fff',
             border: 'none',
             cursor: 'pointer',
-            fontSize: 15,
+            fontSize: T.fontSize.bodyLg,
             fontWeight: 700,
           }}
         >
@@ -250,7 +251,7 @@ export function CookModePage() {
 
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{
-              fontSize: 15,
+              fontSize: T.fontSize.bodyLg,
               fontWeight: 800,
               whiteSpace: 'nowrap',
               overflow: 'hidden',
@@ -261,7 +262,7 @@ export function CookModePage() {
             </div>
             <div style={{
               marginTop: 2,
-              fontSize: 12,
+              fontSize: T.fontSize.caption,
               color: 'var(--mise-text-secondary)',
               fontVariantNumeric: 'tabular-nums',
             }}>
@@ -300,7 +301,7 @@ export function CookModePage() {
 
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{
-                  fontSize: 11,
+                  fontSize: T.fontSize.tiny,
                   fontWeight: 900,
                   letterSpacing: 1.1,
                   textTransform: 'uppercase',
@@ -315,7 +316,7 @@ export function CookModePage() {
                 </div>
                 <div style={{
                   marginTop: 2,
-                  fontSize: 28,
+                  fontSize: T.fontSize.display,
                   lineHeight: 1,
                   fontWeight: 900,
                   fontVariantNumeric: 'tabular-nums',
@@ -338,7 +339,7 @@ export function CookModePage() {
                   background: timer.running ? 'var(--mise-warning)' : 'var(--mise-primary)',
                   color: '#fff',
                   cursor: 'pointer',
-                  fontSize: 13,
+                  fontSize: T.fontSize.small,
                   fontWeight: 800,
                   fontFamily: 'var(--mise-font-text)',
                   overflow: 'hidden',
@@ -437,7 +438,7 @@ export function CookModePage() {
                     overflow: 'hidden',
                     textOverflow: 'ellipsis',
                     textDecoration: 'line-through',
-                    fontSize: 14,
+                    fontSize: T.fontSize.body,
                     lineHeight: 1.35,
                   }}>
                     {step}
@@ -472,7 +473,7 @@ export function CookModePage() {
                     borderRadius: 7,
                     background: 'var(--mise-primary)',
                     color: '#fff',
-                    fontSize: 11,
+                    fontSize: T.fontSize.tiny,
                     lineHeight: 1,
                     fontWeight: 900,
                     letterSpacing: 0.7,
@@ -493,7 +494,7 @@ export function CookModePage() {
                       alignItems: 'center',
                       justifyContent: 'center',
                       flexShrink: 0,
-                      fontSize: 16,
+                      fontSize: T.fontSize.base,
                       fontWeight: 900,
                       fontVariantNumeric: 'tabular-nums',
                     }}>
@@ -505,7 +506,7 @@ export function CookModePage() {
                       minWidth: 0,
                       maxWidth: '100%',
                       color: 'var(--mise-text-primary)',
-                      fontSize: 17,
+                      fontSize: T.fontSize.lead,
                       lineHeight: 1.55,
                       fontWeight: 650,
                       overflowWrap: 'anywhere',
@@ -553,7 +554,7 @@ export function CookModePage() {
                   alignItems: 'center',
                   justifyContent: 'center',
                   flexShrink: 0,
-                  fontSize: 12,
+                  fontSize: T.fontSize.caption,
                   fontWeight: 750,
                   fontVariantNumeric: 'tabular-nums',
                   marginTop: 1,
@@ -568,7 +569,7 @@ export function CookModePage() {
                   WebkitLineClamp: 2,
                   WebkitBoxOrient: 'vertical',
                   overflow: 'hidden',
-                  fontSize: 14,
+                  fontSize: T.fontSize.body,
                   lineHeight: 1.4,
                 }}>
                   {step}
@@ -580,7 +581,7 @@ export function CookModePage() {
                     gap: 4,
                     flexShrink: 0,
                     color: 'var(--mise-warning)',
-                    fontSize: 12,
+                    fontSize: T.fontSize.caption,
                     fontWeight: 800,
                     fontVariantNumeric: 'tabular-nums',
                   }}>
@@ -618,10 +619,10 @@ export function CookModePage() {
               }}>
                 <Check size={26} strokeWidth={3} />
               </div>
-              <div style={{ fontSize: 19, fontWeight: 850, marginBottom: 6 }}>
+              <div style={{ fontSize: T.fontSize.subhead, fontWeight: 850, marginBottom: 6 }}>
                 {t('cookComplete')}
               </div>
-              <div style={{ fontSize: 14, lineHeight: 1.45, color: 'var(--mise-text-secondary)' }}>
+              <div style={{ fontSize: T.fontSize.body, lineHeight: 1.45, color: 'var(--mise-text-secondary)' }}>
                 {t('cookCompleteHint')}
               </div>
 
@@ -634,7 +635,7 @@ export function CookModePage() {
                       padding: '8px 16px', borderRadius: 99,
                       background: 'rgba(16,185,129,0.15)',
                       border: '1px solid rgba(16,185,129,0.3)',
-                      fontSize: 13, fontWeight: 600, color: 'var(--mise-success)',
+                      fontSize: T.fontSize.small, fontWeight: 600, color: 'var(--mise-success)',
                     }}>
                       <Check size={14} strokeWidth={3} /> Logged to nutrition
                     </div>
@@ -661,7 +662,7 @@ export function CookModePage() {
                         border: '1px solid rgba(124,58,237,0.3)',
                         background: 'rgba(124,58,237,0.1)',
                         color: 'var(--mise-primary)',
-                        fontSize: 14, fontWeight: 600, cursor: 'pointer',
+                        fontSize: T.fontSize.body, fontWeight: 600, cursor: 'pointer',
                         fontFamily: 'var(--mise-font-text)',
                       }}
                     >
@@ -737,7 +738,7 @@ export function CookModePage() {
               background: isComplete ? 'var(--mise-success)' : 'var(--mise-primary)',
               color: '#fff',
               cursor: 'pointer',
-              fontSize: 15,
+              fontSize: T.fontSize.bodyLg,
               fontWeight: 850,
               fontFamily: 'var(--mise-font-text)',
               display: 'flex',

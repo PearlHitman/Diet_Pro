@@ -72,13 +72,13 @@ export function ProfilePage() {
             background: T.accentTint, border: `1px solid ${T.borderAcc}`,
             color: T.accent,
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontSize: 19, fontWeight: 700,
+            fontSize: T.fontSize.subhead, fontWeight: 700,
           }}>{local.name ? local.name[0].toUpperCase() : '?'}</div>
           <div style={{ flex: 1 }}>
-            <div style={{ fontSize: 16, fontWeight: 700, color: T.text, letterSpacing: -0.3 }}>
+            <div style={{ fontSize: T.fontSize.base, fontWeight: 700, color: T.text, letterSpacing: -0.3 }}>
               {local.name || '—'}
             </div>
-            <div style={{ fontSize: 12, color: T.muted, marginTop: 2 }}>
+            <div style={{ fontSize: T.fontSize.caption, color: T.muted, marginTop: 2 }}>
               {local.cuisine || '—'} · {t(local.level === 'Beginner' ? 'beginner' : local.level === 'Expert' ? 'expert' : 'intermediate')}
             </div>
           </div>
@@ -141,8 +141,8 @@ export function ProfilePage() {
         }}>
           <Globe size={16} color={T.muted} />
           <div style={{ flex: 1 }}>
-            <div style={{ fontSize: 13, fontWeight: 600, color: T.text }}>{t('language')}</div>
-            <div style={{ fontSize: 11, color: T.muted, marginTop: 1 }}>{t('languageHint')}</div>
+            <div style={{ fontSize: T.fontSize.small, fontWeight: 600, color: T.text }}>{t('language')}</div>
+            <div style={{ fontSize: T.fontSize.tiny, color: T.muted, marginTop: 1 }}>{t('languageHint')}</div>
           </div>
           <Segmented<Language>
             value={local.language}
@@ -178,7 +178,7 @@ function BodyStatsSection({
     <div style={{ marginTop: 24 }}>
       {/* Section header */}
       <div style={{
-        fontSize: 13, fontWeight: 600, letterSpacing: 0.5,
+        fontSize: T.fontSize.small, fontWeight: 600, letterSpacing: 0.5,
         color: T.muted, marginBottom: 12,
       }}>
         BODY & GOALS
@@ -234,7 +234,7 @@ function BodyStatsSection({
                 )}
               </div>
               <span style={{
-                fontSize: 14, fontWeight: 500,
+                fontSize: T.fontSize.body, fontWeight: 500,
                 color: stats.activityLevel === val ? 'var(--mise-primary)' : T.text,
               }}>{label}</span>
             </button>
@@ -250,10 +250,10 @@ function BodyStatsSection({
           border: '1px solid rgba(124,58,237,0.2)',
           borderRadius: 14,
         }}>
-          <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--mise-primary)', marginBottom: 8, letterSpacing: 0.3 }}>
+          <div style={{ fontSize: T.fontSize.caption, fontWeight: 600, color: 'var(--mise-primary)', marginBottom: 8, letterSpacing: 0.3 }}>
             YOUR DAILY TARGETS
           </div>
-          <div style={{ fontSize: 15, fontWeight: 700, color: T.text, marginBottom: 6 }}>
+          <div style={{ fontSize: T.fontSize.bodyLg, fontWeight: 700, color: T.text, marginBottom: 6 }}>
             {goals.calories.toLocaleString()} kcal / day
           </div>
           <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
@@ -275,8 +275,8 @@ function MacroChip({ label, value, color }: { label: string; value: number; colo
       background: `${color}18`, border: `1px solid ${color}44`,
     }}>
       <div style={{ width: 6, height: 6, borderRadius: 99, background: color }} />
-      <span style={{ fontSize: 12, fontWeight: 600, color: T.text }}>{value}g</span>
-      <span style={{ fontSize: 11, color: T.muted }}>{label}</span>
+      <span style={{ fontSize: T.fontSize.caption, fontWeight: 600, color: T.text }}>{value}g</span>
+      <span style={{ fontSize: T.fontSize.tiny, color: T.muted }}>{label}</span>
     </div>
   );
 }
@@ -288,7 +288,7 @@ function SavedPill({ label }: { label: string }) {
       padding: '5px 9px', borderRadius: 999,
       background: T.successTint, border: `1px solid ${T.successBord}`,
       color: T.success,
-      fontSize: 11, fontWeight: 600, letterSpacing: 0.2,
+      fontSize: T.fontSize.tiny, fontWeight: 600, letterSpacing: 0.2,
     }}>
       <Check size={11} />{label}
     </div>

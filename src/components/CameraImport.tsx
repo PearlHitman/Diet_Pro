@@ -185,7 +185,7 @@ function AnalyzingView({ hint }: { hint: string }) {
         borderTopColor: T.accent,
         animation: 'spin 1s linear infinite',
       }} />
-      <div style={{ fontSize: 14, color: T.text2 }}>{hint}</div>
+      <div style={{ fontSize: T.fontSize.body, color: T.text2 }}>{hint}</div>
       <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
     </div>
   );
@@ -238,7 +238,7 @@ function ReviewSingleView({ item, onConfirm, onCancel, t }: {
                   background: category === c ? T.accentTint : T.surface,
                   border: `1px solid ${category === c ? T.borderAcc : T.border}`,
                   color: category === c ? T.accent : T.text2,
-                  fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: T.font,
+                  fontSize: T.fontSize.caption, fontWeight: 600, cursor: 'pointer', fontFamily: T.font,
                 }}>{catLabels[c]}</button>
               ))}
             </div>
@@ -260,7 +260,7 @@ function ReviewSingleView({ item, onConfirm, onCancel, t }: {
             width: '100%', padding: '14px', borderRadius: 14, border: 'none',
             background: name.trim() ? T.accentGrad : T.surface,
             color: name.trim() ? '#1a1208' : T.muted,
-            fontSize: 15, fontWeight: 700,
+            fontSize: T.fontSize.bodyLg, fontWeight: 700,
             cursor: name.trim() ? 'pointer' : 'not-allowed',
             fontFamily: T.font,
           }}
@@ -332,7 +332,7 @@ function ReviewBulkView({ items, onChange, onConfirm, onCancel, t }: {
             border: `1px solid ${T.border}`,
             background: T.surface,
             color: T.text2,
-            fontSize: 12,
+            fontSize: T.fontSize.caption,
             fontWeight: 600,
             cursor: 'pointer',
             fontFamily: T.font,
@@ -395,7 +395,7 @@ function ReviewBulkView({ items, onChange, onConfirm, onCancel, t }: {
                         boxSizing: 'border-box',
                       }}
                     >
-                      {it.selected ? <span style={{ fontSize: 11, color: '#1a1208', fontWeight: 900 }}>✓</span> : null}
+                      {it.selected ? <span style={{ fontSize: T.fontSize.tiny, color: '#1a1208', fontWeight: 900 }}>✓</span> : null}
                     </span>
                   </button>
 
@@ -416,7 +416,7 @@ function ReviewBulkView({ items, onChange, onConfirm, onCancel, t }: {
                               style={{
                                 padding: '6px 10px',
                                 borderRadius: 999,
-                                fontSize: 11,
+                                fontSize: T.fontSize.tiny,
                                 fontWeight: 600,
                                 cursor: 'pointer',
                                 fontFamily: T.font,
@@ -437,7 +437,7 @@ function ReviewBulkView({ items, onChange, onConfirm, onCancel, t }: {
                             padding: '8px 14px',
                             borderRadius: 10,
                             border: 'none',
-                            fontSize: 12,
+                            fontSize: T.fontSize.caption,
                             fontWeight: 700,
                             cursor: bulkEditor.draftName.trim() ? 'pointer' : 'not-allowed',
                             fontFamily: T.font,
@@ -450,9 +450,9 @@ function ReviewBulkView({ items, onChange, onConfirm, onCancel, t }: {
                       </>
                     ) : (
                       <>
-                        <div style={{ fontSize: 14, fontWeight: 500, color: T.text }}>{it.name}</div>
+                        <div style={{ fontSize: T.fontSize.body, fontWeight: 500, color: T.text }}>{it.name}</div>
                         {it.amount ? (
-                          <div style={{ fontSize: 11, color: T.muted, marginTop: 2 }}>{it.amount}</div>
+                          <div style={{ fontSize: T.fontSize.tiny, color: T.muted, marginTop: 2 }}>{it.amount}</div>
                         ) : null}
                       </>
                     )}
@@ -510,7 +510,7 @@ function ReviewBulkView({ items, onChange, onConfirm, onCancel, t }: {
             border: 'none',
             background: selected > 0 ? T.accentGrad : T.surface,
             color: selected > 0 ? '#1a1208' : T.muted,
-            fontSize: 15,
+            fontSize: T.fontSize.bodyLg,
             fontWeight: 700,
             cursor: selected > 0 ? 'pointer' : 'not-allowed',
             fontFamily: T.font,
@@ -531,12 +531,12 @@ function ErrorView({ message, onClose, onRetry, t }: {
 }) {
   return (
     <div style={{ padding: '32px 20px 28px', textAlign: 'center' }}>
-      <div style={{ fontSize: 36, marginBottom: 12 }}>⚠️</div>
-      <div style={{ fontSize: 15, fontWeight: 600, color: T.text, marginBottom: 8 }}>{t('errorTitle')}</div>
-      <div style={{ fontSize: 13, color: T.text2, lineHeight: 1.5, marginBottom: 24 }}>{message}</div>
+      <div style={{ fontSize: T.fontSize.hero, marginBottom: 12 }}>⚠️</div>
+      <div style={{ fontSize: T.fontSize.bodyLg, fontWeight: 600, color: T.text, marginBottom: 8 }}>{t('errorTitle')}</div>
+      <div style={{ fontSize: T.fontSize.small, color: T.text2, lineHeight: 1.5, marginBottom: 24 }}>{message}</div>
       <div style={{ display: 'flex', gap: 10 }}>
-        <button onClick={onClose} style={{ flex: 1, padding: '12px', borderRadius: 12, background: T.surface, color: T.text2, border: `1px solid ${T.border}`, cursor: 'pointer', fontSize: 14, fontWeight: 600, fontFamily: T.font }}>{t('cancel')}</button>
-        <button onClick={onRetry} style={{ flex: 1, padding: '12px', borderRadius: 12, background: T.accentGrad, color: '#1a1208', border: 'none', cursor: 'pointer', fontSize: 14, fontWeight: 700, fontFamily: T.font }}>{t('retry')}</button>
+        <button onClick={onClose} style={{ flex: 1, padding: '12px', borderRadius: 12, background: T.surface, color: T.text2, border: `1px solid ${T.border}`, cursor: 'pointer', fontSize: T.fontSize.body, fontWeight: 600, fontFamily: T.font }}>{t('cancel')}</button>
+        <button onClick={onRetry} style={{ flex: 1, padding: '12px', borderRadius: 12, background: T.accentGrad, color: '#1a1208', border: 'none', cursor: 'pointer', fontSize: T.fontSize.body, fontWeight: 700, fontFamily: T.font }}>{t('retry')}</button>
       </div>
     </div>
   );
@@ -548,7 +548,7 @@ function SheetHeader({ title, onClose }: { title: string; onClose: () => void })
   const { t } = useApp();
   return (
     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-      <div style={{ fontSize: 17, fontWeight: 700, color: T.text }}>{title}</div>
+      <div style={{ fontSize: T.fontSize.lead, fontWeight: 700, color: T.text }}>{title}</div>
       <button
         type="button"
         aria-label={t('closeOverlay')}
@@ -561,7 +561,7 @@ function SheetHeader({ title, onClose }: { title: string; onClose: () => void })
           background: T.surface,
           color: T.text2,
           cursor: 'pointer',
-          fontSize: 16,
+          fontSize: T.fontSize.base,
           display: 'inline-flex',
           alignItems: 'center',
           justifyContent: 'center',
@@ -577,13 +577,13 @@ function SheetHeader({ title, onClose }: { title: string; onClose: () => void })
 }
 
 const labelStyle: React.CSSProperties = {
-  display: 'block', fontSize: 12, fontWeight: 600, color: T.text2,
+  display: 'block', fontSize: T.fontSize.caption, fontWeight: 600, color: T.text2,
   marginBottom: 6, textTransform: 'uppercase', letterSpacing: 0.5,
 };
 
 const inputStyle: React.CSSProperties = {
   width: '100%', padding: '10px 12px', borderRadius: 10,
   background: T.surface, border: `1px solid ${T.border}`,
-  color: T.text, fontSize: 14, fontFamily: T.font,
+  color: T.text, fontSize: T.fontSize.body, fontFamily: T.font,
   outline: 'none', boxSizing: 'border-box',
 };

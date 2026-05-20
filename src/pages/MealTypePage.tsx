@@ -10,6 +10,7 @@ import { CustomizationSheet } from '../components/CustomizationSheet';
 import { useApp } from '../lib/app-state';
 import { saveFlowState, clearFlowState } from '../lib/generate-flow';
 import { EMPTY_CUSTOMIZATION, type Customization, type MealType } from '../lib/types';
+import { T } from '../tokens';
 
 interface Meal {
   id: MealType;
@@ -80,7 +81,7 @@ export function MealTypePage() {
               background: activeCount > 0 ? 'rgba(124, 58, 237, 0.14)' : 'var(--mise-glass-fill)',
               border: activeCount > 0 ? '1px solid rgba(124, 58, 237, 0.35)' : '1px solid var(--mise-glass-border)',
               color: activeCount > 0 ? 'var(--mise-primary)' : 'var(--mise-text-secondary)',
-              fontSize: 13,
+              fontSize: T.fontSize.small,
               fontWeight: 600,
               cursor: 'pointer',
               fontFamily: 'var(--mise-font-text)',
@@ -109,7 +110,7 @@ export function MealTypePage() {
               htmlFor="dish-idea"
               style={{
                 display: 'block',
-                fontSize: 13,
+                fontSize: T.fontSize.small,
                 fontWeight: 600,
                 letterSpacing: 0.4,
                 color: 'var(--mise-text-tertiary)',
@@ -138,7 +139,7 @@ export function MealTypePage() {
                 border: `1px solid ${dishErr ? 'var(--mise-error)' : 'var(--mise-glass-border)'}`,
                 borderRadius: 'var(--mise-radius-input)',
                 color: 'var(--mise-text-primary)',
-                fontSize: 15,
+                fontSize: T.fontSize.bodyLg,
                 fontFamily: 'var(--mise-font-text)',
                 outline: 'none',
                 boxSizing: 'border-box',
@@ -147,7 +148,7 @@ export function MealTypePage() {
             />
             <div
               style={{
-                fontSize: 12,
+                fontSize: T.fontSize.caption,
                 color: dishErr ? 'var(--mise-error)' : 'var(--mise-text-tertiary)',
                 marginTop: 8,
                 lineHeight: 1.45,
@@ -160,7 +161,7 @@ export function MealTypePage() {
 
         <div
           style={{
-            fontSize: 22,
+            fontSize: T.fontSize.heading,
             fontWeight: 600,
             color: 'var(--mise-text-primary)',
             letterSpacing: -0.4,
@@ -171,7 +172,7 @@ export function MealTypePage() {
         </div>
         <div
           style={{
-            fontSize: 14,
+            fontSize: T.fontSize.body,
             color: 'var(--mise-text-secondary)',
             marginTop: 8,
             marginBottom: 22,
@@ -219,7 +220,7 @@ export function MealTypePage() {
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  fontSize: 24,
+                    fontSize: T.fontSize.section,
                   lineHeight: 1,
                 }}
               >
@@ -228,7 +229,7 @@ export function MealTypePage() {
               <div>
                 <div
                   style={{
-                    fontSize: 15,
+                      fontSize: T.fontSize.bodyLg,
                     fontWeight: 600,
                     color: 'var(--mise-text-primary)',
                     letterSpacing: -0.2,
@@ -238,7 +239,7 @@ export function MealTypePage() {
                 </div>
                 <div
                   style={{
-                    fontSize: 13,
+                      fontSize: T.fontSize.small,
                     color: 'var(--mise-text-secondary)',
                     marginTop: 4,
                   }}

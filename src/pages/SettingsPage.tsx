@@ -5,6 +5,7 @@ import { toast } from 'sonner';
 import { Screen, SubHeader } from '../components/Chrome';
 import { Field, Input, Segmented, PrimaryButton, GhostButton } from '../components/Forms';
 import { Check, X, AlertCircle, Trash } from '../components/Icons';
+import { T } from '../tokens';
 import { useApp } from '../lib/app-state';
 import { validateApiKey } from '../lib/claude';
 import { t as translate } from '../lib/i18n';
@@ -131,7 +132,7 @@ export function SettingsPage() {
             {validationError && (
               <div
                 style={{
-                  fontSize: 13,
+                  fontSize: T.fontSize.small,
                   color: 'var(--mise-error)',
                   display: 'flex',
                   alignItems: 'center',
@@ -149,7 +150,7 @@ export function SettingsPage() {
               rel="noreferrer"
               style={{
                 color: 'var(--mise-primary)',
-                fontSize: 13,
+                fontSize: T.fontSize.small,
                 textDecoration: 'none',
                 fontWeight: 500,
               }}
@@ -221,7 +222,7 @@ export function SettingsPage() {
         <div style={{ marginTop: 40 }}>
           <div
             style={{
-              fontSize: 13,
+              fontSize: T.fontSize.small,
               fontWeight: 600,
               letterSpacing: 0.4,
               color: 'var(--mise-error)',
@@ -254,7 +255,7 @@ function KeyStatusBadge({ state, t }: { state: KeyState; t: (k: TKey, v?: Record
           background: 'rgba(16, 185, 129, 0.12)',
           border: '1px solid rgba(16, 185, 129, 0.25)',
           color: 'var(--mise-success)',
-          fontSize: 12,
+          fontSize: T.fontSize.caption,
           fontWeight: 600,
           fontFamily: 'var(--mise-font-text)',
         }}
@@ -275,7 +276,7 @@ function KeyStatusBadge({ state, t }: { state: KeyState; t: (k: TKey, v?: Record
         background: 'rgba(239, 68, 68, 0.12)',
         border: '1px solid rgba(239, 68, 68, 0.25)',
         color: 'var(--mise-error)',
-        fontSize: 12,
+        fontSize: T.fontSize.caption,
         fontWeight: 600,
         fontFamily: 'var(--mise-font-text)',
       }}

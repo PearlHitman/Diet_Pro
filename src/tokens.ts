@@ -40,6 +40,27 @@ export const T = {
   successBord:'rgba(16,185,129,0.25)',
 
   font: 'var(--mise-font-text)',
+  fontSize: {
+    micro: '0.5625rem', // 9 px
+    meta: '0.625rem', // 10 px
+    tiny: '0.6875rem', // 11 px
+    caption: '0.75rem', // 12 px
+    captionLg: '0.78125rem', // 12.5 px
+    small: '0.8125rem', // 13 px
+    bodySm: '0.84375rem', // 13.5 px
+    body: '0.875rem', // 14 px
+    bodyLg: '0.9375rem', // 15 px
+    base: '1rem', // 16 px
+    lead: '1.0625rem', // 17 px
+    title: '1.125rem', // 18 px
+    subhead: '1.1875rem', // 19 px
+    h2: '1.25rem', // 20 px
+    section: '1.5rem', // 24 px
+    heading: '1.375rem', // 22 px
+    display: '1.75rem', // 28 px
+    displayXl: '2rem', // 32 px
+    hero: '2.25rem', // 36 px
+  } as const,
 } as const;
 
 // Top padding reserves space for iOS status bar / notch.

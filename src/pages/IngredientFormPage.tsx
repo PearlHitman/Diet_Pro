@@ -103,7 +103,7 @@ export function IngredientFormPage() {
                   background: category === c ? T.accentTint : T.surface,
                   border: `1px solid ${category === c ? T.borderAcc : T.border}`,
                   color: category === c ? T.accent : T.text2,
-                  fontSize: 12, fontWeight: 600,
+                  fontSize: T.fontSize.caption, fontWeight: 600,
                   cursor: 'pointer', fontFamily: T.font,
                 }}
               >

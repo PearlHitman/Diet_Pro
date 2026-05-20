@@ -90,7 +90,7 @@ function Chip({
   const base: React.CSSProperties = {
     padding: '8px 13px',
     borderRadius: 999,
-    fontSize: 13,
+    fontSize: T.fontSize.small,
     fontWeight: 600,
     fontFamily: T.font,
     cursor: disabled ? 'not-allowed' : 'pointer',
@@ -274,10 +274,10 @@ export function CustomizationSheet({
           borderBottom: `1px solid ${T.border}`,
         }}>
           <div>
-            <div style={{ fontSize: 18, fontWeight: 700, color: T.text, letterSpacing: -0.3 }}>
+            <div style={{ fontSize: T.fontSize.title, fontWeight: 700, color: T.text, letterSpacing: -0.3 }}>
               {t('customize')}
             </div>
-            <div style={{ fontSize: 12, color: T.muted, marginTop: 3 }}>
+            <div style={{ fontSize: T.fontSize.caption, color: T.muted, marginTop: 3 }}>
               {t('customizeSub')}
             </div>
           </div>
@@ -303,7 +303,7 @@ export function CustomizationSheet({
         }}>
           {isEmpty ? (
             <div style={{
-              textAlign: 'center', color: T.text2, fontSize: 14, lineHeight: 1.5,
+              textAlign: 'center', color: T.text2, fontSize: T.fontSize.body, lineHeight: 1.5,
               padding: '20px 0',
             }}>{t('emptyPantryForCustomize')}</div>
           ) : grouped.map(({ cat, items }) => {
@@ -317,10 +317,10 @@ export function CustomizationSheet({
                 }}>
                   <div style={{
                     display: 'flex', alignItems: 'center', gap: 8,
-                    fontSize: 12, fontWeight: 600, letterSpacing: 0.4,
+                    fontSize: T.fontSize.caption, fontWeight: 600, letterSpacing: 0.4,
                     textTransform: 'uppercase', color: T.muted,
                   }}>
-                    <span style={{ fontSize: 14 }}>{CATEGORY_EMOJI[cat]}</span>
+                    <span style={{ fontSize: T.fontSize.body }}>{CATEGORY_EMOJI[cat]}</span>
                     {t(CATEGORY_LABEL_KEY[cat])}
                   </div>
                   {/* 4. key={used} causes remount on count change → bump animation replays */}
@@ -328,7 +328,7 @@ export function CustomizationSheet({
                     key={used}
                     className={!reduceMotion && used > 0 ? 'bump' : ''}
                     style={{
-                      fontSize: 11, fontWeight: 600,
+                      fontSize: T.fontSize.tiny, fontWeight: 600,
                       color: used >= cap ? T.accent : T.mute2,
                       fontVariantNumeric: 'tabular-nums',
                     }}
@@ -363,7 +363,7 @@ export function CustomizationSheet({
           borderTop: `1px solid ${T.border}`,
           background: T.surface2,
         }}>
-          <div style={{ fontSize: 12, color: T.muted, lineHeight: 1.3 }}>
+          <div style={{ fontSize: T.fontSize.caption, color: T.muted, lineHeight: 1.3 }}>
             <span style={{ color: T.accent }}>✓</span> {mustCount} {t('mustIncludeLabel')}
             {' · '}
             <span style={{ color: T.danger }}>✗</span> {skipCount} {t('skipLabel')}
