@@ -53,10 +53,12 @@ function dayOfYear(): number {
 
 // ─── TheMealDB — recipe of the day ───────────────────────────────────────
 
-export async function fetchMealOfDay(): Promise<MealOfDay> {
-  const cached = await get<FeedCache>(FEED_KEY);
-  if (cached && cached.date === todayStr()) {
-    return cached.meal;
+async function loadMealOfDay({ useCache }: { useCache: boolean }): Promise<MealOfDay> {
+  if (useCache) {
+    const cached = await get<FeedCache>(FEED_KEY);
+    if (cached && cached.date === todayStr()) {
+      return cached.meal;
+    }
   }
   const res = await fetch('https://www.themealdb.com/api/json/v1/1/random.php');
   if (!res.ok) throw new Error('TheMealDB request failed');
@@ -79,27 +81,13 @@ export async function fetchMealOfDay(): Promise<MealOfDay> {
   return meal;
 }
 
+export async function fetchMealOfDay(): Promise<MealOfDay> {
+  return loadMealOfDay({ useCache: true });
+}
+
 // Force-refresh ignoring the cache (used by the manual refresh button).
 export async function refreshMealOfDay(): Promise<MealOfDay> {
-  const res = await fetch('https://www.themealdb.com/api/json/v1/1/random.php');
-  if (!res.ok) throw new Error('TheMealDB request failed');
-  const data = await res.json();
-  const m = data.meals?.[0];
-  if (!m) throw new Error('No meal returned');
-  const meal: MealOfDay = {
-    id: m.idMeal,
-    name: m.strMeal,
-    category: m.strCategory ?? '',
-    area: m.strArea ?? '',
-    thumb: m.strMealThumb ?? '',
-    tags: m.strTags
-      ? m.strTags.split(',').map((s: string) => s.trim()).filter(Boolean)
-      : [],
-    youtubeUrl: m.strYoutube || null,
-    sourceUrl: m.strSource || null,
-  };
-  await set(FEED_KEY, { date: todayStr(), meal });
-  return meal;
+  return loadMealOfDay({ useCache: false });
 }
 
 // ─── Food facts (rotating by day of year) ────────────────────────────────
