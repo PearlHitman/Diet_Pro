@@ -15,6 +15,8 @@ interface LocationState {
   mealType?: MealType;
   customization?: Customization;
   dishIdea?: string;
+  maxTime?: number;
+  dietary?: string[];
 }
 
 export function LoadingPage() {
@@ -35,6 +37,8 @@ export function LoadingPage() {
     navState?.customization ?? fallback?.customization ?? EMPTY_CUSTOMIZATION;
   const dishIdeaTrimmed = (navState?.dishIdea ?? fallback?.dishIdea)?.trim();
   const fromDishFlow = !!(dishIdeaTrimmed && dishIdeaTrimmed.length > 0);
+  const maxTime = navState?.maxTime ?? fallback?.maxTime;
+  const dietary = navState?.dietary ?? fallback?.dietary;
 
   useEffect(() => {
     if (!mealType) {
@@ -53,6 +57,8 @@ export function LoadingPage() {
           settings,
           customization,
           dishIdea: dishIdeaTrimmed || undefined,
+          maxTime,
+          dietary,
         });
         if (cancelled) return;
         await appendRecipes(recipes);

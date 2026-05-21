@@ -252,6 +252,22 @@ const EN = {
   errorNetwork: 'Network error. Check your connection.',
   errorParse: 'Claude returned an unexpected response. Try again.',
 
+  // Home — recently cooked strip
+  recentlyCooked: 'Recently cooked',
+  // Pantry stats + filter chips
+  pantryFresh: 'Fresh',
+  pantryExpiring: 'Expiring',
+  pantryCategories: 'Categories',
+  pantryAllFilter: 'All',
+  // History — cookbook header + search
+  cookbookLabel: 'Cookbook',
+  dishesMade: '{n} dishes made',
+  searchRecipes: 'Search recipes…',
+  // Generate — time slider + dietary chips
+  maxTimeLabel: 'Max time',
+  minutesSuffix: 'minutes',
+  dietaryLabel: 'Dietary',
+
   // Cook mode
   cookMode: 'Cook Mode',
   startCooking: 'Start Cooking',
@@ -503,6 +519,22 @@ const EL: Record<Keys, string> = {
   errorNetwork: 'Πρόβλημα δικτύου. Έλεγξε τη σύνδεση.',
   errorParse: 'Ο Claude επέστρεψε απρόσμενη απάντηση. Δοκίμασε ξανά.',
 
+  // Home — recently cooked strip
+  recentlyCooked: 'Πρόσφατα μαγειρεμένα',
+  // Pantry stats + filter chips
+  pantryFresh: 'Φρέσκα',
+  pantryExpiring: 'Λήγουν',
+  pantryCategories: 'Κατηγορίες',
+  pantryAllFilter: 'Όλα',
+  // History — cookbook header + search
+  cookbookLabel: 'Βιβλίο Συνταγών',
+  dishesMade: '{n} πιάτα φτιαγμένα',
+  searchRecipes: 'Αναζήτηση συνταγών…',
+  // Generate — time slider + dietary chips
+  maxTimeLabel: 'Μέγιστος χρόνος',
+  minutesSuffix: 'λεπτά',
+  dietaryLabel: 'Διατροφή',
+
   // Cook mode
   cookMode: 'Λειτουργία Μαγειρέματος',
   startCooking: 'Ξεκίνα το μαγείρεμα',
@@ -750,6 +782,22 @@ const ES: Record<Keys, string> = {
   errorRate: 'Límite de Anthropic alcanzado. Inténtalo en un momento.',
   errorNetwork: 'Error de red. Comprueba tu conexión.',
   errorParse: 'Claude devolvió una respuesta inesperada. Inténtalo de nuevo.',
+
+  // Home — recently cooked strip
+  recentlyCooked: 'Cocinado recientemente',
+  // Pantry stats + filter chips
+  pantryFresh: 'Fresco',
+  pantryExpiring: 'Por caducar',
+  pantryCategories: 'Categorías',
+  pantryAllFilter: 'Todo',
+  // History — cookbook header + search
+  cookbookLabel: 'Recetario',
+  dishesMade: '{n} platos preparados',
+  searchRecipes: 'Buscar recetas…',
+  // Generate — time slider + dietary chips
+  maxTimeLabel: 'Tiempo máx.',
+  minutesSuffix: 'minutos',
+  dietaryLabel: 'Dieta',
 
   cookMode: 'Modo cocina',
   startCooking: 'Empezar a cocinar',

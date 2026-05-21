@@ -1,8 +1,9 @@
 // History — combined history + favorites view, switched via segmented tab.
 // /history?view=all (default) or /history?view=favs.
 
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
+import { Search, X } from 'lucide-react';
 import { Screen } from '../components/Chrome';
 import { RecipeCard } from '../components/RecipeCard';
 import { BookOpen } from '../components/Icons';
@@ -27,11 +28,14 @@ export function HistoryPage() {
   const { recipes, profile, t } = useApp();
   const [params, setParams] = useSearchParams();
   const view: View = params.get('view') === 'favs' ? 'favs' : 'all';
+  const [query, setQuery] = useState('');
 
-  const list = useMemo<Recipe[]>(
-    () => (view === 'favs' ? recipes.filter(r => r.starred) : recipes),
-    [recipes, view],
-  );
+  const list = useMemo<Recipe[]>(() => {
+    const base = view === 'favs' ? recipes.filter(r => r.starred) : recipes;
+    const q = query.trim().toLowerCase();
+    if (!q) return base;
+    return base.filter(r => r.name.toLowerCase().includes(q));
+  }, [recipes, view, query]);
 
   const sections = useMemo(() => {
     const locale = localeFromLanguage(profile.language);
@@ -78,19 +82,61 @@ export function HistoryPage() {
   return (
     <Screen>
       <div style={{ padding: '8px 20px 28px' }}>
-        <h1
-          style={{
+        {/* ── Cookbook header ───────────────────────────────── */}
+        <div style={{ padding: '6px 0 18px' }}>
+          <div style={{
+            fontSize: 11, fontWeight: 500, letterSpacing: '0.14em',
+            textTransform: 'uppercase', color: 'var(--text-3)',
+            fontFamily: 'var(--font-sans)', marginBottom: 6,
+          }}>
+            {t('cookbookLabel')}
+          </div>
+          <h1 style={{
+            fontFamily: 'var(--font-display)',
             fontSize: T.fontSize.displayXl,
-            fontWeight: 600,
-            lineHeight: 1.25,
-            letterSpacing: -0.6,
-            color: 'var(--mise-text-primary)',
-            fontFamily: 'var(--mise-font-display)',
-            margin: '0 0 20px 0',
-          }}
-        >
-          {t('history')}
-        </h1>
+            fontWeight: 400,
+            lineHeight: 1.05,
+            letterSpacing: '-0.02em',
+            color: 'var(--text)',
+            margin: 0,
+          }}>
+            <em style={{ fontStyle: 'italic', color: 'var(--primary)' }}>{recipes.length}</em>
+            {' '}{t('dishesMade', { n: '' }).trimStart().replace(/^\s*/, '')}
+          </h1>
+        </div>
+
+        {/* ── Search ──────────────────────────────────────────── */}
+        <div style={{
+          display: 'flex', alignItems: 'center', gap: 10,
+          padding: '12px 14px', marginBottom: 16,
+          background: 'var(--surface)',
+          border: '1px solid var(--border)',
+          borderRadius: 14,
+        }}>
+          <Search size={16} color="var(--text-3)" />
+          <input
+            type="text"
+            value={query}
+            onChange={e => setQuery(e.target.value)}
+            placeholder={t('searchRecipes')}
+            style={{
+              flex: 1, background: 'transparent', border: 'none', outline: 'none',
+              color: 'var(--text)', fontSize: 14, fontFamily: 'var(--font-sans)',
+            }}
+          />
+          {query.length > 0 && (
+            <button
+              type="button"
+              onClick={() => setQuery('')}
+              style={{
+                all: 'unset', cursor: 'pointer', color: 'var(--text-3)',
+                display: 'flex', alignItems: 'center',
+              }}
+            >
+              <X size={15} />
+            </button>
+          )}
+        </div>
 
         {/* Segmented control */}
         <div

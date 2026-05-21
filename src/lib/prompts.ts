@@ -80,6 +80,8 @@ export interface PromptInput {
   dishIdea?: string;
   /** Fast mode: one compact recipe, shorter output. */
   speed?: boolean;
+  maxTime?: number;
+  dietary?: string[];
 }
 
 // System prompt sets the creative persona. Kept separate so claude.ts
@@ -106,7 +108,7 @@ export function buildRecipePrompt(input: PromptInput): string {
 }
 
 function buildRecipePromptBest({
-  pantry, profile, mealType, customization, dishIdea,
+  pantry, profile, mealType, customization, dishIdea, maxTime, dietary,
 }: PromptInput): string {
   const trimmedDish = dishIdea?.trim();
   const dishSection = trimmedDish
@@ -145,6 +147,20 @@ ${skip.map(n => `- ${n}`).join('\n')}
 NEVER include these ingredients in any recipe, even in trace amounts.`
     : '';
 
+  const timeSection = maxTime
+    ? `\n═══ TIME CONSTRAINT ═══
+The user has set a hard upper limit of ${maxTime} minutes total cook + prep time.
+The cookTime value in your JSON response MUST be ≤ ${maxTime}.
+Do not suggest techniques that push beyond this limit.`
+    : '';
+
+  const dietarySection = dietary && dietary.length > 0
+    ? `\n═══ DIETARY REQUIREMENTS ═══
+The user has selected the following dietary filters — ALL recipes MUST comply:
+${dietary.map(d => `- ${d}`).join('\n')}
+This is non-negotiable. Do not suggest recipes that violate any of these.`
+    : '';
+
   return `You are an expert kitchen assistant. Your job is to suggest 1 recipe the user can actually cook with what they have.
 
 ═══ HOW TO APPROACH THIS ═══
@@ -172,7 +188,7 @@ Diet goal: ${profile.dietGoal}
 ═══ MEAL TYPE ═══
 ${MEAL_DESC[mealType]}
 ${dishSection}
-${mustSection}${skipSection}
+${mustSection}${skipSection}${timeSection}${dietarySection}
 
 ═══ HARD RULES (must all be satisfied) ═══
 
@@ -225,7 +241,7 @@ ${RECIPE_PROMPT_BEST_OUTPUT_FORMAT}`;
 }
 
 function buildRecipePromptSpeed({
-  pantry, profile, mealType, customization, dishIdea,
+  pantry, profile, mealType, customization, dishIdea, maxTime, dietary,
 }: PromptInput): string {
   const trimmedDish = dishIdea?.trim();
   const langInstruction = profile.language === 'EL'
@@ -255,7 +271,7 @@ PANTRY:
 ${formatPantry(pantry)}
 
 PROFILE: ${profile.level} cook, ${profile.servings} servings, cuisine: ${profile.cuisine || 'any'}, allergies: ${profile.allergies || 'none'}, diet: ${profile.dietGoal}.
-MEAL TYPE: ${MEAL_DESC[mealType]}${dishSection}${mustSection}${skipSection}
+MEAL TYPE: ${MEAL_DESC[mealType]}${dishSection}${mustSection}${skipSection}${maxTime ? `\nHARD TIME LIMIT: cookTime MUST be ≤ ${maxTime} minutes.` : ''}${dietary && dietary.length > 0 ? `\nDIETARY: must comply with all of: ${dietary.join(', ')}.` : ''}
 
 RULES:
 - ≥70% ingredients from pantry ("missing": false). At most 2 missing items per recipe.
@@ -426,13 +442,5 @@ Rules:
 /** Plain-text substitution hints for ingredients the user lacks. */
 export function buildSubstitutionPrompt(missingIngredientNames: string[], pantry: Ingredient[]): string {
   const miss = missingIngredientNames.filter(Boolean).map(s => `- ${s}`).join('\n') || '(none)';
-  return `These ingredients are NOT in the user's pantry:\n${miss}
-
-Ingredients they DO have:\n${formatPantryShort(pantry)}
-
-Suggest the best substitutions from what they already have. If there is no reasonable substitute for an item, say "No good substitute" for that line.
-
-Respond in plain text as a numbered or bulleted list — NOT JSON — one line per missing ingredient.
-
-Keep it concise and practical for home cooking.`;
+  return `These ingredients are NOT in the user's pantry:\n${miss}\n\nIngredients they DO have:\n${formatPantryShort(pantry)}\n\nSuggest the best substitutions from what they already have. If there is no reasonable substitute for an item, say "No good substitute" for that line.\n\nRespond in plain text as a numbered or bulleted list — NOT JSON — one line per missing ingredient.\n\nKeep it concise and practical for home cooking.`;
 }

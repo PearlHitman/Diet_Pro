@@ -3,13 +3,13 @@
 
 import React, { useMemo, useRef, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Refrigerator, Zap, ArrowRight, Sparkles, Leaf, AlertCircle } from 'lucide-react';
+import { Refrigerator, Zap, ArrowRight, Sparkles, Leaf, AlertCircle, Clock, Flame, ChefHat } from 'lucide-react';
 import { Screen, AppHeader } from '../components/Chrome';
 import { T } from '../tokens';
 import { useApp } from '../lib/app-state';
 import { computeNutritionGoals, sumMeals, toDateStr } from '../lib/nutrition';
 import { prefersReducedMotion } from '../lib/motion';
-import type { Ingredient, NutritionGoals } from '../lib/types';
+import type { Ingredient, NutritionGoals, Recipe } from '../lib/types';
 import type { DayTotals } from '../lib/nutrition';
 
 // ── Helpers ──────────────────────────────────────────────────
@@ -18,6 +18,15 @@ function daysLeft(expiresOn: string | null): number {
   if (!expiresOn) return Infinity;
   const ms = new Date(expiresOn).getTime() - Date.now();
   return Math.ceil(ms / (1000 * 60 * 60 * 24));
+}
+
+function dishGradient(id: string, n: 0 | 1): string {
+  const palettes: [string, string][] = [
+    ['#3a2418', '#1f140c'], ['#2a3422', '#161e10'], ['#3a2a24', '#1e1614'],
+    ['#322a3a', '#181420'], ['#3a3424', '#1e1c10'], ['#243a36', '#10201d'],
+  ];
+  const h = id.split('').reduce((s, c) => s + c.charCodeAt(0), 0);
+  return palettes[h % palettes.length][n];
 }
 
 function todayDateLabel(lang: 'EN' | 'EL' | 'ES'): string {
@@ -157,7 +166,7 @@ function MacroBar({
 // ── Main page ─────────────────────────────────────────────────
 
 export function HomePage() {
-  const { pantry, profile, settings, bodyStats, nutritionLog, t } = useApp();
+  const { pantry, profile, settings, bodyStats, nutritionLog, recipes, t } = useApp();
   const navigate = useNavigate();
   const reduceMotion = prefersReducedMotion();
 
@@ -421,6 +430,50 @@ export function HomePage() {
           <NutritionCard goals={goals} totals={totals} mealCount={todayMeals.length} onClick={() => navigate('/nutrition')} />
         </div>
 
+        {/* ── Recently cooked strip ────────────────────────── */}
+        {recipes.length > 0 && (
+          <div
+            className={reduceMotion ? undefined : 'fade-up'}
+            style={{
+              marginTop: 28,
+              ...(reduceMotion ? {} : { animationDelay: '110ms' }),
+            }}
+          >
+            <SectionHeader
+              label={t('recentlyCooked')}
+              trailing={
+                <button
+                  type="button"
+                  onClick={() => navigate('/history')}
+                  style={{
+                    background: 'none', border: 'none',
+                    color: 'var(--primary)', fontSize: 12, fontWeight: 600,
+                    cursor: 'pointer', fontFamily: 'var(--font-sans)',
+                  }}
+                >
+                  {t('seeAll')}
+                </button>
+              }
+            />
+            <div style={{
+              display: 'flex', gap: 10, overflowX: 'auto',
+              margin: '0 -18px', padding: '0 18px 4px',
+              scrollbarWidth: 'none',
+            }}>
+              {[...recipes]
+                .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+                .slice(0, 4)
+                .map(r => (
+                  <RecentRecipeCard
+                    key={r.id}
+                    recipe={r}
+                    onTap={() => navigate(`/recipe/${r.id}`)}
+                  />
+                ))}
+            </div>
+          </div>
+        )}
+
         {/* ── API key banner ───────────────────────────────── */}
         {needsKey && (
           <div
@@ -573,6 +626,55 @@ function NutritionCard({
         </span>
         <span style={{ fontSize: 12, color: 'var(--primary)', fontWeight: 600, fontFamily: 'var(--font-sans)' }}>
           Full breakdown →
+        </span>
+      </div>
+    </button>
+  );
+}
+
+// ── Recent recipe card ─────────────────────────────────────────
+
+function RecentRecipeCard({ recipe, onTap }: { recipe: Recipe; onTap: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onTap}
+      className="press"
+      style={{
+        all: 'unset', flex: '0 0 180px', boxSizing: 'border-box',
+        background: 'var(--surface)', border: '1px solid var(--border)',
+        borderRadius: 18, padding: 14, cursor: 'pointer',
+        display: 'flex', flexDirection: 'column',
+      }}
+    >
+      {/* Gradient thumbnail */}
+      <div style={{
+        height: 80, borderRadius: 12,
+        background: `linear-gradient(135deg, ${dishGradient(recipe.id, 0)}, ${dishGradient(recipe.id, 1)})`,
+        marginBottom: 12,
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+      }}>
+        <ChefHat size={28} color="rgba(255,255,255,0.25)" />
+      </div>
+      {/* Name */}
+      <div style={{
+        fontSize: 13, fontWeight: 600, color: 'var(--text)',
+        fontFamily: 'var(--font-sans)', lineHeight: 1.3, marginBottom: 8,
+        overflow: 'hidden', display: '-webkit-box',
+        WebkitLineClamp: 2, WebkitBoxOrient: 'vertical',
+      }}>
+        {recipe.name}
+      </div>
+      {/* Meta */}
+      <div style={{
+        marginTop: 'auto', display: 'flex', gap: 10,
+        fontSize: 11, color: 'var(--text-3)', fontFamily: 'var(--font-sans)',
+      }}>
+        <span style={{ display: 'flex', alignItems: 'center', gap: 3 }}>
+          <Clock size={11} />{recipe.cookTime}m
+        </span>
+        <span style={{ display: 'flex', alignItems: 'center', gap: 3 }}>
+          <Flame size={11} />{recipe.calories}
         </span>
       </div>
     </button>

@@ -144,17 +144,32 @@ export function PantryPage() {
   const navigate = useNavigate();
 
   const [query, setQuery] = useState('');
+  const [activeCat, setActiveCat] = useState<Category | 'all'>('all');
   const [captured, setCaptured] = useState<{ file: File; mode: CameraMode } | null>(null);
   const [sheetId, setSheetId] = useState<string | null>(null);
 
   const photoRef = useRef<HTMLInputElement>(null);
   const receiptRef = useRef<HTMLInputElement>(null);
 
+  const expiringCount = useMemo(
+    () => pantry.filter(it => { const d = daysUntil(it.expiresOn); return d !== null && d <= 5; }).length,
+    [pantry],
+  );
+  const freshCount = useMemo(
+    () => pantry.filter(it => { const d = daysUntil(it.expiresOn); return d === null || d > 5; }).length,
+    [pantry],
+  );
+  const presentCats = useMemo(
+    () => new Set(pantry.map(it => it.category)),
+    [pantry],
+  );
+
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
-    if (!q) return pantry;
-    return pantry.filter(it => it.name.toLowerCase().includes(q));
-  }, [pantry, query]);
+    const base = activeCat === 'all' ? pantry : pantry.filter(it => it.category === activeCat);
+    if (!q) return base;
+    return base.filter(it => it.name.toLowerCase().includes(q));
+  }, [pantry, query, activeCat]);
 
   const grouped = useMemo(() => {
     const out: Record<Category, Ingredient[]> = {
@@ -261,6 +276,38 @@ export function PantryPage() {
           </DropdownMenu>
         </div>
 
+        {/* ── Stats row ────────────────────────────────────── */}
+        {pantry.length > 0 && (
+          <div style={{
+            display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10, marginBottom: 20,
+          }}>
+            {[
+              { label: t('pantryFresh'), value: freshCount, color: 'var(--success)' },
+              { label: t('pantryExpiring'), value: expiringCount, color: 'var(--warning)' },
+              { label: t('pantryCategories'), value: presentCats.size, color: 'var(--mise-primary)' },
+            ].map(stat => (
+              <div key={stat.label} style={{
+                background: 'var(--mise-glass-fill)', border: '1px solid var(--mise-glass-border)',
+                borderRadius: 'var(--mise-radius-button)', padding: '12px 14px',
+                textAlign: 'center',
+              }}>
+                <div style={{
+                  fontSize: 22, fontWeight: 400, lineHeight: 1,
+                  color: stat.color, fontFamily: 'var(--mise-font-display)', marginBottom: 4,
+                }}>
+                  {stat.value}
+                </div>
+                <div style={{
+                  fontSize: 11, color: 'var(--mise-text-tertiary)',
+                  fontFamily: 'var(--mise-font-text)', fontWeight: 500,
+                }}>
+                  {stat.label}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
         {/* ── Search input ─────────────────────────────────── */}
         <div
           style={{
@@ -318,6 +365,37 @@ export function PantryPage() {
             </button>
           )}
         </div>
+
+        {/* ── Category filter chips ────────────────────────── */}
+        {pantry.length > 0 && presentCats.size > 1 && (
+          <div style={{
+            display: 'flex', gap: 8, overflowX: 'auto',
+            margin: '0 -20px', padding: '0 20px 16px',
+            scrollbarWidth: 'none',
+          }}>
+            {(['all', ...CATEGORY_ORDER.filter(c => presentCats.has(c))] as Array<Category | 'all'>).map(cat => {
+              const isActive = activeCat === cat;
+              return (
+                <button
+                  key={cat}
+                  type="button"
+                  onClick={() => setActiveCat(cat)}
+                  className="press"
+                  style={{
+                    flexShrink: 0, padding: '6px 14px', borderRadius: 999,
+                    border: `1px solid ${isActive ? 'var(--mise-primary)' : 'var(--mise-glass-border)'}`,
+                    background: isActive ? 'rgba(124,58,237,0.14)' : 'transparent',
+                    color: isActive ? 'var(--mise-primary)' : 'var(--mise-text-secondary)',
+                    fontSize: 13, fontWeight: 500, cursor: 'pointer',
+                    fontFamily: 'var(--mise-font-text)', whiteSpace: 'nowrap',
+                  }}
+                >
+                  {cat === 'all' ? t('pantryAllFilter') : catLabel[cat]}
+                </button>
+              );
+            })}
+          </div>
+        )}
 
         {/* ── Categories or empty state ────────────────────── */}
         {pantry.length === 0 ? (

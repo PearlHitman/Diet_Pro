@@ -36,12 +36,22 @@ export function MealTypePage() {
   const [customization, setCustomization] = useState<Customization>(EMPTY_CUSTOMIZATION);
   const [dishIdea, setDishIdea] = useState('');
   const [dishErr, setDishErr] = useState(false);
+  const [maxTime, setMaxTime] = useState(30);
+  const [dietary, setDietary] = useState<string[]>([]);
   const activeCount = customization.mustInclude.length + customization.skip.length;
+
+  const DIETARY_OPTIONS = ['Vegetarian', 'Vegan', 'Gluten-free', 'Dairy-free', 'Low-carb', 'High-protein'] as const;
+
+  function toggleDiet(d: string) {
+    setDietary(arr => arr.includes(d) ? arr.filter(x => x !== d) : [...arr, d]);
+  }
 
   function pick(meal: MealType) {
     // Always start with a clean flow slate so an aborted previous attempt
     // doesn't leak into this one.
     clearFlowState();
+    const dietaryPayload = dietary.length > 0 ? dietary : undefined;
+    const maxTimePayload = maxTime !== 120 ? maxTime : undefined; // 120 = "no limit"
     if (dishMode) {
       const trimmed = dishIdea.trim();
       if (!trimmed) {
@@ -49,12 +59,12 @@ export function MealTypePage() {
         return;
       }
       setDishErr(false);
-      const flow = { mealType: meal, customization, dishIdea: trimmed };
+      const flow = { mealType: meal, customization, dishIdea: trimmed, maxTime: maxTimePayload, dietary: dietaryPayload };
       saveFlowState(flow);
       navigate('/generate/loading', { state: flow });
       return;
     }
-    const flow = { mealType: meal, customization };
+    const flow = { mealType: meal, customization, maxTime: maxTimePayload, dietary: dietaryPayload };
     saveFlowState(flow);
     navigate('/generate/loading', { state: flow });
   }
@@ -179,6 +189,90 @@ export function MealTypePage() {
           }}
         >
           {subtitle}
+        </div>
+
+        {/* ── Max time slider ─────────────────────────────── */}
+        <div style={{ marginBottom: 22 }}>
+          <div style={{
+            fontSize: 11, fontWeight: 500, letterSpacing: '0.14em',
+            textTransform: 'uppercase', color: 'var(--text-3)',
+            fontFamily: 'var(--font-sans)', marginBottom: 10,
+          }}>
+            {t('maxTimeLabel')}
+          </div>
+          <div style={{
+            padding: '16px 18px',
+            background: 'var(--surface)',
+            border: '1px solid var(--border)',
+            borderRadius: 'var(--radius-card)',
+            boxShadow: 'var(--shadow-card)',
+          }}>
+            <div style={{
+              display: 'flex', justifyContent: 'space-between', alignItems: 'baseline',
+              marginBottom: 10,
+            }}>
+              <span style={{
+                fontFamily: 'var(--font-display)', fontSize: 28,
+                fontWeight: 400, color: 'var(--text)',
+              }}>
+                {maxTime === 120 ? '∞' : maxTime}
+              </span>
+              <span style={{ fontSize: 12, color: 'var(--text-3)', fontFamily: 'var(--font-sans)' }}>
+                {t('minutesSuffix')}
+              </span>
+            </div>
+            <input
+              type="range"
+              min={10}
+              max={120}
+              step={5}
+              value={maxTime}
+              onChange={e => setMaxTime(parseInt(e.target.value, 10))}
+              style={{ width: '100%', accentColor: 'var(--primary)' }}
+            />
+            <div style={{
+              display: 'flex', justifyContent: 'space-between', marginTop: 4,
+              fontSize: 10, color: 'var(--text-4)', fontFamily: 'var(--font-sans)',
+            }}>
+              <span>10m</span>
+              <span>∞ any time</span>
+            </div>
+          </div>
+        </div>
+
+        {/* ── Dietary chips ───────────────────────────────────── */}
+        <div style={{ marginBottom: 24 }}>
+          <div style={{
+            fontSize: 11, fontWeight: 500, letterSpacing: '0.14em',
+            textTransform: 'uppercase', color: 'var(--text-3)',
+            fontFamily: 'var(--font-sans)', marginBottom: 10,
+          }}>
+            {t('dietaryLabel')}
+          </div>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+            {DIETARY_OPTIONS.map(d => {
+              const isActive = dietary.includes(d);
+              return (
+                <button
+                  key={d}
+                  type="button"
+                  onClick={() => toggleDiet(d)}
+                  className="press"
+                  style={{
+                    display: 'inline-flex', alignItems: 'center',
+                    padding: '6px 12px', borderRadius: 999,
+                    border: `1px solid ${isActive ? 'var(--primary)' : 'var(--border-strong)'}`,
+                    background: isActive ? 'var(--primary-dim)' : 'transparent',
+                    color: isActive ? 'var(--primary)' : 'var(--text-2)',
+                    fontSize: 12, fontWeight: 500, cursor: 'pointer',
+                    fontFamily: 'var(--font-sans)',
+                  }}
+                >
+                  {d}
+                </button>
+              );
+            })}
+          </div>
         </div>
 
         <div

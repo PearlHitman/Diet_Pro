@@ -70,6 +70,8 @@ export interface GenerateInput {
   customization?: Customization;
   /** Free-text craving from "I have a dish in mind" flow. */
   dishIdea?: string;
+  maxTime?: number;
+  dietary?: string[];
 }
 
 export async function generateRecipes(input: GenerateInput): Promise<Recipe[]> {
@@ -83,6 +85,8 @@ export async function generateRecipes(input: GenerateInput): Promise<Recipe[]> {
     customization: input.customization,
     dishIdea: input.dishIdea?.trim() || undefined,
     speed: fast,
+    maxTime: input.maxTime,
+    dietary: input.dietary,
   });
 
   let text: string;

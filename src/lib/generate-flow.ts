@@ -18,6 +18,8 @@ export interface GenerateFlowState {
   mealType: MealType;
   customization: Customization;
   dishIdea?: string;
+  maxTime?: number;
+  dietary?: string[];
 }
 
 function safeSession(): Storage | null {
@@ -54,6 +56,8 @@ export function loadFlowState(): GenerateFlowState | null {
       mealType,
       customization: parsed.customization ?? EMPTY_CUSTOMIZATION,
       dishIdea: typeof parsed.dishIdea === 'string' ? parsed.dishIdea : undefined,
+      maxTime: typeof parsed.maxTime === 'number' ? parsed.maxTime : undefined,
+      dietary: Array.isArray(parsed.dietary) ? parsed.dietary.filter((x): x is string => typeof x === 'string') : undefined,
     };
   } catch {
     return null;
@@ -84,7 +88,7 @@ export function loadResultIds(): string[] {
 /**
  * Clear all generate-flow scratch state.
  * Call when the user explicitly exits the flow (back to home, starts a
- * fresh generation, etc) so a future reload doesn't restore stale data.
+ * fresh gen etc) so a future reload doesn't restore stale data.
  */
 export function clearFlowState(): void {
   const s = safeSession();
