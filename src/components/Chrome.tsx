@@ -74,22 +74,21 @@ export function AppHeader({
             width: 34,
             height: 34,
             borderRadius: 10,
-            background: 'var(--primary-dim)',
-            border: '1px solid var(--border)',
-            color: 'var(--primary)',
+            background: 'linear-gradient(135deg, var(--primary), #c8623a)',
+            boxShadow: '0 6px 18px var(--primary-glow)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             flexShrink: 0,
           }}
         >
-          <ChefHat size={18} />
+          <ChefHat size={18} color="#fff" />
         </div>
         <div
           style={{
-            fontSize: '1.1rem',
+            fontSize: 24,
             fontWeight: 400,
-            letterSpacing: '-0.01em',
+            letterSpacing: '-0.5px',
             color: 'var(--text)',
             fontFamily: 'var(--font-display)',
             lineHeight: 1,
@@ -367,5 +366,8 @@ export function GlassCard({
     >
       {children}
     </Tag>
+  );
+}
+>
   );
 }
