@@ -368,6 +368,3 @@ export function GlassCard({
     </Tag>
   );
 }
->
-  );
-}
