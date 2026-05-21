@@ -60,7 +60,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     allergies: '', dietGoal: 'None', language: 'EN', theme: 'system',
   });
   const [recipes, setRecipes] = useState<Recipe[]>([]);
-  const [settings, setSettingsState] = useState<Settings>({ apiKey: '', model: 'claude-sonnet-4-5', recipeSpeed: 'best' });
+  const [settings, setSettingsState] = useState<Settings>({ apiKey: '', model: 'claude-sonnet-4-5', recipeSpeed: 'best', byok: false });
   const [bodyStats, setBodyStatsState] = useState<BodyStats | null>(null);
   const [nutritionLog, setNutritionLog] = useState<LoggedMeal[]>([]);
   const [ready, setReady] = useState(false);
@@ -168,7 +168,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       allergies: '', dietGoal: 'None', language: 'EN', theme: 'system',
     });
     setRecipes([]);
-    setSettingsState({ apiKey: '', model: 'claude-sonnet-4-5', recipeSpeed: 'best' });
+    setSettingsState({ apiKey: '', model: 'claude-sonnet-4-5', recipeSpeed: 'best', byok: false });
     setBodyStatsState(null);
     setNutritionLog([]);
   }, []);

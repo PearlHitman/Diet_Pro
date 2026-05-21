@@ -170,6 +170,12 @@ const EN = {
   importSuccess: 'Data imported.',
   importFailed: 'Import failed: {reason}',
 
+  // Developer / BYOK
+  developerSection: 'Developer',
+  byokToggle: 'Use my own API key',
+  byokToggleHint: 'Off: AI calls go through the shared server (3 free generations/day). On: your key is used directly with no daily cap.',
+  rateLimitHit: "You've used today's 3 free generations. Try again tomorrow, or enable your own API key in Settings \u2192 Developer.",
+
   // Camera import
   addFromCamera: 'Add from camera',
   scanBarcode: 'Scan barcode',
@@ -412,6 +418,12 @@ const EL: Record<Keys, string> = {
   importSuccess: 'Τα δεδομένα εισήχθησαν.',
   importFailed: 'Αποτυχία εισαγωγής: {reason}',
 
+  // Developer / BYOK
+  developerSection: 'Προγραμματιστής',
+  byokToggle: 'Χρήση του δικού μου API key',
+  byokToggleHint: 'Κλειστό: οι κλήσεις AI γίνονται μέσω κοινόχρηστου διακομιστή (3 δωρεάν/ημέρα). Ανοιχτό: το κλειδί σου χρησιμοποιείται απευθείας, χωρίς ημερήσιο όριο.',
+  rateLimitHit: 'Χρησιμοποίησες τις 3 δωρεάν δημιουργίες σήμερα. Δοκίμασε αύριο ή ενεργοποίησε το δικό σου API key στις Ρυθμίσεις → Προγραμματιστής.',
+
   // Camera import
   addFromCamera: 'Προσθήκη από κάμερα',
   scanBarcode: 'Σάρωση barcode',
@@ -647,6 +659,12 @@ const ES: Record<Keys, string> = {
   importConfirm: 'La importación reemplazará tu despensa, recetas, perfil y ajustes actuales (la clave API se conserva). ¿Continuar?',
   importSuccess: 'Datos importados.',
   importFailed: 'Importación fallida: {reason}',
+
+  // Developer / BYOK
+  developerSection: 'Desarrollador',
+  byokToggle: 'Usar mi propia clave API',
+  byokToggleHint: 'Desactivado: las llamadas de IA van por el servidor compartido (3 generaciones gratis/día). Activado: tu clave se usa directamente, sin límite diario.',
+  rateLimitHit: 'Has usado las 3 generaciones gratuitas de hoy. Inténtalo mañana o activa tu propia clave API en Ajustes → Desarrollador.',
 
   addFromCamera: 'Añadir desde cámara',
   scanBarcode: 'Escanear código de barras',

@@ -30,13 +30,15 @@ export function Screen({
       className={className}
       style={{
         width: '100%',
-        minHeight: '100vh',
-        background: bg ?? 'var(--mise-background)',
-        color: 'var(--mise-text-primary)',
-        fontFamily: 'var(--mise-font-text)',
+        /* 100dvh: respects Safari's collapsible URL bar on iPhone */
+        minHeight: '100dvh',
+        background: bg ?? 'var(--bg)',
+        color: 'var(--text)',
+        fontFamily: 'var(--font-sans)',
         paddingTop: SCREEN_PAD_TOP,
+        /* Extra bottom padding clears the 72px tab bar + home indicator */
         paddingBottom: hasTabBar
-          ? 'calc(72px + env(safe-area-inset-bottom))'
+          ? 'calc(72px + env(safe-area-inset-bottom) + 8px)'
           : 'env(safe-area-inset-bottom)',
         boxSizing: 'border-box',
         ...style,
@@ -62,31 +64,35 @@ export function AppHeader({
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
-        padding: dense ? '10px 20px 6px' : '14px 20px 8px',
+        padding: dense ? '10px 18px 6px' : '14px 18px 10px',
       }}
     >
+      {/* Mise wordmark + gradient chef-hat tile */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
         <div
           style={{
-            width: 32,
-            height: 32,
+            width: 34,
+            height: 34,
             borderRadius: 10,
-            background: 'rgba(124, 58, 237, 0.1)',
-            color: 'var(--mise-primary)',
+            background: 'var(--primary-dim)',
+            border: '1px solid var(--border)',
+            color: 'var(--primary)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
+            flexShrink: 0,
           }}
         >
           <ChefHat size={18} />
         </div>
         <div
           style={{
-            fontSize: T.fontSize.bodyLg,
-            fontWeight: 600,
-            letterSpacing: -0.2,
-            color: 'var(--mise-text-primary)',
-            fontFamily: 'var(--mise-font-display)',
+            fontSize: '1.1rem',
+            fontWeight: 400,
+            letterSpacing: '-0.01em',
+            color: 'var(--text)',
+            fontFamily: 'var(--font-display)',
+            lineHeight: 1,
           }}
         >
           {t('appName')}
@@ -103,18 +109,16 @@ export function AppHeader({
             style={{
               minWidth: 44,
               minHeight: 44,
-              borderRadius: 'var(--mise-radius-button)',
-              border: '1px solid var(--mise-glass-border)',
-              background: 'var(--mise-glass-fill)',
-              backdropFilter: 'blur(20px) saturate(180%)',
-              WebkitBackdropFilter: 'blur(20px) saturate(180%)',
-              color: 'var(--mise-text-secondary)',
+              borderRadius: 'var(--radius-button)',
+              border: '1px solid var(--border)',
+              background: 'var(--surface-2)',
+              color: 'var(--text-2)',
               display: 'inline-flex',
               alignItems: 'center',
               justifyContent: 'center',
               cursor: 'pointer',
               padding: 0,
-              boxShadow: 'var(--mise-shadow-sm)',
+              boxShadow: 'var(--shadow-sm)',
               boxSizing: 'border-box',
             }}
           >
@@ -134,16 +138,14 @@ function LangPill({ lang }: { lang: 'EN' | 'EL' | 'ES' }) {
         alignItems: 'center',
         gap: 5,
         padding: '6px 11px',
-        borderRadius: 'var(--mise-radius-pill)',
-        background: 'var(--mise-glass-fill)',
-        backdropFilter: 'blur(12px)',
-        WebkitBackdropFilter: 'blur(12px)',
-        border: '1px solid var(--mise-glass-border)',
-        color: 'var(--mise-text-secondary)',
+        borderRadius: 'var(--radius-pill)',
+        background: 'var(--surface-2)',
+        border: '1px solid var(--border)',
+        color: 'var(--text-2)',
         fontSize: T.fontSize.tiny,
         fontWeight: 600,
         letterSpacing: 0.3,
-        boxShadow: 'var(--mise-shadow-sm)',
+        boxShadow: 'var(--shadow-sm)',
       }}
     >
       <Globe size={12} />
@@ -174,10 +176,10 @@ export function SubHeader({
         position: 'sticky',
         top: 0,
         zIndex: 5,
-        background: 'var(--mise-glass-fill)',
-        backdropFilter: 'blur(40px) saturate(180%)',
-        WebkitBackdropFilter: 'blur(40px) saturate(180%)',
-        borderBottom: '1px solid var(--mise-glass-border)',
+        background: 'var(--bg)',
+        backdropFilter: 'blur(40px) saturate(150%)',
+        WebkitBackdropFilter: 'blur(40px) saturate(150%)',
+        borderBottom: '1px solid var(--border)',
       }}
     >
       <button
@@ -188,10 +190,10 @@ export function SubHeader({
         style={{
           minWidth: 44,
           minHeight: 44,
-          borderRadius: 'var(--mise-radius-button)',
-          border: '1px solid var(--mise-glass-border)',
-          background: 'rgba(255,255,255,0.5)',
-          color: 'var(--mise-text-primary)',
+          borderRadius: 'var(--radius-button)',
+          border: '1px solid var(--border)',
+          background: 'var(--surface-2)',
+          color: 'var(--text)',
           cursor: 'pointer',
           display: 'inline-flex',
           alignItems: 'center',
@@ -271,16 +273,18 @@ export function TabBar() {
         bottom: 0,
         left: 0,
         right: 0,
+        height: 'calc(72px + env(safe-area-inset-bottom))',
         display: 'flex',
         justifyContent: 'space-around',
-        alignItems: 'center',
-        background: 'var(--mise-glass-fill)',
-        backdropFilter: 'blur(40px) saturate(180%)',
-        WebkitBackdropFilter: 'blur(40px) saturate(180%)',
-        borderTop: '1px solid var(--mise-glass-border)',
+        alignItems: 'flex-start',
         paddingTop: 8,
-        paddingBottom: 'calc(env(safe-area-inset-bottom) + 8px)',
-        boxShadow: '0px -4px 24px rgba(0, 0, 0, 0.08)',
+        paddingBottom: 'env(safe-area-inset-bottom)',
+        /* Warm dark frosted dock */
+        background: 'var(--surface)',
+        backdropFilter: 'blur(40px) saturate(150%)',
+        WebkitBackdropFilter: 'blur(40px) saturate(150%)',
+        borderTop: '1px solid var(--border)',
+        boxShadow: '0 -1px 0 var(--border-strong)',
         zIndex: 100,
       }}
     >
@@ -297,25 +301,29 @@ export function TabBar() {
               display: 'flex',
               flexDirection: 'column',
               alignItems: 'center',
-              gap: 4,
-              padding: '8px 14px',
+              gap: 3,
+              /* Minimum 44pt touch target */
+              minWidth: 64,
+              minHeight: 44,
+              padding: '6px 10px',
               border: 'none',
-              borderRadius: 'var(--mise-radius-small)',
-              background: active ? 'rgba(124, 58, 237, 0.1)' : 'transparent',
+              borderRadius: 'var(--radius-small)',
+              background: active ? 'var(--primary-dim)' : 'transparent',
               cursor: 'pointer',
-              color: active ? 'var(--mise-primary)' : 'var(--mise-text-secondary)',
-              fontFamily: 'var(--mise-font-text)',
+              color: active ? 'var(--primary)' : 'var(--text-3)',
+              fontFamily: 'var(--font-sans)',
               ...(reduceMotion
                 ? { transition: 'none' }
-                : { transition: 'background-color 0.2s ease, color 0.2s ease' }),
+                : { transition: 'background-color 240ms var(--ease-mise), color 240ms var(--ease-mise)' }),
             }}
           >
-            <Icon size={22} />
+            <Icon size={22} strokeWidth={active ? 2 : 1.6} />
             <span
               style={{
                 fontSize: T.fontSize.tiny,
-                fontWeight: 500,
-                color: active ? 'var(--mise-primary)' : 'var(--mise-text-secondary)',
+                fontWeight: active ? 600 : 400,
+                color: 'inherit',
+                lineHeight: 1,
               }}
             >
               {label}
@@ -346,12 +354,10 @@ export function GlassCard({
       onClick={onClick}
       className={className}
       style={{
-        background: 'var(--mise-glass-fill)',
-        backdropFilter: 'blur(20px) saturate(180%)',
-        WebkitBackdropFilter: 'blur(20px) saturate(180%)',
-        border: '1px solid var(--mise-glass-border)',
-        borderRadius: 'var(--mise-radius-card)',
-        boxShadow: 'var(--mise-shadow-glass)',
+        background: 'var(--surface)',
+        border: '1px solid var(--border)',
+        borderRadius: 'var(--radius-card)',
+        boxShadow: 'var(--shadow-card)',
         textAlign: 'left',
         font: 'inherit',
         color: 'inherit',

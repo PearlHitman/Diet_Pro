@@ -17,23 +17,21 @@ const ctaCardBtn: React.CSSProperties = {
   display: 'flex',
   alignItems: 'center',
   gap: 16,
-  padding: 20,
-  background: 'var(--mise-glass-fill)',
-  backdropFilter: 'blur(20px) saturate(180%)',
-  WebkitBackdropFilter: 'blur(20px) saturate(180%)',
-  border: '1px solid var(--mise-glass-border)',
-  borderRadius: 'var(--mise-radius-card)',
-  boxShadow: 'var(--mise-shadow-glass)',
+  padding: 18,
+  background: 'var(--surface)',
+  border: '1px solid var(--border)',
+  borderRadius: 'var(--radius-card)',
+  boxShadow: 'var(--shadow-card)',
   cursor: 'pointer',
-  transition: 'transform 0.3s var(--mise-ease-apple), box-shadow 0.3s var(--mise-ease-apple)',
+  transition: 'transform 0.12s ease, box-shadow 0.12s ease',
   boxSizing: 'border-box',
   width: '100%',
 };
 const ctaCardIconWrap: React.CSSProperties = {
   width: 48,
   height: 48,
-  borderRadius: 12,
-  background: 'rgba(124, 58, 237, 0.10)',
+  borderRadius: 15,  // size * 0.32
+  background: 'var(--primary-dim)',
   display: 'flex',
   alignItems: 'center',
   justifyContent: 'center',
@@ -43,18 +41,18 @@ const ctaCardTextCol: React.CSSProperties = { flex: 1, minWidth: 0 };
 const ctaCardTitle: React.CSSProperties = {
   fontSize: T.fontSize.lead,
   fontWeight: 600,
-  lineHeight: 1.412,
-  color: 'var(--mise-text-primary)',
-  fontFamily: 'var(--mise-font-text)',
+  lineHeight: 1.4,
+  color: 'var(--text)',
+  fontFamily: 'var(--font-sans)',
   marginBottom: 2,
 };
 const ctaCardSubtitle: React.CSSProperties = {
   fontSize: T.fontSize.bodyLg,
-  lineHeight: 1.333,
-  color: 'var(--mise-text-secondary)',
-  fontFamily: 'var(--mise-font-text)',
+  lineHeight: 1.35,
+  color: 'var(--text-2)',
+  fontFamily: 'var(--font-sans)',
 };
-const ctaCardChevron: React.CSSProperties = { color: 'var(--mise-text-tertiary)', flexShrink: 0 };
+const ctaCardChevron: React.CSSProperties = { color: 'var(--text-3)', flexShrink: 0 };
 
 function greetingKey(): 'homeGreetingMorning' | 'homeGreetingAfternoon' | 'homeGreetingEvening' {
   const h = new Date().getHours();
@@ -81,8 +79,8 @@ export function HomePage() {
   const card1Enough = pantryCount >= 2;
 
   const gk = greetingKey();
-  const greetLine =
-    `${t(gk)}${profile.name.trim() ? `, ${profile.name.trim()}` : ''}`;
+  const greetBase = t(gk); // e.g. "Good morning"
+  const userName  = profile.name.trim();
   const reduceMotion = prefersReducedMotion();
 
   return (
@@ -94,25 +92,34 @@ export function HomePage() {
           className={reduceMotion ? undefined : 'fade-up'}
           style={{ ...(!reduceMotion ? { animationDelay: '0ms' } : {}), marginBottom: 28 }}
         >
+          {/* Display-serif greeting hero — name in italic primary */}
           <h1
             style={{
               fontSize: T.fontSize.displayXl,
-              fontWeight: 600,
-              lineHeight: 1.25,
-              letterSpacing: -0.6,
-              color: 'var(--mise-text-primary)',
-              fontFamily: 'var(--mise-font-display)',
-              marginBottom: 6,
+              fontWeight: 400,           /* Instrument Serif at regular weight */
+              lineHeight: 1.05,
+              letterSpacing: '-0.02em',
+              color: 'var(--text)',
+              fontFamily: 'var(--font-display)',
+              marginBottom: 8,
             }}
           >
-            {greetLine}
+            {greetBase}
+            {userName ? (
+              <>
+                ,{' '}
+                <em style={{ fontStyle: 'italic', color: 'var(--primary)' }}>
+                  {userName}
+                </em>
+              </>
+            ) : null}
           </h1>
           <p
             style={{
-              fontSize: T.fontSize.lead,
-              lineHeight: 1.412,
-              color: 'var(--mise-text-secondary)',
-              fontFamily: 'var(--mise-font-text)',
+              fontSize: T.fontSize.bodyLg,
+              lineHeight: 1.5,
+              color: 'var(--text-2)',
+              fontFamily: 'var(--font-sans)',
               margin: 0,
             }}
           >
@@ -131,7 +138,7 @@ export function HomePage() {
           }}
         >
           <CTACard
-            icon={<Refrigerator size={24} style={{ color: 'var(--mise-primary)' }} />}
+            icon={<Refrigerator size={24} style={{ color: 'var(--primary)' }} />}
             title={t('cookFromPantry')}
             subtitle={
               card1Enough
@@ -141,7 +148,7 @@ export function HomePage() {
             onClick={() => navigate(card1Enough ? '/generate' : '/pantry')}
           />
           <CTACard
-            icon={<Lightbulb size={24} style={{ color: 'var(--mise-primary)' }} />}
+            icon={<Lightbulb size={24} style={{ color: 'var(--primary)' }} />}
             title={t('haveDishInMind')}
             subtitle={t('haveDishInMindSub')}
             onClick={() => navigate('/dish')}
@@ -160,18 +167,18 @@ export function HomePage() {
                 padding: '14px 16px',
                 background: 'rgba(245, 158, 11, 0.10)',
                 border: '1px solid rgba(245, 158, 11, 0.25)',
-                borderRadius: 'var(--mise-radius-button)',
+                borderRadius: 'var(--radius-button)',
                 display: 'flex',
                 alignItems: 'center',
                 gap: 12,
-                color: 'var(--mise-text-primary)',
+                color: 'var(--text)',
                 fontSize: T.fontSize.body,
                 boxShadow: 'var(--mise-shadow-sm)',
               }}
             >
-              <AlertCircle size={18} style={{ color: 'var(--mise-warning)', flexShrink: 0 }} />
+              <AlertCircle size={18} style={{ color: 'var(--warning)', flexShrink: 0 }} />
               <span style={{ flex: 1 }}>{t('errorNoKey')}</span>
-              <ChevronRight size={16} style={{ color: 'var(--mise-warning)' }} />
+              <ChevronRight size={16} style={{ color: 'var(--warning)' }} />
             </div>
           </Link>
         )}
@@ -203,17 +210,17 @@ function NutritionCard({
         style={{
           all: 'unset', display: 'block', width: '100%', boxSizing: 'border-box',
           padding: '16px 18px', marginTop: 14,
-          background: 'rgba(124,58,237,0.06)',
-          border: '1px dashed rgba(124,58,237,0.3)',
-          borderRadius: 'var(--mise-radius-card)',
+          background: 'var(--primary-dim)',
+          border: '1px dashed var(--border-strong)',
+          borderRadius: 'var(--radius-card)',
           cursor: 'pointer',
           textAlign: 'left',
         }}
       >
-        <div style={{ fontSize: T.fontSize.small, fontWeight: 600, color: 'var(--mise-primary)', marginBottom: 4, letterSpacing: 0.3 }}>
+        <div style={{ fontSize: T.fontSize.small, fontWeight: 600, color: 'var(--primary)', marginBottom: 4, letterSpacing: 0.3 }}>
           TODAY'S NUTRITION
         </div>
-        <div style={{ fontSize: T.fontSize.body, color: 'var(--mise-text-secondary)', lineHeight: 1.4 }}>
+        <div style={{ fontSize: T.fontSize.body, color: 'var(--text-2)', lineHeight: 1.4 }}>
           Set up your body stats in Profile to track daily nutrition goals →
         </div>
       </button>
@@ -227,9 +234,9 @@ function NutritionCard({
   const gap  = CIRC - dash;
 
   const macros = [
-    { label: 'Protein', value: totals.protein,  goal: goals.protein,  color: '#F472B6' },
-    { label: 'Carbs',   value: totals.carbs,    goal: goals.carbs,    color: '#60A5FA' },
-    { label: 'Fat',     value: totals.fat,       goal: goals.fat,      color: '#34D399' },
+    { label: 'Protein', value: totals.protein,  goal: goals.protein,  color: 'var(--protein)' },
+    { label: 'Carbs',   value: totals.carbs,    goal: goals.carbs,    color: 'var(--carbs)' },
+    { label: 'Fat',     value: totals.fat,       goal: goals.fat,      color: 'var(--fat)' },
   ];
 
   return (
@@ -240,20 +247,20 @@ function NutritionCard({
       style={{
         all: 'unset', display: 'block', width: '100%', boxSizing: 'border-box',
         padding: '16px 18px', marginTop: 14,
-        background: 'rgba(124,58,237,0.08)',
-        border: '1px solid rgba(124,58,237,0.22)',
-        borderRadius: 'var(--mise-radius-card)',
+        background: 'var(--primary-dim)',
+        border: '1px solid var(--border-strong)',
+        borderRadius: 'var(--radius-card)',
         cursor: 'pointer',
       }}
     >
       {/* Header row */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
-        <div style={{ fontSize: T.fontSize.small, fontWeight: 600, color: 'var(--mise-primary)', letterSpacing: 0.3 }}>
+        <div style={{ fontSize: T.fontSize.small, fontWeight: 600, color: 'var(--primary)', letterSpacing: 0.3 }}>
           TODAY'S NUTRITION
         </div>
         <div style={{
-          fontSize: T.fontSize.tiny, color: 'var(--mise-primary)',
-          background: 'rgba(124,58,237,0.15)', padding: '3px 8px', borderRadius: 99,
+          fontSize: T.fontSize.tiny, color: 'var(--primary)',
+          background: 'var(--primary-dim)', padding: '3px 8px', borderRadius: 99,
         }}>
           {dateLabel}
         </div>
@@ -264,10 +271,10 @@ function NutritionCard({
         {/* Calorie ring */}
         <div style={{ position: 'relative', width: 72, height: 72, flexShrink: 0 }}>
           <svg width="72" height="72" viewBox="0 0 72 72" style={{ transform: 'rotate(-90deg)' }}>
-            <circle cx="36" cy="36" r="28" fill="none" stroke="rgba(124,58,237,0.15)" strokeWidth="7" />
+            <circle cx="36" cy="36" r="28" fill="none" stroke="var(--primary-dim)" strokeWidth="7" />
             <circle
               cx="36" cy="36" r="28" fill="none"
-              stroke="var(--mise-primary)" strokeWidth="7"
+              stroke="var(--primary)" strokeWidth="7"
               strokeLinecap="round"
               strokeDasharray={`${dash} ${gap}`}
             />
@@ -276,10 +283,10 @@ function NutritionCard({
             position: 'absolute', top: '50%', left: '50%',
             transform: 'translate(-50%,-50%)', textAlign: 'center',
           }}>
-            <div style={{ fontSize: calPct >= 0.1 ? T.fontSize.small : T.fontSize.tiny, fontWeight: 700, color: 'var(--mise-text-primary)', lineHeight: 1 }}>
+            <div style={{ fontSize: calPct >= 0.1 ? T.fontSize.small : T.fontSize.tiny, fontWeight: 700, color: 'var(--text)', lineHeight: 1 }}>
               {totals.calories.toLocaleString()}
             </div>
-            <div style={{ fontSize: T.fontSize.micro, color: 'var(--mise-text-secondary)', marginTop: 2 }}>
+            <div style={{ fontSize: T.fontSize.micro, color: 'var(--text-2)', marginTop: 2 }}>
               of {goals.calories.toLocaleString()}
             </div>
           </div>
@@ -303,8 +310,8 @@ function NutritionCard({
                     ...(reduceMotion ? { transition: 'none' } : { transition: 'width 0.4s ease' }),
                   }} />
                 </div>
-                <div style={{ fontSize: T.fontSize.tiny, fontWeight: 600, color: 'var(--mise-text-primary)', width: 34, textAlign: 'right', flexShrink: 0 }}>
-                  {m.value}<span style={{ fontSize: T.fontSize.micro, color: 'var(--mise-text-secondary)' }}>g</span>
+                <div style={{ fontSize: T.fontSize.tiny, fontWeight: 600, color: 'var(--text)', width: 34, textAlign: 'right', flexShrink: 0 }}>
+                  {m.value}<span style={{ fontSize: T.fontSize.micro, color: 'var(--text-2)' }}>g</span>
                 </div>
               </div>
             );
@@ -312,7 +319,7 @@ function NutritionCard({
         </div>
       </div>
 
-      <div style={{ fontSize: T.fontSize.tiny, color: 'var(--mise-primary)', textAlign: 'center', marginTop: 12, opacity: 0.8 }}>
+      <div style={{ fontSize: T.fontSize.tiny, color: 'var(--primary)', textAlign: 'center', marginTop: 12, opacity: 0.8 }}>
         Tap for full breakdown →
       </div>
     </button>

@@ -1,26 +1,20 @@
-// Core data types — the shape of everything stored & passed around.
-// Keep this lean. If a field isn't used by UI or AI, don't add it.
+// Core data types -- the shape of everything stored & passed around.
 
-// ─── Pantry ──────────────────────────────────────────────────
+// ---- Pantry ----
 
-// Canonical ordering of pantry categories. Imported everywhere instead
-// of being retyped locally (it had drifted into two different orders
-// across the codebase before being centralised here).
 export const CATEGORIES = [
-  'produce', // φρούτα/λαχανικά
-  'protein', // κρέας/ψάρι/αυγά
-  'dairy',   // γαλακτοκομικά
-  'grains',  // ζυμαρικά/ρύζι/ψωμί
-  'pantry',  // λάδια, μπαχαρικά, κονσέρβες
+  'produce',
+  'protein',
+  'dairy',
+  'grains',
+  'pantry',
   'other',
 ] as const;
 
 export type Category = typeof CATEGORIES[number];
 
-/** Set form for fast membership/validation checks. */
 export const CATEGORY_SET: ReadonlySet<Category> = new Set(CATEGORIES);
 
-/** Type guard for unknown values coming off the wire / from storage. */
 export function isCategory(x: unknown): x is Category {
   return typeof x === 'string' && CATEGORY_SET.has(x as Category);
 }
@@ -29,129 +23,122 @@ export interface Ingredient {
   id: string;
   name: string;
   category: Category;
-  // ISO date string (YYYY-MM-DD). null = no expiry tracking.
   expiresOn: string | null;
-  // Free text — "500g", "2 cans", "half jar". Optional.
   amount?: string;
-  // When was this added? Used for sort order in empty-expiry case.
-  addedAt: string; // ISO datetime
+  addedAt: string;
 }
 
-// ─── Profile ─────────────────────────────────────────────────
+// ---- Profile ----
 
 export type Level = 'Beginner' | 'Intermediate' | 'Expert';
 export type DietGoal = 'None' | 'Weight loss' | 'Muscle' | 'Health';
 export type Language = 'EN' | 'EL' | 'ES';
 export type ThemePref = 'system' | 'light' | 'dark';
+export type TonePref = 'warm-dark' | 'slate-dark' | 'espresso' | 'editorial-cream';
 
 export interface Profile {
   name: string;
-  cuisine: string;           // free text, e.g. "Mediterranean"
-  servings: number;          // 1-12
+  cuisine: string;
+  servings: number;
   level: Level;
-  allergies: string;         // free text, comma-separated
+  allergies: string;
   dietGoal: DietGoal;
   language: Language;
-  theme: ThemePref;          // visual theme preference
+  theme: ThemePref;
+  tone?: TonePref;
+  autoColor?: boolean;
+  manualColor?: string;
 }
 
-// ─── Recipes ─────────────────────────────────────────────────
+// ---- Recipes ----
 
 export type MealType = 'quick' | 'healthy' | 'comfort' | 'festive';
 
-// ─── Customization ───────────────────────────────────────────
-// Per-generation overrides chosen by the user before tapping a meal
-// type. Names are lowercased so we can match loosely in the prompt.
+// ---- Customization ----
 
 export interface Customization {
-  mustInclude: string[]; // ingredient names (lowercased) — max 1 protein + 3 other
-  skip: string[];        // ingredient names (lowercased) — no cap
+  mustInclude: string[];
+  skip: string[];
 }
 
 export const EMPTY_CUSTOMIZATION: Customization = { mustInclude: [], skip: [] };
 
 export interface RecipeIngredient {
   name: string;
-  amount: string;            // "200g", "2 cloves", "to taste"
-  missing: boolean;          // true = not in user's pantry
-  /** Shopping-list grouping when missing (from AI hint). */
+  amount: string;
+  missing: boolean;
   pantryCategory?: Category;
 }
 
 export interface Recipe {
-  id: string;                // generated locally on save
+  id: string;
   name: string;
-  cookTime: number;          // minutes
+  cookTime: number;
   difficulty: Level;
-  calories: number;          // estimated per serving
+  calories: number;
   servings: number;
   ingredients: RecipeIngredient[];
   steps: string[];
   chefTips: string[];
-  /** Human-readable portion line, e.g. "Serves 4". */
   serving: string;
-  // Macros — estimated per serving. Optional: old recipes lack these.
-  protein?: number;          // g per serving
-  carbs?: number;            // g per serving
-  fat?: number;              // g per serving
-  // Provenance & user state
+  protein?: number;
+  carbs?: number;
+  fat?: number;
   mealType: MealType;
-  createdAt: string;         // ISO datetime
+  createdAt: string;
   starred: boolean;
 }
 
-// ─── Body stats & nutrition ───────────────────────────────────
+// ---- Body stats & nutrition ----
 
 export type Sex = 'male' | 'female';
 export type ActivityLevel = 'sedentary' | 'light' | 'moderate' | 'active' | 'very_active';
 
 export interface BodyStats {
   sex: Sex;
-  age: number;          // years
-  weight: number;       // kg
-  height: number;       // cm
+  age: number;
+  weight: number;
+  height: number;
   activityLevel: ActivityLevel;
 }
 
-/** Computed daily targets (derived from BodyStats + DietGoal, never stored). */
 export interface NutritionGoals {
-  calories: number;   // kcal/day
-  protein: number;    // g/day
-  carbs: number;      // g/day
-  fat: number;        // g/day
+  calories: number;
+  protein: number;
+  carbs: number;
+  fat: number;
 }
 
 export interface LoggedMeal {
   id: string;
-  date: string;           // YYYY-MM-DD
+  date: string;
   name: string;
   source: 'recipe' | 'manual';
   recipeId?: string;
-  calories: number;       // kcal
-  protein: number;        // g
-  carbs: number;          // g
-  fat: number;            // g
-  servings: number;       // multiplier (1 = as-is)
+  calories: number;
+  protein: number;
+  carbs: number;
+  fat: number;
+  servings: number;
 }
 
-// ─── Settings ────────────────────────────────────────────────
+// ---- Settings ----
 
 export type ClaudeModel =
-  | 'claude-sonnet-4-5'      // default
+  | 'claude-sonnet-4-5'
   | 'claude-haiku-4-5'
   | 'claude-opus-4-5';
 
-/** Recipe batch generation profile — separate from `model` (used for subs etc.). */
 export type RecipeSpeed = 'fast' | 'best';
 
 export interface Settings {
-  apiKey: string;            // empty string = not configured
+  apiKey: string;
   model: ClaudeModel;
-  /** Fast = Haiku + 2 compact recipes; Best = chosen model + 3 full recipes. */
   recipeSpeed: RecipeSpeed;
+  byok: boolean;
 }
 
-// ─── AI response shape ─────────────────────────────────────
+// ---- AI response shape ----
 
 export interface AIRecipe {
   name: string;
@@ -168,7 +155,7 @@ export interface AIRecipe {
 }
 
 export interface AIResponse {
-  recipes: AIRecipe[];       // 2 in fast mode, 3 in best mode
+  recipes: AIRecipe[];
 }
 
 export interface AIDishResponse {

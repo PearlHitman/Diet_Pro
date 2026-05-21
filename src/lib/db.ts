@@ -60,6 +60,7 @@ const DEFAULT_SETTINGS: Settings = {
   apiKey: '',
   model: 'claude-sonnet-4-5',
   recipeSpeed: 'best',
+  byok: false,
 };
 
 // ─── Keys ────────────────────────────────────────────────────
@@ -128,6 +129,8 @@ export async function loadSettings(): Promise<Settings> {
     ...(saved ?? {}),
     model: coerceLoadedModel(saved),
     recipeSpeed: coerceLoadedRecipeSpeed(saved),
+    // Existing users who saved settings before byok existed get false (proxy mode).
+    byok: typeof saved?.byok === 'boolean' ? saved.byok : false,
   };
 }
 
