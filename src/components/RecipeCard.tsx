@@ -23,22 +23,24 @@ const metaServingLine: React.CSSProperties = {
 };
 
 const recipeCardShell: React.CSSProperties = {
-  background: 'var(--mise-glass-fill)',
-  backdropFilter: 'blur(20px) saturate(180%)',
-  WebkitBackdropFilter: 'blur(20px) saturate(180%)',
-  border: '1px solid var(--mise-glass-border)',
-  borderRadius: 'var(--mise-radius-card)',
-  boxShadow: 'var(--mise-shadow-glass)',
-  padding: '20px 20px 18px',
-  display: 'flex', flexDirection: 'column', gap: 16,
+  background: 'var(--surface)',
+  border: '1px solid var(--border)',
+  borderRadius: 'var(--radius-card)',
+  boxShadow: 'var(--shadow-card)',
+  padding: '22px 22px 20px',
+  display: 'flex', flexDirection: 'column', gap: 20,
 };
 const recipeHeaderRow: React.CSSProperties = {
   display: 'flex', alignItems: 'flex-start', gap: 12,
 };
 const recipeTitleCol: React.CSSProperties = { flex: 1, minWidth: 0 };
 const recipeNameStyle: React.CSSProperties = {
-  fontSize: T.fontSize.title, fontWeight: 700, color: T.text, letterSpacing: -0.4,
-  lineHeight: 1.25,
+  fontSize: 26,
+  fontWeight: 400,
+  color: 'var(--text)',
+  letterSpacing: '-0.02em',
+  lineHeight: 1.1,
+  fontFamily: 'var(--font-display)',
 };
 const recipeMetaRowWrap: React.CSSProperties = { marginTop: 8 };
 const starBtnStyle: React.CSSProperties = {
@@ -86,17 +88,18 @@ const ingredientCheckbox: React.CSSProperties = {
   width: 18,
   height: 18,
   borderRadius: 999,
-  border: `1px solid ${T.border}`,
+  border: '1px solid var(--border-strong)',
   background: 'transparent',
   display: 'flex',
   alignItems: 'center',
   justifyContent: 'center',
   marginTop: 1,
+  transition: 'background 160ms var(--ease-mise), border-color 160ms var(--ease-mise)',
 };
 const ingredientCheckboxChecked: React.CSSProperties = {
-  border: `1px solid ${T.borderAcc}`,
-  background: T.accent,
-  color: '#FFFFFF',
+  border: '1px solid var(--primary)',
+  background: 'var(--primary)',
+  color: 'var(--on-primary)',
 };
 const ingredientAmtStyle: React.CSSProperties = {
   fontSize: T.fontSize.tiny, color: T.mute2, fontVariantNumeric: 'tabular-nums', minWidth: 38,
@@ -121,56 +124,80 @@ const stepBtn: React.CSSProperties = {
 };
 const stepNumCircle: React.CSSProperties = {
   flex: 'none',
-  width: 44,
-  height: 44,
+  width: 38,
+  height: 38,
   borderRadius: 999,
-  background: T.accentTint,
-  color: T.accent,
-  border: `1px solid ${T.borderAcc}`,
+  background: 'var(--primary-dim)',
+  color: 'var(--primary)',
+  border: '1px solid var(--border-strong)',
   display: 'flex',
   alignItems: 'center',
   justifyContent: 'center',
-  fontSize: T.fontSize.title,
-  fontWeight: 800,
+  fontSize: 15,
+  fontWeight: 600,
   fontVariantNumeric: 'tabular-nums',
-  marginTop: 2,
+  fontFamily: 'var(--font-mono)',
+  marginTop: 3,
 };
 const stepNumCircleDone: React.CSSProperties = {
-  background: 'rgba(255,255,255,0.35)',
-  color: T.muted,
-  border: `1px solid ${T.border}`,
+  background: 'var(--surface-3)',
+  color: 'var(--text-3)',
+  border: '1px solid var(--border)',
 };
 const stepBody: React.CSSProperties = { flex: 1 };
 const stepText: React.CSSProperties = {
-  fontSize: T.fontSize.lead,
-  color: T.text,
-  lineHeight: 1.6,
-  paddingTop: 7,
+  fontSize: 15,
+  color: 'var(--text)',
+  lineHeight: 1.55,
+  paddingTop: 6,
+  fontFamily: 'var(--font-sans)',
 };
 const jumpIngredientsBtn: React.CSSProperties = {
   position: 'fixed',
-  bottom: 88,
-  right: 16,
+  bottom: 96,
+  right: 18,
   zIndex: 30,
   borderRadius: 999,
-  border: `1px solid ${T.borderAcc}`,
-  background: T.accentTint,
-  color: T.accent,
-  padding: '10px 12px',
-  fontSize: T.fontSize.captionLg,
-  fontWeight: 700,
+  border: '1px solid var(--border-strong)',
+  background: 'var(--surface-2)',
+  color: 'var(--text)',
+  padding: '10px 16px 10px 14px',
+  fontSize: 12,
+  fontWeight: 600,
+  letterSpacing: '0.01em',
   cursor: 'pointer',
-  fontFamily: 'var(--mise-font-text)',
-  boxShadow: 'var(--mise-shadow-glass)',
+  fontFamily: 'var(--font-sans)',
+  boxShadow: 'var(--shadow-lg)',
+  display: 'inline-flex',
+  alignItems: 'center',
+  gap: 6,
+  backdropFilter: 'blur(12px)',
+  WebkitBackdropFilter: 'blur(12px)',
+};
+const jumpIngredientsDot: React.CSSProperties = {
+  width: 6,
+  height: 6,
+  borderRadius: 999,
+  background: 'var(--primary)',
+  boxShadow: '0 0 8px var(--primary-glow)',
+  flexShrink: 0,
 };
 const chefTipsUl: React.CSSProperties = {
-  margin: '8px 0 0',
-  paddingLeft: 18,
+  margin: '4px 0 0',
+  padding: 0,
+  listStyle: 'none',
   display: 'flex',
   flexDirection: 'column',
-  gap: 8,
+  gap: 10,
 };
-const chefTipLi: React.CSSProperties = { fontSize: T.fontSize.bodySm, color: T.text2, lineHeight: 1.5 };
+const chefTipLi: React.CSSProperties = {
+  fontSize: 13.5,
+  color: 'var(--text-2)',
+  lineHeight: 1.55,
+  paddingLeft: 14,
+  position: 'relative',
+  fontFamily: 'var(--font-sans)',
+};
 const compactCardLink: React.CSSProperties = { textDecoration: 'none' };
 
 export function MetaRow({ recipe }: { recipe: Recipe }) {
@@ -415,6 +442,19 @@ export function RecipeCard({
               <ul style={chefTipsUl}>
                 {recipe.chefTips.map((tip, i) => (
                   <li key={i} style={chefTipLi}>
+                    <span
+                      aria-hidden="true"
+                      style={{
+                        position: 'absolute',
+                        left: 0,
+                        top: '0.6em',
+                        width: 5,
+                        height: 5,
+                        borderRadius: 999,
+                        background: 'var(--primary)',
+                        opacity: 0.7,
+                      }}
+                    />
                     {tip}
                   </li>
                 ))}
@@ -425,7 +465,8 @@ export function RecipeCard({
       )}
       {showJumpToIngredients && (
         <button type="button" className="press" style={jumpIngredientsBtn} onClick={scrollToIngredients}>
-          {t('viewIngredients')}
+          <span aria-hidden="true" style={jumpIngredientsDot} />
+          <span>{t('viewIngredients')}</span>
         </button>
       )}
     </div>
