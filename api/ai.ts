@@ -7,7 +7,12 @@
 // Request:  POST /api/ai  (JSON body + X-Device-ID header)
 // Response: { text: string }  |  { error: string } + appropriate HTTP status
 //
-// Rate limit: 3 requests per device per day (fixed window).
+// Rate limit:
+//   Default:                3 requests/device/day
+//   Promo (grace, days 0-4): no limit
+//   Promo (days 5-90):      20 requests/device/day
+//   Promo expired (>90d):   back to 3/day
+//
 // Fail-open: if Upstash is unreachable, the request goes through anyway.
 // The Anthropic spend cap ($10/month, set in console.anthropic.com) is the
 // real safety net.
@@ -16,6 +21,7 @@ import type { VercelRequest, VercelResponse } from '@vercel/node';
 import Anthropic from '@anthropic-ai/sdk';
 import { Ratelimit } from '@upstash/ratelimit';
 import { Redis } from '@upstash/redis';
+import { promoKey } from './redeem';
 
 // ─── Types ────────────────────────────────────────────────────
 
@@ -45,24 +51,73 @@ const ALLOWED_ACTIONS: ReadonlySet<Action> = new Set([
   'recipes', 'dish', 'substitutions', 'product-photo', 'receipt',
 ]);
 
-// ─── Rate limiter (lazily constructed so cold starts don't block) ──
+// ─── Constants ────────────────────────────────────────────────
 
-let rl: Ratelimit | null = null;
+const DEFAULT_LIMIT = 3;
+const PROMO_LIMIT   = 20;
+const GRACE_DAYS    = 5;
+const PROMO_DAYS    = 90;
 
-function getRateLimiter(): Ratelimit | null {
-  if (rl) return rl;
+// ─── Redis client (lazily constructed) ───────────────────────
+
+let redisClient: Redis | null = null;
+
+function getRedis(): Redis | null {
+  if (redisClient) return redisClient;
+  const url   = process.env.UPSTASH_REDIS_REST_URL;
+  const token = process.env.UPSTASH_REDIS_REST_TOKEN;
+  if (!url || !token) return null;
+  try {
+    redisClient = new Redis({ url, token });
+    return redisClient;
+  } catch {
+    return null;
+  }
+}
+
+// ─── Rate limiters (one per limit value, lazily constructed) ──
+
+const rlCache: Map<number, Ratelimit> = new Map();
+
+function getRateLimiter(limit: number): Ratelimit | null {
+  if (rlCache.has(limit)) return rlCache.get(limit)!;
   const url   = process.env.UPSTASH_REDIS_REST_URL;
   const token = process.env.UPSTASH_REDIS_REST_TOKEN;
   if (!url || !token) return null; // env not configured — fail open
   try {
-    rl = new Ratelimit({
+    const instance = new Ratelimit({
       redis: new Redis({ url, token }),
-      limiter: Ratelimit.fixedWindow(3, '1 d'),
-      prefix: 'mise:rl',
+      limiter: Ratelimit.fixedWindow(limit, '1 d'),
+      prefix: `mise:rl:${limit}`,
     });
-    return rl;
+    rlCache.set(limit, instance);
+    return instance;
   } catch {
     return null;
+  }
+}
+
+// ─── Promo check ──────────────────────────────────────────────
+// Returns the effective daily request limit for a given device.
+// 0 means "no limit" (grace period).
+
+async function getEffectiveLimit(deviceId: string): Promise<number> {
+  const db = getRedis();
+  if (!db) return DEFAULT_LIMIT;
+
+  try {
+    const record = await db.get<{ code: string; activatedAt: string }>(promoKey(deviceId));
+    if (!record) return DEFAULT_LIMIT;
+
+    const daysSince = Math.floor(
+      (Date.now() - new Date(record.activatedAt).getTime()) / (1000 * 60 * 60 * 24)
+    );
+
+    if (daysSince >= PROMO_DAYS) return DEFAULT_LIMIT; // promo expired
+    if (daysSince < GRACE_DAYS)  return 0;             // grace — no limit
+    return PROMO_LIMIT;                                 // active promo window
+  } catch {
+    return DEFAULT_LIMIT; // fail open
   }
 }
 
@@ -95,21 +150,30 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const deviceId = (req.headers['x-device-id'] as string | undefined)?.trim() || 'unknown';
 
   // ── Rate limit (fail open on Upstash error) ──
-  const limiter = getRateLimiter();
-  if (limiter) {
-    try {
-      const { success, remaining } = await limiter.limit(deviceId);
-      if (!success) {
-        res.setHeader('X-RateLimit-Remaining', '0');
-        return res.status(429).json({
-          error: "Daily generation limit reached (3/day). Try again tomorrow.",
-        });
+  const effectiveLimit = await getEffectiveLimit(deviceId);
+
+  if (effectiveLimit > 0) {
+    // Apply the appropriate rate limiter (default 3 or promo 20)
+    const limiter = getRateLimiter(effectiveLimit);
+    if (limiter) {
+      try {
+        const { success, remaining } = await limiter.limit(deviceId);
+        if (!success) {
+          res.setHeader('X-RateLimit-Remaining', '0');
+          const isPromo = effectiveLimit === PROMO_LIMIT;
+          return res.status(429).json({
+            error: isPromo
+              ? `Daily limit reached (${PROMO_LIMIT}/day on your promo plan). Try again tomorrow.`
+              : `You've used today's ${DEFAULT_LIMIT} free generations. Try again tomorrow, or enable your own API key in Settings → Developer.`,
+          });
+        }
+        res.setHeader('X-RateLimit-Remaining', String(remaining));
+      } catch {
+        // Upstash unreachable — let the request through (fail open).
       }
-      res.setHeader('X-RateLimit-Remaining', String(remaining));
-    } catch {
-      // Upstash unreachable — let the request through (fail open).
     }
   }
+  // effectiveLimit === 0 → grace period, no limit applied
 
   // ── Parse body ──
   const body = req.body as RequestBody | undefined;

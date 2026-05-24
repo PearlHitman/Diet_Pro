@@ -161,3 +161,22 @@ export interface AIResponse {
 export interface AIDishResponse {
   recipe: AIRecipe;
 }
+
+// ---- Promo codes ----
+
+export interface PromoRecord {
+  code: string;
+  activatedAt: string; // ISO date string
+}
+
+export interface PromoStatus {
+  active: boolean;
+  code?: string;
+  activatedAt?: string;       // ISO date string
+  gracePeriodEnds?: string;   // activatedAt + 5 days
+  expiresAt?: string;         // activatedAt + 90 days
+  dailyLimit: number;         // 20 during promo, 3 default
+  inGracePeriod: boolean;     // true if within first 5 days
+  daysRemaining?: number;     // days left in the 90-day promo
+  expired?: boolean;          // true if promo window has ended
+}
