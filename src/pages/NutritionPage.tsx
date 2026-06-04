@@ -1,18 +1,25 @@
 // Nutrition page — Today / Week / Month tabs + Add Food sheet.
 
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
 import { Screen, SubHeader } from '../components/Chrome';
 import { useApp } from '../lib/app-state';
-import { buildNutritionEstimatePrompt } from '../lib/prompts';
+import { buildNutritionEstimatePrompt, buildWeekMealPlanPrompt, MEAL_PLAN_SYSTEM_PROMPT } from '../lib/prompts';
 import { prefersReducedMotion } from '../lib/motion';
+import { pantryMatchesName } from '../lib/pantry-match';
 import { T } from '../tokens';
 import { callClaude, parseJsonLoose, ClaudeError } from '../lib/claude';
 import {
   computeNutritionGoals, sumMeals, toDateStr, lastNDays,
   type DayTotals,
 } from '../lib/nutrition';
-import type { LoggedMeal, NutritionGoals } from '../lib/types';
+import {
+  CATEGORIES, isCategory,
+  type Category, type GroceryItem, type Ingredient, type LoggedMeal,
+  type MealPlanDay, type MealSlot, type NutritionGoals, type PlannedMeal,
+  type Profile, type Settings, type WeekMealPlan,
+} from '../lib/types';
 
 // ─── helpers ─────────────────────────────────────────────────
 
@@ -22,10 +29,37 @@ function uid(): string {
 
 // ─── Main page ───────────────────────────────────────────────
 
-type Tab = 'today' | 'week' | 'month';
+type Tab = 'today' | 'week' | 'month' | 'prep';
+
+const CATEGORY_ORDER: readonly Category[] = CATEGORIES;
+
+const SLOT_EMOJI: Record<MealSlot, string> = {
+  breakfast: '🌅',
+  lunch: '☀️',
+  dinner: '🌙',
+  snack: '🍎',
+};
+
+const SLOT_LABEL: Record<MealSlot, string> = {
+  breakfast: 'Breakfast',
+  lunch: 'Lunch',
+  dinner: 'Dinner',
+  snack: 'Snack',
+};
+
+const MEAL_SLOTS: MealSlot[] = ['breakfast', 'lunch', 'dinner', 'snack'];
+
+function tabLabel(t: Tab): string {
+  if (t === 'prep') return 'Prep ✦';
+  return t.charAt(0).toUpperCase() + t.slice(1);
+}
 
 export function NutritionPage() {
-  const { profile, bodyStats, nutritionLog, addLoggedMeal, removeLoggedMeal, settings } = useApp();
+  const {
+    pantry, profile, bodyStats, nutritionLog, mealPlan,
+    addLoggedMeal, removeLoggedMeal, settings,
+    saveMealPlan, updateMealPlan, clearMealPlan,
+  } = useApp();
   const navigate = useNavigate();
   const [tab, setTab] = useState<Tab>('today');
   const [showAddSheet, setShowAddSheet] = useState(false);
@@ -52,20 +86,21 @@ export function NutritionPage() {
           border: '1px solid var(--mise-glass-border)',
           borderRadius: 'var(--mise-radius-button)', padding: 3, marginBottom: 18,
         }}>
-          {(['today', 'week', 'month'] as Tab[]).map(t => (
+          {(['today', 'week', 'month', 'prep'] as Tab[]).map(t => (
             <button
               key={t}
               onClick={() => setTab(t)}
               style={{
-                flex: 1, padding: '8px 0', border: 'none',
+                flex: 1, padding: '7px 2px', border: 'none',
                 borderRadius: 11, cursor: 'pointer',
-                fontSize: T.fontSize.body, fontWeight: 600, fontFamily: 'var(--mise-font-text)',
+                fontSize: T.fontSize.small, fontWeight: 600, fontFamily: 'var(--mise-font-text)',
                 background: tab === t ? 'var(--mise-primary)' : 'transparent',
                 color: tab === t ? '#fff' : 'var(--mise-text-secondary)',
+                whiteSpace: 'nowrap',
                 ...(reduceMotion ? { transition: 'none' } : { transition: 'background 0.2s ease, color 0.2s ease' }),
               }}
             >
-              {t.charAt(0).toUpperCase() + t.slice(1)}
+              {tabLabel(t)}
             </button>
           ))}
         </div>
@@ -82,6 +117,19 @@ export function NutritionPage() {
         )}
         {tab === 'week'  && <WeekTab  goals={goals} log={nutritionLog} />}
         {tab === 'month' && <MonthTab goals={goals} log={nutritionLog} />}
+        {tab === 'prep' && (
+          <PrepTab
+            pantry={pantry}
+            profile={profile}
+            goals={goals}
+            settings={settings}
+            mealPlan={mealPlan}
+            onSavePlan={saveMealPlan}
+            onUpdatePlan={updateMealPlan}
+            onClearPlan={clearMealPlan}
+            onLogMeal={addLoggedMeal}
+          />
+        )}
       </div>
 
       {showAddSheet && (
@@ -745,6 +793,785 @@ function MacroLine({ label, value, unit, color }: { label: string; value: number
       <div style={{ width: 6, height: 6, borderRadius: 99, background: color, flexShrink: 0 }} />
       <span style={{ fontSize: T.fontSize.caption, fontWeight: 600, color: 'var(--mise-text-primary)' }}>{value}{unit}</span>
       <span style={{ fontSize: T.fontSize.tiny, color: 'var(--mise-text-tertiary)' }}>{label}</span>
+    </div>
+  );
+}
+
+// ─── Meal prep (Prep tab) ────────────────────────────────────
+
+function mondayOfWeek(d = new Date()): string {
+  const date = new Date(d);
+  const day = date.getDay();
+  const diff = day === 0 ? -6 : 1 - day;
+  date.setDate(date.getDate() + diff);
+  return toDateStr(date);
+}
+
+function addDaysStr(iso: string, n: number): string {
+  const d = new Date(iso + 'T12:00:00');
+  d.setDate(d.getDate() + n);
+  return toDateStr(d);
+}
+
+function weekdayShort(iso: string): string {
+  return ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][
+    new Date(iso + 'T12:00:00').getDay()
+  ];
+}
+
+function consolidateAmount(amounts: string[]): string {
+  const grams: number[] = [];
+  for (const a of amounts) {
+    const m = a.trim().match(/^(\d+\.?\d*)\s*(g|kg)$/i);
+    if (!m) return `× ${amounts.length}`;
+    let g = parseFloat(m[1]);
+    if (m[2].toLowerCase() === 'kg') g *= 1000;
+    grams.push(g);
+  }
+  const total = grams.reduce((s, x) => s + x, 0);
+  if (total >= 1000) return `${total / 1000}kg`;
+  return `${total}g`;
+}
+
+function buildGroceryList(plan: WeekMealPlan, pantry: Ingredient[]): GroceryItem[] {
+  const byName = new Map<string, { amounts: string[]; category: Category }>();
+  for (const day of plan.days) {
+    for (const meal of day.meals) {
+      for (const ing of meal.ingredients) {
+        if (pantryMatchesName(pantry, ing.name)) continue;
+        const key = ing.name.toLowerCase().trim();
+        const existing = byName.get(key);
+        if (existing) {
+          existing.amounts.push(ing.amount);
+          if (!existing.category && ing.category) existing.category = ing.category;
+        } else {
+          byName.set(key, { amounts: [ing.amount], category: ing.category });
+        }
+      }
+    }
+  }
+  const items: GroceryItem[] = [];
+  for (const [key, { amounts, category }] of byName) {
+    const displayName = plan.days.flatMap(d => d.meals).flatMap(m => m.ingredients)
+      .find(i => i.name.toLowerCase().trim() === key)?.name ?? key;
+    items.push({
+      name: displayName,
+      totalAmount: consolidateAmount(amounts),
+      category,
+      checked: false,
+    });
+  }
+  items.sort((a, b) => CATEGORY_ORDER.indexOf(a.category) - CATEGORY_ORDER.indexOf(b.category));
+  return items;
+}
+
+interface RawMealIngredient {
+  name: string;
+  amount: string;
+  category?: string;
+}
+
+interface RawPlannedMeal {
+  slot: MealSlot;
+  name: string;
+  calories: number;
+  protein: number;
+  carbs: number;
+  fat: number;
+  servings: number;
+  ingredients: RawMealIngredient[];
+}
+
+function parseRawMeal(raw: unknown, preserve?: PlannedMeal): PlannedMeal | null {
+  if (!raw || typeof raw !== 'object') return null;
+  const m = raw as Record<string, unknown>;
+  const slot = m.slot as MealSlot;
+  if (!MEAL_SLOTS.includes(slot)) return null;
+  if (typeof m.name !== 'string' || typeof m.calories !== 'number') return null;
+  const ingredients = Array.isArray(m.ingredients)
+    ? (m.ingredients as RawMealIngredient[])
+        .filter(i => i && typeof i.name === 'string' && typeof i.amount === 'string')
+        .map(i => ({
+          name: i.name,
+          amount: i.amount,
+          category: isCategory(i.category) ? i.category : 'other' as Category,
+        }))
+    : [];
+  return {
+    id: preserve?.id ?? uid(),
+    slot,
+    name: m.name,
+    calories: Number(m.calories) || 0,
+    protein: Number(m.protein) || 0,
+    carbs: Number(m.carbs) || 0,
+    fat: Number(m.fat) || 0,
+    servings: Number(m.servings) || 1,
+    ingredients,
+    cooked: preserve?.cooked ?? false,
+  };
+}
+
+function parseWeekPlanResponse(
+  parsed: unknown,
+  startDate: string,
+  existing?: WeekMealPlan | null,
+): WeekMealPlan | null {
+  if (!parsed || typeof parsed !== 'object') return null;
+  const root = parsed as { days?: unknown };
+  const rawDays = Array.isArray(root.days) ? root.days : [];
+  if (rawDays.length < 1) return null;
+
+  const days: MealPlanDay[] = [];
+  for (let i = 0; i < 7; i++) {
+    const dayRaw = rawDays[i];
+    if (!dayRaw || typeof dayRaw !== 'object') {
+      if (i >= rawDays.length) {
+        const existingDay = existing?.days[i];
+        if (existingDay) {
+          days.push(existingDay);
+          continue;
+        }
+      }
+      return null;
+    }
+    const dr = dayRaw as { date?: string; meals?: unknown };
+    const date = typeof dr.date === 'string' ? dr.date : addDaysStr(startDate, i);
+    const existingDay = existing?.days[i];
+    const meals: PlannedMeal[] = [];
+    const rawMeals = Array.isArray(dr.meals) ? dr.meals : [];
+    for (const slot of MEAL_SLOTS) {
+      const rawSlot = rawMeals.find(
+        (x: unknown) => x && typeof x === 'object' && (x as RawPlannedMeal).slot === slot,
+      );
+      const prev = existingDay?.meals.find(m => m.slot === slot);
+      const meal = parseRawMeal(rawSlot, prev);
+      if (!meal) return null;
+      meals.push(meal);
+    }
+    days.push({ date, meals });
+  }
+
+  return {
+    id: existing?.id ?? uid(),
+    createdAt: existing?.createdAt ?? new Date().toISOString(),
+    startDate,
+    days,
+  };
+}
+
+function claudePrepError(err: unknown): string {
+  if (err instanceof ClaudeError && err.kind === 'auth') {
+    return 'API key missing or invalid — check Settings.';
+  }
+  if (err instanceof ClaudeError && err.kind === 'rate') {
+    return 'Rate limit hit — wait a moment and try again.';
+  }
+  if (err instanceof ClaudeError && err.kind === 'parse') {
+    return 'Claude returned unexpected data — try again.';
+  }
+  if (err instanceof Error) return err.message;
+  return 'Something went wrong — try again.';
+}
+
+function PrepTab({
+  pantry,
+  profile,
+  goals,
+  settings,
+  mealPlan,
+  onSavePlan,
+  onUpdatePlan,
+  onClearPlan,
+  onLogMeal,
+}: {
+  pantry: Ingredient[];
+  profile: Profile;
+  goals: NutritionGoals | null;
+  settings: Settings;
+  mealPlan: WeekMealPlan | null;
+  onSavePlan: (plan: WeekMealPlan) => Promise<void>;
+  onUpdatePlan: (plan: WeekMealPlan) => Promise<void>;
+  onClearPlan: () => Promise<void>;
+  onLogMeal: (meal: LoggedMeal) => Promise<void>;
+}) {
+  const navigate = useNavigate();
+  const reduceMotion = prefersReducedMotion();
+  const [view, setView] = useState<'plan' | 'grocery'>('plan');
+  const [generating, setGenerating] = useState(false);
+  const [swappingId, setSwappingId] = useState<string | null>(null);
+  const [error, setError] = useState('');
+  const [groceryItems, setGroceryItems] = useState<GroceryItem[]>([]);
+
+  const planGroceryCount = useMemo(
+    () => (mealPlan ? buildGroceryList(mealPlan, pantry).filter(g => !g.checked).length : 0),
+    [mealPlan, pantry],
+  );
+
+  const uncheckedGroceryCount = useMemo(
+    () => groceryItems.filter(g => !g.checked).length,
+    [groceryItems],
+  );
+
+  useEffect(() => {
+    if (view === 'grocery' && mealPlan) {
+      setGroceryItems(buildGroceryList(mealPlan, pantry));
+    }
+  }, [view, mealPlan, pantry]);
+
+  const generateFullWeek = useCallback(async () => {
+    if (!settings.apiKey) {
+      setError('No API key — add one in Settings.');
+      return;
+    }
+    setGenerating(true);
+    setError('');
+    try {
+      const monday = mondayOfWeek();
+      const prompt = buildWeekMealPlanPrompt({
+        pantry,
+        profile,
+        goals,
+        startDate: monday,
+        batchCookHint: true,
+      });
+      const raw = await callClaude({
+        apiKey: settings.apiKey,
+        model: settings.model,
+        prompt,
+        system: MEAL_PLAN_SYSTEM_PROMPT,
+        maxTokens: 8192,
+      });
+      const parsed = parseJsonLoose(raw);
+      const plan = parseWeekPlanResponse(parsed, monday, mealPlan);
+      if (!plan) throw new ClaudeError('Could not parse meal plan.', 'parse');
+      await onSavePlan(plan);
+      setView('plan');
+    } catch (err) {
+      setError(claudePrepError(err));
+    } finally {
+      setGenerating(false);
+    }
+  }, [pantry, profile, goals, settings, mealPlan, onSavePlan]);
+
+  const swapMeal = useCallback(async (dayIndex: number, meal: PlannedMeal) => {
+    if (!mealPlan || !settings.apiKey) {
+      setError('No API key — add one in Settings.');
+      return;
+    }
+    setSwappingId(meal.id);
+    setError('');
+    try {
+      const prompt = buildWeekMealPlanPrompt({
+        pantry,
+        profile,
+        goals,
+        startDate: mealPlan.startDate,
+        swapDay: dayIndex,
+        swapSlot: meal.slot,
+        batchCookHint: false,
+      });
+      const raw = await callClaude({
+        apiKey: settings.apiKey,
+        model: settings.model,
+        prompt,
+        system: MEAL_PLAN_SYSTEM_PROMPT,
+        maxTokens: 1024,
+      });
+      const parsed = parseJsonLoose(raw);
+      const replacement = parseRawMeal(parsed, meal);
+      if (!replacement) throw new ClaudeError('Could not parse meal.', 'parse');
+      const days = mealPlan.days.map((d, i) => {
+        if (i !== dayIndex) return d;
+        return {
+          ...d,
+          meals: d.meals.map(m => (m.id === meal.id ? replacement : m)),
+        };
+      });
+      await onUpdatePlan({ ...mealPlan, days });
+    } catch (err) {
+      setError(claudePrepError(err));
+    } finally {
+      setSwappingId(null);
+    }
+  }, [pantry, profile, goals, settings, mealPlan, onUpdatePlan]);
+
+  const markCooked = useCallback(async (dayDate: string, meal: PlannedMeal) => {
+    if (!mealPlan || meal.cooked) return;
+    await onLogMeal({
+      id: uid(),
+      date: dayDate,
+      name: meal.name,
+      source: 'manual',
+      calories: meal.calories,
+      protein: meal.protein,
+      carbs: meal.carbs,
+      fat: meal.fat,
+      servings: meal.servings,
+    });
+    const days = mealPlan.days.map(d => ({
+      ...d,
+      meals: d.meals.map(m =>
+        m.id === meal.id ? { ...m, cooked: true } : m,
+      ),
+    }));
+    await onUpdatePlan({ ...mealPlan, days });
+    toast.success('Meal logged ✓');
+  }, [mealPlan, onLogMeal, onUpdatePlan]);
+
+  const regenerateFullWeek = useCallback(async () => {
+    await onClearPlan();
+    await generateFullWeek();
+  }, [onClearPlan, generateFullWeek]);
+
+  if (view === 'grocery' && mealPlan) {
+    return (
+      <GroceryListView
+        items={groceryItems}
+        onToggle={(name) => {
+          setGroceryItems(prev =>
+            prev.map(g => (g.name === name ? { ...g, checked: !g.checked } : g)),
+          );
+        }}
+        onBack={() => setView('plan')}
+      />
+    );
+  }
+
+  if (!mealPlan) {
+    return (
+      <div style={{ textAlign: 'center', padding: '24px 8px' }}>
+        <div style={{
+          background: 'var(--mise-glass-fill)',
+          border: '1px solid var(--mise-glass-border)',
+          borderRadius: 18,
+          padding: '28px 20px',
+          marginBottom: 16,
+        }}>
+          <p style={{
+            fontSize: T.fontSize.bodyLg, color: 'var(--mise-text-secondary)',
+            lineHeight: 1.6, margin: '0 0 20px',
+          }}>
+            Generate a full 7-day meal plan from your pantry and calorie goals, plus a consolidated grocery list.
+          </p>
+          {!goals && (
+            <p style={{
+              fontSize: T.fontSize.small, color: 'var(--mise-text-tertiary)',
+              marginBottom: 16, lineHeight: 1.5,
+            }}>
+              Set up your body stats in{' '}
+              <button
+                type="button"
+                onClick={() => navigate('/profile')}
+                style={{
+                  background: 'none', border: 'none', cursor: 'pointer',
+                  color: 'var(--mise-primary)', fontWeight: 600,
+                  fontFamily: 'var(--mise-font-text)', padding: 0,
+                }}
+              >
+                Profile
+              </button>
+              {' '}for accurate daily targets.
+            </p>
+          )}
+          {generating ? (
+            <div
+              className={reduceMotion ? undefined : 'pulse'}
+              style={{ fontSize: T.fontSize.body, color: 'var(--mise-text-secondary)' }}
+            >
+              Claude is planning your week…
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={() => void generateFullWeek()}
+              style={{
+                padding: '14px 28px', borderRadius: 14, border: 'none',
+                background: 'var(--mise-primary)', color: '#fff',
+                fontSize: T.fontSize.bodyLg, fontWeight: 700, cursor: 'pointer',
+                fontFamily: 'var(--mise-font-text)',
+                boxShadow: '0 4px 12px rgba(124,58,237,0.3)',
+              }}
+            >
+              ✦ Generate My Week
+            </button>
+          )}
+        </div>
+        {error && (
+          <PrepErrorBlock message={error} onRetry={() => void generateFullWeek()} />
+        )}
+      </div>
+    );
+  }
+
+  return (
+    <div style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
+      {generating && (
+        <div
+          className={reduceMotion ? undefined : 'pulse'}
+          style={{
+            textAlign: 'center', marginBottom: 14,
+            fontSize: T.fontSize.small, color: 'var(--mise-text-tertiary)',
+          }}
+        >
+          Claude is planning your week…
+        </div>
+      )}
+
+      {error && (
+        <div style={{ marginBottom: 12 }}>
+          <PrepErrorBlock message={error} onRetry={() => void regenerateFullWeek()} />
+        </div>
+      )}
+
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+        {mealPlan.days.map((day, dayIndex) => (
+          <DayPlanCard
+            key={day.date}
+            day={day}
+            goals={goals}
+            swappingId={swappingId}
+            onSwap={(meal) => void swapMeal(dayIndex, meal)}
+            onCooked={(meal) => void markCooked(day.date, meal)}
+          />
+        ))}
+      </div>
+
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 20 }}>
+        <button
+          type="button"
+          disabled={generating}
+          onClick={() => void regenerateFullWeek()}
+          style={prepSecondaryBtn}
+        >
+          ↻ Regenerate full week
+        </button>
+        <button
+          type="button"
+          onClick={() => {
+            setGroceryItems(buildGroceryList(mealPlan, pantry));
+            setView('grocery');
+          }}
+          style={prepPrimaryBtn}
+        >
+          🛒 View Grocery List ({view === 'grocery' ? uncheckedGroceryCount : planGroceryCount} items)
+        </button>
+      </div>
+    </div>
+  );
+}
+
+const prepPrimaryBtn: React.CSSProperties = {
+  width: '100%', padding: 14, borderRadius: 14, border: 'none',
+  background: 'var(--mise-primary)', color: '#fff',
+  fontSize: T.fontSize.body, fontWeight: 700, cursor: 'pointer',
+  fontFamily: 'var(--mise-font-text)',
+};
+
+const prepSecondaryBtn: React.CSSProperties = {
+  width: '100%', padding: 14, borderRadius: 14,
+  border: '1px solid var(--mise-glass-border)',
+  background: 'var(--mise-glass-fill)', color: 'var(--mise-text-secondary)',
+  fontSize: T.fontSize.body, fontWeight: 600, cursor: 'pointer',
+  fontFamily: 'var(--mise-font-text)',
+};
+
+function PrepErrorBlock({ message, onRetry }: { message: string; onRetry: () => void }) {
+  return (
+    <div style={{
+      padding: '12px 14px', borderRadius: 12,
+      background: 'rgba(239,68,68,0.08)',
+      border: '1px solid rgba(239,68,68,0.25)',
+    }}>
+      <div style={{ fontSize: T.fontSize.small, color: 'var(--mise-error)', marginBottom: 10 }}>
+        {message}
+      </div>
+      <button
+        type="button"
+        onClick={onRetry}
+        style={{
+          padding: '8px 14px', borderRadius: 10,
+          border: '1px solid var(--mise-glass-border)',
+          background: 'transparent', color: 'var(--mise-text-primary)',
+          fontSize: T.fontSize.small, fontWeight: 600, cursor: 'pointer',
+          fontFamily: 'var(--mise-font-text)',
+        }}
+      >
+        Retry
+      </button>
+    </div>
+  );
+}
+
+function DayPlanCard({
+  day,
+  goals,
+  swappingId,
+  onSwap,
+  onCooked,
+}: {
+  day: MealPlanDay;
+  goals: NutritionGoals | null;
+  swappingId: string | null;
+  onSwap: (meal: PlannedMeal) => void;
+  onCooked: (meal: PlannedMeal) => void;
+}) {
+  const dayCal = day.meals.reduce((s, m) => s + Math.round(m.calories * m.servings), 0);
+  const target = goals?.calories ?? 2000;
+  const ratio = dayCal / target;
+  const over = ratio > 1.15;
+  const onTarget = ratio >= 0.85 && ratio <= 1.15;
+  const calColor = over
+    ? 'var(--mise-error)'
+    : onTarget
+      ? 'var(--mise-success)'
+      : 'var(--mise-text-secondary)';
+
+  return (
+    <div style={{
+      background: 'var(--mise-glass-fill)',
+      border: '1px solid var(--mise-glass-border)',
+      borderRadius: 16,
+      overflow: 'hidden',
+    }}>
+      <div style={{
+        display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+        padding: '12px 14px',
+        borderBottom: '1px solid var(--mise-glass-border)',
+      }}>
+        <div>
+          <span style={{ fontSize: T.fontSize.body, fontWeight: 700, color: 'var(--mise-text-primary)' }}>
+            {weekdayShort(day.date)}
+          </span>
+          <span style={{ fontSize: T.fontSize.small, color: 'var(--mise-text-tertiary)', marginLeft: 8 }}>
+            {day.date.slice(5)}
+          </span>
+        </div>
+        <span style={{
+          fontSize: T.fontSize.caption, fontWeight: 600,
+          padding: '4px 10px', borderRadius: 99,
+          background: 'rgba(124,58,237,0.1)',
+          color: calColor,
+        }}>
+          {dayCal} / {target} kcal
+        </span>
+      </div>
+      {MEAL_SLOTS.map(slot => {
+        const meal = day.meals.find(m => m.slot === slot);
+        if (!meal) return null;
+        const swapping = swappingId === meal.id;
+        return (
+          <MealPlanRow
+            key={meal.id}
+            meal={meal}
+            swapping={swapping}
+            onSwap={() => onSwap(meal)}
+            onCooked={() => onCooked(meal)}
+          />
+        );
+      })}
+    </div>
+  );
+}
+
+function MealPlanRow({
+  meal,
+  swapping,
+  onSwap,
+  onCooked,
+}: {
+  meal: PlannedMeal;
+  swapping: boolean;
+  onSwap: () => void;
+  onCooked: () => void;
+}) {
+  const kcal = Math.round(meal.calories * meal.servings);
+  return (
+    <div style={{
+      display: 'flex', alignItems: 'center', gap: 8,
+      padding: '10px 14px',
+      borderBottom: '1px solid var(--mise-glass-border)',
+      opacity: meal.cooked ? 0.55 : 1,
+    }}>
+      <span style={{ fontSize: 18, flexShrink: 0 }}>{SLOT_EMOJI[meal.slot]}</span>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{
+          fontSize: T.fontSize.small, fontWeight: 600,
+          color: 'var(--mise-text-primary)',
+          overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+          ...(meal.cooked ? { textDecoration: 'line-through', textDecorationColor: 'var(--mise-text-tertiary)' } : {}),
+        }}>
+          {meal.name}
+        </div>
+        <div style={{ fontSize: T.fontSize.tiny, color: 'var(--mise-text-tertiary)' }}>
+          {SLOT_LABEL[meal.slot]} · {kcal} kcal
+        </div>
+      </div>
+      {swapping ? (
+        <span style={{ fontSize: T.fontSize.tiny, color: 'var(--mise-text-tertiary)' }}>…</span>
+      ) : (
+        <>
+          <button type="button" onClick={onSwap} style={mealActionBtn}>
+            ↻ Swap
+          </button>
+          <button
+            type="button"
+            onClick={onCooked}
+            disabled={meal.cooked}
+            style={{
+              ...mealActionBtn,
+              color: meal.cooked ? 'var(--mise-success)' : 'var(--mise-primary)',
+            }}
+          >
+            {meal.cooked ? '✓ Done' : '✓ Cooked'}
+          </button>
+        </>
+      )}
+    </div>
+  );
+}
+
+const mealActionBtn: React.CSSProperties = {
+  flexShrink: 0,
+  padding: '5px 8px', borderRadius: 8, border: '1px solid var(--mise-glass-border)',
+  background: 'transparent', fontSize: T.fontSize.tiny, fontWeight: 600,
+  cursor: 'pointer', fontFamily: 'var(--mise-font-text)',
+  color: 'var(--mise-text-secondary)',
+};
+
+function GroceryListView({
+  items,
+  onToggle,
+  onBack,
+}: {
+  items: GroceryItem[];
+  onToggle: (name: string) => void;
+  onBack: () => void;
+}) {
+  const grouped = useMemo(() => {
+    const map = new Map<Category, GroceryItem[]>();
+    for (const item of items) {
+      const list = map.get(item.category) ?? [];
+      list.push(item);
+      map.set(item.category, list);
+    }
+    return CATEGORY_ORDER.filter(c => map.has(c)).map(c => ({ cat: c, items: map.get(c)! }));
+  }, [items]);
+
+  const formatForClipboard = useCallback(() => {
+    const lines: string[] = [];
+    for (const { cat, items: catItems } of grouped) {
+      const unchecked = catItems.filter(i => !i.checked);
+      if (unchecked.length === 0) continue;
+      lines.push(cat.toUpperCase());
+      for (const i of unchecked) {
+        lines.push(`- ${i.name} — ${i.totalAmount}`);
+      }
+      lines.push('');
+    }
+    return lines.join('\n').trim();
+  }, [grouped]);
+
+  const copyList = useCallback(async () => {
+    const text = formatForClipboard();
+    await navigator.clipboard.writeText(text);
+    toast.success('Copied to clipboard');
+  }, [formatForClipboard]);
+
+  const shareList = useCallback(async () => {
+    const text = formatForClipboard();
+    if (navigator.share) {
+      try {
+        await navigator.share({ title: 'Grocery list', text });
+      } catch {
+        /* user cancelled */
+      }
+    } else {
+      await navigator.clipboard.writeText(text);
+      toast.success('Copied to clipboard');
+    }
+  }, [formatForClipboard]);
+
+  const catLabels: Record<Category, string> = {
+    produce: 'Produce',
+    protein: 'Protein',
+    dairy: 'Dairy',
+    grains: 'Grains',
+    pantry: 'Pantry',
+    other: 'Other',
+  };
+
+  return (
+    <div style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
+      <button
+        type="button"
+        onClick={onBack}
+        style={{
+          background: 'none', border: 'none', padding: '0 0 14px',
+          color: 'var(--mise-primary)', fontWeight: 600,
+          fontSize: T.fontSize.body, cursor: 'pointer',
+          fontFamily: 'var(--mise-font-text)',
+        }}
+      >
+        ← Back to Plan
+      </button>
+
+      {items.length === 0 ? (
+        <p style={{ color: 'var(--mise-text-secondary)', fontSize: T.fontSize.body, textAlign: 'center' }}>
+          Everything you need is already in your pantry.
+        </p>
+      ) : (
+        grouped.map(({ cat, items: catItems }) => (
+          <div key={cat} style={{ marginBottom: 16 }}>
+            <div style={{
+              fontSize: T.fontSize.caption, fontWeight: 700,
+              color: 'var(--mise-text-tertiary)', letterSpacing: 0.6,
+              marginBottom: 8, textTransform: 'uppercase',
+            }}>
+              {catLabels[cat]}
+            </div>
+            {catItems.map(item => (
+              <label
+                key={item.name}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: 10,
+                  padding: '10px 0',
+                  borderBottom: '1px solid var(--mise-glass-border)',
+                  opacity: item.checked ? 0.45 : 1,
+                  cursor: 'pointer',
+                }}
+              >
+                <input
+                  type="checkbox"
+                  checked={item.checked}
+                  onChange={() => onToggle(item.name)}
+                  style={{ width: 18, height: 18, accentColor: 'var(--mise-primary)' }}
+                />
+                <span style={{
+                  flex: 1, fontSize: T.fontSize.body,
+                  color: 'var(--mise-text-primary)',
+                  textDecoration: item.checked ? 'line-through' : 'none',
+                }}>
+                  {item.name}
+                </span>
+                <span style={{ fontSize: T.fontSize.small, color: 'var(--mise-text-tertiary)' }}>
+                  {item.totalAmount}
+                </span>
+              </label>
+            ))}
+          </div>
+        ))
+      )}
+
+      <div style={{ display: 'flex', gap: 10, marginTop: 8 }}>
+        <button type="button" onClick={() => void copyList()} style={{ ...prepSecondaryBtn, flex: 1 }}>
+          Copy list
+        </button>
+        {'share' in navigator && typeof navigator.share === 'function' && (
+          <button type="button" onClick={() => void shareList()} style={{ ...prepPrimaryBtn, flex: 1 }}>
+            Share ↗
+          </button>
+        )}
+      </div>
     </div>
   );
 }

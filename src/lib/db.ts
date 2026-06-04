@@ -7,7 +7,7 @@
 // is fine and much simpler than per-record stores).
 
 import { get, set, del } from 'idb-keyval';
-import { CATEGORY_SET, type BodyStats, type Ingredient, type LoggedMeal, type Profile, type Recipe, type Settings } from './types';
+import { CATEGORY_SET, type BodyStats, type Ingredient, type LoggedMeal, type Profile, type Recipe, type Settings, type WeekMealPlan } from './types';
 import { resetOnboarded } from './onboarding-state';
 
 function normalizeRecipe(r: Recipe): Recipe {
@@ -73,6 +73,7 @@ const K = {
   feed:       'kitchen:feed:v1',
   bodyStats:  'kitchen:bodystats:v1',
   nutrition:  'kitchen:nutrition:v1',
+  mealPlan:   'kitchen:mealplan:v1',
 } as const;
 
 // Expose feed key so feed.ts can share the same constant.
@@ -175,12 +176,27 @@ export async function removeLoggedMeal(id: string): Promise<void> {
   await saveNutritionLog(log.filter(m => m.id !== id));
 }
 
+// ─── Meal plan ───────────────────────────────────────────────
+
+export async function loadMealPlan(): Promise<WeekMealPlan | null> {
+  return (await get<WeekMealPlan>(K.mealPlan)) ?? null;
+}
+
+export async function saveMealPlan(plan: WeekMealPlan): Promise<void> {
+  await set(K.mealPlan, plan);
+}
+
+export async function deleteMealPlan(): Promise<void> {
+  await del(K.mealPlan);
+}
+
 // ─── Reset (debug helper, useful during dev) ─────────────────
 
 export async function resetAll(): Promise<void> {
   await Promise.all([
     del(K.pantry), del(K.profile), del(K.recipes),
     del(K.settings), del(K.feed), del(K.bodyStats), del(K.nutrition),
+    del(K.mealPlan),
     resetOnboarded(),
   ]);
 }

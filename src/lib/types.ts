@@ -180,3 +180,39 @@ export interface PromoStatus {
   daysRemaining?: number;     // days left in the 90-day promo
   expired?: boolean;          // true if promo window has ended
 }
+
+// ---- Meal Plan ----
+
+export type MealSlot = 'breakfast' | 'lunch' | 'dinner' | 'snack';
+
+export interface PlannedMeal {
+  id: string;            // uid
+  slot: MealSlot;
+  name: string;
+  calories: number;
+  protein: number;       // grams per serving
+  carbs: number;         // grams per serving
+  fat: number;           // grams per serving
+  servings: number;
+  ingredients: { name: string; amount: string; category: Category }[];
+  cooked: boolean;       // true once user marks it done
+}
+
+export interface MealPlanDay {
+  date: string;          // YYYY-MM-DD
+  meals: PlannedMeal[];
+}
+
+export interface WeekMealPlan {
+  id: string;
+  createdAt: string;     // ISO datetime
+  startDate: string;     // YYYY-MM-DD (Monday of the week)
+  days: MealPlanDay[];   // always 7 entries
+}
+
+export interface GroceryItem {
+  name: string;
+  totalAmount: string;   // consolidated e.g. "600g" or "× 4"
+  category: Category;
+  checked: boolean;
+}

@@ -2,7 +2,10 @@
 // Edit here when you want to tune the AI's behavior — don't scatter
 // prompts across the codebase.
 
-import type { Customization, Ingredient, Language, MealType, Profile } from './types';
+import type {
+  Customization, Ingredient, Language, MealSlot, MealType,
+  NutritionGoals, Profile,
+} from './types';
 import { daysUntil } from './date';
 
 export const DISH_SYSTEM_PROMPT = `You return precise, authentic recipes as JSON only — no markdown fences unless asked elsewhere.`;
@@ -421,6 +424,140 @@ ${formatPantryShort(pantry)}
  * Estimate macros for a free-text food description.
  * Used by the "Add food" manual entry flow.
  */
+// ─── Week meal plan ──────────────────────────────────────────
+
+export const MEAL_PLAN_SYSTEM_PROMPT = `You are a practical meal-prep nutritionist. Return only valid JSON — no markdown fences, no prose. Each day must include exactly four meals: breakfast, lunch, dinner, snack.`;
+
+const MEAL_SLOT_ORDER: MealSlot[] = ['breakfast', 'lunch', 'dinner', 'snack'];
+
+const MEAL_PLAN_FULL_SCHEMA = `{
+  "days": [
+    {
+      "date": "YYYY-MM-DD",
+      "meals": [
+        {
+          "slot": "breakfast" | "lunch" | "dinner" | "snack",
+          "name": "string",
+          "calories": number,
+          "protein": number,
+          "carbs": number,
+          "fat": number,
+          "servings": number,
+          "ingredients": [
+            { "name": "string", "amount": "string", "category": "produce"|"protein"|"dairy"|"grains"|"pantry"|"other" }
+          ]
+        }
+      ]
+    }
+  ]
+}`;
+
+const MEAL_PLAN_SINGLE_SCHEMA = `{
+  "slot": "breakfast" | "lunch" | "dinner" | "snack",
+  "name": "string",
+  "calories": number,
+  "protein": number,
+  "carbs": number,
+  "fat": number,
+  "servings": number,
+  "ingredients": [
+    { "name": "string", "amount": "string", "category": "produce"|"protein"|"dairy"|"grains"|"pantry"|"other" }
+  ]
+}`;
+
+export function buildWeekMealPlanPrompt({
+  pantry,
+  profile,
+  goals,
+  startDate,
+  swapDay,
+  swapSlot,
+  batchCookHint,
+}: {
+  pantry: Ingredient[];
+  profile: Profile;
+  goals: NutritionGoals | null;
+  startDate: string;
+  swapDay?: number;
+  swapSlot?: MealSlot;
+  batchCookHint: boolean;
+}): string {
+  const isSwap = swapDay !== undefined && swapSlot !== undefined;
+  const swapDate = isSwap ? addDaysToDateStr(startDate, swapDay) : '';
+
+  const langInstruction = profile.language === 'EL'
+    ? 'CRITICAL OUTPUT LANGUAGE: All meal names and ingredient names MUST be in Greek (Ελληνικά).'
+    : profile.language === 'ES'
+      ? 'CRITICAL OUTPUT LANGUAGE: All meal names and ingredient names MUST be in Spanish (Español).'
+      : 'Output language: English.';
+
+  const goalsSection = goals
+    ? `═══ DAILY NUTRITION TARGETS (each day must hit these across all four meals) ═══
+Calories: ${goals.calories} kcal
+Protein: ${goals.protein} g
+Carbs: ${goals.carbs} g
+Fat: ${goals.fat} g
+
+Sum calories, protein, carbs, and fat across breakfast + lunch + dinner + snack for each day. Stay within ±10% of calorie target and reasonably close on macros.`
+    : `═══ NUTRITION TARGETS ═══
+(No body stats — aim for balanced ~2000 kcal days with sensible macro split.)`;
+
+  const batchSection = batchCookHint
+    ? `\n═══ BATCH COOKING ═══
+Where sensible, suggest batch-cooked ingredients that span multiple days (e.g., cook a large pot of grains on day 1 and reuse across later days). Note this explicitly in the meal name or ingredients.`
+    : '';
+
+  const swapSection = isSwap
+    ? `\n═══ SWAP MODE — SINGLE MEAL ONLY ═══
+Regenerate ONLY one meal: ${swapSlot} on ${swapDate} (day index ${swapDay} of the week starting ${startDate}).
+Return ONLY the single meal object (no "days" wrapper). Do not return other days or meals.`
+    : `\n═══ FULL WEEK ═══
+Plan exactly 7 consecutive days starting ${startDate} (Monday). Each date must be YYYY-MM-DD, incrementing by one day.
+Each day must have exactly these four slots in order: ${MEAL_SLOT_ORDER.join(', ')}.`;
+
+  const outputSection = isSwap
+    ? `═══ OUTPUT (JSON ONLY, no prose, no fences) ═══\n${MEAL_PLAN_SINGLE_SCHEMA}`
+    : `═══ OUTPUT (JSON ONLY, no prose, no fences) ═══\n${MEAL_PLAN_FULL_SCHEMA}`;
+
+  return `You are planning ${isSwap ? 'one replacement meal' : 'a full 7-day meal prep week'} for a home cook.
+
+═══ HOW TO APPROACH THIS ═══
+This is PANTRY-FIRST. Prioritise ingredients the user already has, especially those expiring soonest.
+Use loose name matching (e.g. "chicken" in pantry matches "chicken breast" in a recipe).
+
+═══ PANTRY (use these first; items expiring soonest are highest priority) ═══
+${formatPantry(pantry)}
+
+EXPIRY PRIORITY: Items marked "expires TODAY" or "prefer using" MUST be featured when possible across the week.
+
+═══ USER PROFILE ═══
+Name: ${profile.name || '(not set)'}
+Cuisine preference: ${profile.cuisine || '(open to anything)'}
+Cooking level: ${profile.level}
+Default servings per meal: ${profile.servings}
+Allergies & avoidances: ${profile.allergies || '(none)'}
+Diet goal: ${profile.dietGoal}
+
+${goalsSection}
+${batchSection}
+${swapSection}
+
+═══ HARD RULES ═══
+1. Never use anything from the allergies list.
+2. Respect diet goal (weight loss → lighter meals; muscle → higher protein).
+3. Each meal lists ingredients with realistic amounts and a valid category.
+4. ${langInstruction}
+5. Specific, appetising meal names — not generic "Chicken and rice".
+
+${outputSection}`;
+}
+
+function addDaysToDateStr(iso: string, days: number): string {
+  const d = new Date(iso + 'T12:00:00');
+  d.setDate(d.getDate() + days);
+  return d.toISOString().slice(0, 10);
+}
+
 export function buildNutritionEstimatePrompt(foodDescription: string): string {
   return `Estimate the nutritional content of this food or meal as described:
 "${foodDescription}"

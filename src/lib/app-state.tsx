@@ -4,7 +4,7 @@
 // state set is rare).
 
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
-import type { BodyStats, Ingredient, LoggedMeal, Profile, Recipe, Settings } from './types';
+import type { BodyStats, Ingredient, LoggedMeal, Profile, Recipe, Settings, WeekMealPlan } from './types';
 import * as db from './db';
 import { t as translate } from './i18n';
 import { applyTheme } from './theme';
@@ -18,6 +18,7 @@ interface AppState {
   settings: Settings;
   bodyStats: BodyStats | null;
   nutritionLog: LoggedMeal[];
+  mealPlan: WeekMealPlan | null;
   ready: boolean;
 
   // Pantry mutations
@@ -39,6 +40,11 @@ interface AppState {
   saveBodyStats: (stats: BodyStats) => Promise<void>;
   addLoggedMeal: (meal: LoggedMeal) => Promise<void>;
   removeLoggedMeal: (id: string) => Promise<void>;
+
+  // Meal plan
+  saveMealPlan: (plan: WeekMealPlan) => Promise<void>;
+  updateMealPlan: (plan: WeekMealPlan) => Promise<void>;
+  clearMealPlan: () => Promise<void>;
 
   // Reset
   resetAll: () => Promise<void>;
@@ -63,14 +69,15 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [settings, setSettingsState] = useState<Settings>({ apiKey: '', model: 'claude-sonnet-4-5', recipeSpeed: 'best', byok: false });
   const [bodyStats, setBodyStatsState] = useState<BodyStats | null>(null);
   const [nutritionLog, setNutritionLog] = useState<LoggedMeal[]>([]);
+  const [mealPlan, setMealPlanState] = useState<WeekMealPlan | null>(null);
   const [ready, setReady] = useState(false);
 
   // Initial load.
   useEffect(() => {
     (async () => {
-      const [p, pr, r, s, bs, nl] = await Promise.all([
+      const [p, pr, r, s, bs, nl, mp] = await Promise.all([
         db.loadPantry(), db.loadProfile(), db.loadRecipes(), db.loadSettings(),
-        db.loadBodyStats(), db.loadNutritionLog(),
+        db.loadBodyStats(), db.loadNutritionLog(), db.loadMealPlan(),
       ]);
       setPantry(p);
       setProfileState(pr);
@@ -78,6 +85,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       setSettingsState(s);
       setBodyStatsState(bs);
       setNutritionLog(nl);
+      setMealPlanState(mp);
       setReady(true);
     })();
   }, []);
@@ -158,6 +166,18 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setNutritionLog(prev => prev.filter(m => m.id !== id));
   }, []);
 
+  const saveMealPlan = useCallback(async (plan: WeekMealPlan) => {
+    setMealPlanState(plan);
+    await db.saveMealPlan(plan);
+  }, []);
+
+  const updateMealPlan = saveMealPlan;
+
+  const clearMealPlan = useCallback(async () => {
+    setMealPlanState(null);
+    await db.deleteMealPlan();
+  }, []);
+
   // ─── Reset ──────────────────────────────────────────────────
 
   const resetAll = useCallback(async () => {
@@ -171,6 +191,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setSettingsState({ apiKey: '', model: 'claude-sonnet-4-5', recipeSpeed: 'best', byok: false });
     setBodyStatsState(null);
     setNutritionLog([]);
+    setMealPlanState(null);
   }, []);
 
   const exportData = useCallback(() => db.exportAllData(), []);
@@ -201,11 +222,12 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   );
 
   const value: AppState = {
-    pantry, profile, recipes, settings, bodyStats, nutritionLog, ready,
+    pantry, profile, recipes, settings, bodyStats, nutritionLog, mealPlan, ready,
     addIngredient, bulkAddIngredients, restoreIngredientAt, updateIngredient, removeIngredient,
     saveProfile, saveSettings,
     appendRecipes, toggleStar,
     saveBodyStats, addLoggedMeal, removeLoggedMeal,
+    saveMealPlan, updateMealPlan, clearMealPlan,
     resetAll,
     exportData, importData,
     t,
