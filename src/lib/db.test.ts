@@ -3,7 +3,7 @@
 // deterministically — we're testing db.ts's logic, not the browser's IDB.
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import type { Ingredient, Recipe } from './types';
+import type { Ingredient, Recipe, Settings } from './types';
 
 // vi.hoisted lets the same Map be referenced by both the mock factory
 // (hoisted to the top of the file) and the beforeEach reset below.
@@ -134,11 +134,16 @@ describe('settings storage', () => {
     const s = await loadSettings();
     expect(s.apiKey).toBe('');
     expect(s.model).toBe('claude-sonnet-4-5');
+    expect(s.recipeSpeed).toBe('best');
   });
 
   it('round-trips saved settings and migrates invalid Opus id', async () => {
-    await saveSettings({ apiKey: 'sk-ant-test', model: 'claude-opus-4-7' as any });
-    expect(await loadSettings()).toEqual({ apiKey: 'sk-ant-test', model: 'claude-opus-4-5' });
+    await saveSettings({ apiKey: 'sk-ant-test', model: 'claude-opus-4-7' as unknown as Settings['model'], recipeSpeed: 'fast', byok: false });
+    expect(await loadSettings()).toEqual({
+      apiKey: 'sk-ant-test',
+      model: 'claude-opus-4-5',
+      recipeSpeed: 'fast',
+    });
   });
 });
 
@@ -147,7 +152,7 @@ describe('settings storage', () => {
 describe('resetAll', () => {
   it('clears pantry, profile, recipes and settings', async () => {
     await savePantry([makeIngredient('eggs')]);
-    await saveSettings({ apiKey: 'sk-ant-test', model: 'claude-haiku-4-5' });
+    await saveSettings({ apiKey: 'sk-ant-test', model: 'claude-haiku-4-5', recipeSpeed: 'best', byok: false });
     await addRecipes([makeRecipe('r1')]);
 
     await resetAll();

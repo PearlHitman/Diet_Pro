@@ -4,22 +4,26 @@
 // state set is rare).
 
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
-import type { Ingredient, Profile, Recipe, Settings, Language } from './types';
+import type { BodyStats, Ingredient, LoggedMeal, Profile, Recipe, Settings } from './types';
 import * as db from './db';
 import { t as translate } from './i18n';
 import { applyTheme } from './theme';
 
+/* eslint-disable react-refresh/only-export-components */
 interface AppState {
   // Data
   pantry: Ingredient[];
   profile: Profile;
   recipes: Recipe[];
   settings: Settings;
+  bodyStats: BodyStats | null;
+  nutritionLog: LoggedMeal[];
   ready: boolean;
 
   // Pantry mutations
   addIngredient: (item: Ingredient) => Promise<void>;
   bulkAddIngredients: (items: Ingredient[]) => Promise<void>;
+  restoreIngredientAt: (index: number, item: Ingredient) => Promise<void>;
   updateIngredient: (id: string, patch: Partial<Ingredient>) => Promise<void>;
   removeIngredient: (id: string) => Promise<void>;
 
@@ -31,8 +35,17 @@ interface AppState {
   appendRecipes: (newOnes: Recipe[]) => Promise<void>;
   toggleStar: (id: string) => Promise<void>;
 
+  // Body stats & nutrition
+  saveBodyStats: (stats: BodyStats) => Promise<void>;
+  addLoggedMeal: (meal: LoggedMeal) => Promise<void>;
+  removeLoggedMeal: (id: string) => Promise<void>;
+
   // Reset
   resetAll: () => Promise<void>;
+
+  // Export / import (manual cross-device "sync")
+  exportData: () => Promise<db.ExportPayload>;
+  importData: (raw: unknown) => Promise<void>;
 
   // i18n shortcut
   t: (key: Parameters<typeof translate>[1], vars?: Record<string, string | number>) => string;
@@ -47,19 +60,24 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     allergies: '', dietGoal: 'None', language: 'EN', theme: 'system',
   });
   const [recipes, setRecipes] = useState<Recipe[]>([]);
-  const [settings, setSettingsState] = useState<Settings>({ apiKey: '', model: 'claude-sonnet-4-5' });
+  const [settings, setSettingsState] = useState<Settings>({ apiKey: '', model: 'claude-sonnet-4-5', recipeSpeed: 'best', byok: false });
+  const [bodyStats, setBodyStatsState] = useState<BodyStats | null>(null);
+  const [nutritionLog, setNutritionLog] = useState<LoggedMeal[]>([]);
   const [ready, setReady] = useState(false);
 
   // Initial load.
   useEffect(() => {
     (async () => {
-      const [p, pr, r, s] = await Promise.all([
+      const [p, pr, r, s, bs, nl] = await Promise.all([
         db.loadPantry(), db.loadProfile(), db.loadRecipes(), db.loadSettings(),
+        db.loadBodyStats(), db.loadNutritionLog(),
       ]);
       setPantry(p);
       setProfileState(pr);
       setRecipes(r);
       setSettingsState(s);
+      setBodyStatsState(bs);
+      setNutritionLog(nl);
       setReady(true);
     })();
   }, []);
@@ -74,6 +92,14 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   const bulkAddIngredients = useCallback(async (items: Ingredient[]) => {
     const next = [...items, ...pantry];
+    setPantry(next);
+    await db.savePantry(next);
+  }, [pantry]);
+
+  const restoreIngredientAt = useCallback(async (index: number, item: Ingredient) => {
+    const next = [...pantry];
+    const idx = Math.max(0, Math.min(index, next.length));
+    next.splice(idx, 0, item);
     setPantry(next);
     await db.savePantry(next);
   }, [pantry]);
@@ -115,6 +141,23 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     await db.saveRecipes(next);
   }, [recipes]);
 
+  // ─── Body stats & nutrition ──────────────────────────────────
+
+  const saveBodyStats = useCallback(async (stats: BodyStats) => {
+    setBodyStatsState(stats);
+    await db.saveBodyStats(stats);
+  }, []);
+
+  const addLoggedMeal = useCallback(async (meal: LoggedMeal) => {
+    await db.addLoggedMeal(meal);
+    setNutritionLog(await db.loadNutritionLog());
+  }, []);
+
+  const removeLoggedMeal = useCallback(async (id: string) => {
+    await db.removeLoggedMeal(id);
+    setNutritionLog(prev => prev.filter(m => m.id !== id));
+  }, []);
+
   // ─── Reset ──────────────────────────────────────────────────
 
   const resetAll = useCallback(async () => {
@@ -125,7 +168,23 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       allergies: '', dietGoal: 'None', language: 'EN', theme: 'system',
     });
     setRecipes([]);
-    setSettingsState({ apiKey: '', model: 'claude-sonnet-4-5' });
+    setSettingsState({ apiKey: '', model: 'claude-sonnet-4-5', recipeSpeed: 'best', byok: false });
+    setBodyStatsState(null);
+    setNutritionLog([]);
+  }, []);
+
+  const exportData = useCallback(() => db.exportAllData(), []);
+
+  const importData = useCallback(async (raw: unknown) => {
+    await db.importAllData(raw);
+    // Reload all in-memory state from disk so the UI reflects the import.
+    const [p, pr, r, s] = await Promise.all([
+      db.loadPantry(), db.loadProfile(), db.loadRecipes(), db.loadSettings(),
+    ]);
+    setPantry(p);
+    setProfileState(pr);
+    setRecipes(r);
+    setSettingsState(s);
   }, []);
 
   // Re-apply theme whenever profile.theme changes (incl. on first load).
@@ -142,11 +201,13 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   );
 
   const value: AppState = {
-    pantry, profile, recipes, settings, ready,
-    addIngredient, bulkAddIngredients, updateIngredient, removeIngredient,
+    pantry, profile, recipes, settings, bodyStats, nutritionLog, ready,
+    addIngredient, bulkAddIngredients, restoreIngredientAt, updateIngredient, removeIngredient,
     saveProfile, saveSettings,
     appendRecipes, toggleStar,
+    saveBodyStats, addLoggedMeal, removeLoggedMeal,
     resetAll,
+    exportData, importData,
     t,
   };
 

@@ -8,12 +8,15 @@ import { Sparkles, AlertCircle, ArrowLeft } from '../components/Icons';
 import { T, SCREEN_PAD_TOP } from '../tokens';
 import { useApp } from '../lib/app-state';
 import { generateRecipes, ClaudeError } from '../lib/claude';
+import { loadFlowState, saveResultIds } from '../lib/generate-flow';
 import { EMPTY_CUSTOMIZATION, type Customization, type MealType } from '../lib/types';
 
 interface LocationState {
   mealType?: MealType;
   customization?: Customization;
   dishIdea?: string;
+  maxTime?: number;
+  dietary?: string[];
 }
 
 export function LoadingPage() {
@@ -25,11 +28,17 @@ export function LoadingPage() {
   /** Increment to re-run generation (Retry) without remounting. */
   const [generationToken, setGenerationToken] = useState(0);
 
-  const state = location.state as LocationState | null;
-  const mealType = state?.mealType;
-  const customization = state?.customization ?? EMPTY_CUSTOMIZATION;
-  const dishIdeaTrimmed = state?.dishIdea?.trim();
+  // Prefer router state (fast path); fall back to sessionStorage so a
+  // mid-flow reload doesn't lose what the user picked.
+  const navState = location.state as LocationState | null;
+  const fallback = loadFlowState();
+  const mealType: MealType | undefined = navState?.mealType ?? fallback?.mealType;
+  const customization: Customization =
+    navState?.customization ?? fallback?.customization ?? EMPTY_CUSTOMIZATION;
+  const dishIdeaTrimmed = (navState?.dishIdea ?? fallback?.dishIdea)?.trim();
   const fromDishFlow = !!(dishIdeaTrimmed && dishIdeaTrimmed.length > 0);
+  const maxTime = navState?.maxTime ?? fallback?.maxTime;
+  const dietary = navState?.dietary ?? fallback?.dietary;
 
   useEffect(() => {
     if (!mealType) {
@@ -48,11 +57,16 @@ export function LoadingPage() {
           settings,
           customization,
           dishIdea: dishIdeaTrimmed || undefined,
+          maxTime,
+          dietary,
         });
         if (cancelled) return;
         await appendRecipes(recipes);
         if (cancelled) return;
-        navigate('/results', { state: { ids: recipes.map(r => r.id) }, replace: true });
+        const ids = recipes.map(r => r.id);
+        // Persist ids so /results can recover from a reload too.
+        saveResultIds(ids);
+        navigate('/results', { state: { ids }, replace: true });
       } catch (e) {
         if (cancelled) return;
         if (e instanceof ClaudeError) {
@@ -89,10 +103,10 @@ export function LoadingPage() {
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             margin: '0 auto 18px',
           }}><AlertCircle size={22} color={T.danger} /></div>
-          <div style={{ fontSize: 17, fontWeight: 700, color: T.text, marginBottom: 8 }}>
+          <div style={{ fontSize: T.fontSize.lead, fontWeight: 700, color: T.text, marginBottom: 8 }}>
             {t('errorTitle')}
           </div>
-          <div style={{ fontSize: 14, color: T.text2, marginBottom: 24, lineHeight: 1.5 }}>
+          <div style={{ fontSize: T.fontSize.body, color: T.text2, marginBottom: 24, lineHeight: 1.5 }}>
             {error}
           </div>
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', justifyContent: 'center' }}>
@@ -104,7 +118,7 @@ export function LoadingPage() {
                 padding: '11px 18px', borderRadius: 11,
                 background: T.surface, color: T.text2,
                 border: `1px solid ${T.border}`, cursor: 'pointer',
-                fontSize: 14, fontWeight: 600, fontFamily: T.font,
+                fontSize: T.fontSize.body, fontWeight: 600, fontFamily: T.font,
                 display: 'inline-flex', alignItems: 'center', gap: 6,
               }}
             ><ArrowLeft size={14} />{t('back')}</button>
@@ -117,7 +131,7 @@ export function LoadingPage() {
                 padding: '12px 20px', borderRadius: 'var(--mise-radius-button)',
                 background: 'var(--mise-primary)', color: '#FFFFFF',
                 border: 'none', cursor: 'pointer',
-                fontSize: 14, fontWeight: 600, fontFamily: T.font,
+                fontSize: T.fontSize.body, fontWeight: 600, fontFamily: T.font,
                 boxShadow: '0px 4px 12px rgba(124, 58, 237, 0.3)',
               }}
             >{t('retry')}</button>
@@ -144,11 +158,11 @@ export function LoadingPage() {
           }}
         ><Sparkles size={28} color={T.accent} /></div>
 
-        <div style={{ fontSize: 17, fontWeight: 700, color: T.text, marginBottom: 8 }}>
+        <div style={{ fontSize: T.fontSize.lead, fontWeight: 700, color: T.text, marginBottom: 8 }}>
           {t('generating')}
         </div>
-        <div style={{ fontSize: 13, color: T.muted }}>
-          {t('generatingHint')}
+        <div style={{ fontSize: T.fontSize.small, color: T.muted }}>
+          {settings.recipeSpeed === 'fast' ? t('generatingHintFast') : t('generatingHint')}
         </div>
       </div>
     </Screen>

@@ -25,6 +25,7 @@ import {
   Package as LucidePackage,
   SlidersHorizontal as LucideSliders,
   Star as LucideStar,
+  type LucideIcon,
 } from 'lucide-react';
 
 type Props = {
@@ -36,7 +37,7 @@ type Props = {
 
 // Lucide components are forwardRefs; type them loosely so we don't have
 // to mirror their full prop signature.
-const wrap = (Lucide: any) =>
+const wrap = (Lucide: LucideIcon) =>
   ({ size = 16, strokeWidth = 2, color = 'currentColor', style }: Props) =>
     <Lucide size={size} strokeWidth={strokeWidth} color={color} style={style} />;
 

@@ -11,8 +11,12 @@ import { createPortal } from 'react-dom';
 import { Pencil } from 'lucide-react';
 import { T } from '../tokens';
 import { useApp } from '../lib/app-state';
+import { t as translate } from '../lib/i18n';
 import { scanProductPhoto, scanReceipt, type ScannedIngredient } from '../lib/claude';
-import type { Category, Ingredient } from '../lib/types';
+import { prepareImageForVision } from '../lib/image';
+import { CATEGORIES, type Category, type Ingredient } from '../lib/types';
+
+type TKey = Parameters<typeof translate>[1];
 
 // ─── Types ───────────────────────────────────────────────────
 
@@ -31,23 +35,9 @@ interface Draft extends ScannedIngredient {
   expiresOn?: string | null;
 }
 
-const CATS: Category[] = ['produce', 'protein', 'dairy', 'grains', 'pantry', 'other'];
+const CATS: readonly Category[] = CATEGORIES;
 
 // ─── Helpers ─────────────────────────────────────────────────
-
-function fileToBase64(file: File): Promise<{ data: string; mediaType: string }> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => {
-      const result = reader.result as string;
-      const [header, data] = result.split(',');
-      const mediaType = header.match(/data:(.*);base64/)?.[1] ?? 'image/jpeg';
-      resolve({ data, mediaType });
-    };
-    reader.onerror = reject;
-    reader.readAsDataURL(file);
-  });
-}
 
 function makePantryItem(draft: Draft): Ingredient {
   const ex = draft.expiresOn;
@@ -80,7 +70,7 @@ export function CameraImport({ file, mode, onClose }: Props) {
 
     (async () => {
       try {
-        const { data, mediaType } = await fileToBase64(file);
+        const { data, mediaType } = await prepareImageForVision(file);
 
         if (mode === 'photo') {
           const result = await scanProductPhoto(data, mediaType, profile.language, settings);
@@ -94,8 +84,9 @@ export function CameraImport({ file, mode, onClose }: Props) {
             setStep({ name: 'review-bulk', items: results.map(r => ({ ...r, selected: true })) });
           }
         }
-      } catch (e: any) {
-        if (!cancelled) setStep({ name: 'error', message: e?.message ?? t('cameraError') });
+      } catch (e: unknown) {
+        const message = e instanceof Error ? e.message : undefined;
+        if (!cancelled) setStep({ name: 'error', message: message ?? t('cameraError') });
       }
     })();
 
@@ -194,7 +185,7 @@ function AnalyzingView({ hint }: { hint: string }) {
         borderTopColor: T.accent,
         animation: 'spin 1s linear infinite',
       }} />
-      <div style={{ fontSize: 14, color: T.text2 }}>{hint}</div>
+      <div style={{ fontSize: T.fontSize.body, color: T.text2 }}>{hint}</div>
       <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
     </div>
   );
@@ -206,7 +197,7 @@ function ReviewSingleView({ item, onConfirm, onCancel, t }: {
   item: Draft;
   onConfirm: (d: Draft) => void;
   onCancel: () => void;
-  t: (k: any, v?: any) => string;
+  t: (k: TKey, v?: Record<string, string | number>) => string;
 }) {
   const [name, setName] = useState(item.name);
   const [amount, setAmount] = useState(item.amount ?? '');
@@ -247,7 +238,7 @@ function ReviewSingleView({ item, onConfirm, onCancel, t }: {
                   background: category === c ? T.accentTint : T.surface,
                   border: `1px solid ${category === c ? T.borderAcc : T.border}`,
                   color: category === c ? T.accent : T.text2,
-                  fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: T.font,
+                  fontSize: T.fontSize.caption, fontWeight: 600, cursor: 'pointer', fontFamily: T.font,
                 }}>{catLabels[c]}</button>
               ))}
             </div>
@@ -269,7 +260,7 @@ function ReviewSingleView({ item, onConfirm, onCancel, t }: {
             width: '100%', padding: '14px', borderRadius: 14, border: 'none',
             background: name.trim() ? T.accentGrad : T.surface,
             color: name.trim() ? '#1a1208' : T.muted,
-            fontSize: 15, fontWeight: 700,
+            fontSize: T.fontSize.bodyLg, fontWeight: 700,
             cursor: name.trim() ? 'pointer' : 'not-allowed',
             fontFamily: T.font,
           }}
@@ -286,7 +277,7 @@ function ReviewBulkView({ items, onChange, onConfirm, onCancel, t }: {
   onChange: (items: Draft[]) => void;
   onConfirm: (items: Draft[]) => void;
   onCancel: () => void;
-  t: (k: any, v?: any) => string;
+  t: (k: TKey, v?: Record<string, string | number>) => string;
 }) {
   const selected = items.filter(i => i.selected).length;
   const allSelected = selected === items.length;
@@ -341,7 +332,7 @@ function ReviewBulkView({ items, onChange, onConfirm, onCancel, t }: {
             border: `1px solid ${T.border}`,
             background: T.surface,
             color: T.text2,
-            fontSize: 12,
+            fontSize: T.fontSize.caption,
             fontWeight: 600,
             cursor: 'pointer',
             fontFamily: T.font,
@@ -373,23 +364,39 @@ function ReviewBulkView({ items, onChange, onConfirm, onCancel, t }: {
                 <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
                   <button
                     type="button"
+                    role="checkbox"
+                    aria-checked={it.selected}
+                    aria-label={appT('toggleImportIngredient')}
                     onClick={() => onChange(items.map((x, i) => (i === idx ? { ...x, selected: !x.selected } : x)))}
                     style={{
                       all: 'unset',
-                      width: 18,
-                      height: 18,
-                      borderRadius: 5,
+                      minWidth: 44,
+                      minHeight: 44,
                       flexShrink: 0,
                       marginTop: 3,
-                      border: `2px solid ${it.selected ? T.accent : T.mute2}`,
-                      background: it.selected ? T.accent : 'transparent',
-                      display: 'flex',
+                      display: 'inline-flex',
                       alignItems: 'center',
                       justifyContent: 'center',
                       cursor: 'pointer',
+                      boxSizing: 'border-box',
                     }}
                   >
-                    {it.selected && <span style={{ fontSize: 11, color: '#1a1208', fontWeight: 900 }}>✓</span>}
+                    <span
+                      aria-hidden
+                      style={{
+                        width: 18,
+                        height: 18,
+                        borderRadius: 5,
+                        border: `2px solid ${it.selected ? T.accent : T.mute2}`,
+                        background: it.selected ? T.accent : 'transparent',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        boxSizing: 'border-box',
+                      }}
+                    >
+                      {it.selected ? <span style={{ fontSize: T.fontSize.tiny, color: '#1a1208', fontWeight: 900 }}>✓</span> : null}
+                    </span>
                   </button>
 
                   <div style={{ flex: 1, minWidth: 0 }}>
@@ -409,7 +416,7 @@ function ReviewBulkView({ items, onChange, onConfirm, onCancel, t }: {
                               style={{
                                 padding: '6px 10px',
                                 borderRadius: 999,
-                                fontSize: 11,
+                                fontSize: T.fontSize.tiny,
                                 fontWeight: 600,
                                 cursor: 'pointer',
                                 fontFamily: T.font,
@@ -430,7 +437,7 @@ function ReviewBulkView({ items, onChange, onConfirm, onCancel, t }: {
                             padding: '8px 14px',
                             borderRadius: 10,
                             border: 'none',
-                            fontSize: 12,
+                            fontSize: T.fontSize.caption,
                             fontWeight: 700,
                             cursor: bulkEditor.draftName.trim() ? 'pointer' : 'not-allowed',
                             fontFamily: T.font,
@@ -443,9 +450,9 @@ function ReviewBulkView({ items, onChange, onConfirm, onCancel, t }: {
                       </>
                     ) : (
                       <>
-                        <div style={{ fontSize: 14, fontWeight: 500, color: T.text }}>{it.name}</div>
+                        <div style={{ fontSize: T.fontSize.body, fontWeight: 500, color: T.text }}>{it.name}</div>
                         {it.amount ? (
-                          <div style={{ fontSize: 11, color: T.muted, marginTop: 2 }}>{it.amount}</div>
+                          <div style={{ fontSize: T.fontSize.tiny, color: T.muted, marginTop: 2 }}>{it.amount}</div>
                         ) : null}
                       </>
                     )}
@@ -467,21 +474,22 @@ function ReviewBulkView({ items, onChange, onConfirm, onCancel, t }: {
                       className="press"
                       style={{
                         all: 'unset',
-                        width: 32,
-                        height: 32,
+                        minWidth: 44,
+                        minHeight: 44,
                         borderRadius: 8,
-                        display: 'flex',
+                        display: 'inline-flex',
                         alignItems: 'center',
                         justifyContent: 'center',
                         color: T.text2,
                         cursor: 'pointer',
                         flexShrink: 0,
+                        boxSizing: 'border-box',
                       }}
                     >
                       <Pencil size={17} strokeWidth={2} />
                     </button>
                   ) : (
-                    <div style={{ width: 32 }} />
+                    <div style={{ width: 44, flexShrink: 0 }} />
                   )}
                 </div>
               </div>
@@ -502,7 +510,7 @@ function ReviewBulkView({ items, onChange, onConfirm, onCancel, t }: {
             border: 'none',
             background: selected > 0 ? T.accentGrad : T.surface,
             color: selected > 0 ? '#1a1208' : T.muted,
-            fontSize: 15,
+            fontSize: T.fontSize.bodyLg,
             fontWeight: 700,
             cursor: selected > 0 ? 'pointer' : 'not-allowed',
             fontFamily: T.font,
@@ -519,16 +527,16 @@ function ReviewBulkView({ items, onChange, onConfirm, onCancel, t }: {
 
 function ErrorView({ message, onClose, onRetry, t }: {
   message: string; onClose: () => void; onRetry: () => void;
-  t: (k: any) => string;
+  t: (k: TKey, v?: Record<string, string | number>) => string;
 }) {
   return (
     <div style={{ padding: '32px 20px 28px', textAlign: 'center' }}>
-      <div style={{ fontSize: 36, marginBottom: 12 }}>⚠️</div>
-      <div style={{ fontSize: 15, fontWeight: 600, color: T.text, marginBottom: 8 }}>{t('errorTitle')}</div>
-      <div style={{ fontSize: 13, color: T.text2, lineHeight: 1.5, marginBottom: 24 }}>{message}</div>
+      <div style={{ fontSize: T.fontSize.hero, marginBottom: 12 }}>⚠️</div>
+      <div style={{ fontSize: T.fontSize.bodyLg, fontWeight: 600, color: T.text, marginBottom: 8 }}>{t('errorTitle')}</div>
+      <div style={{ fontSize: T.fontSize.small, color: T.text2, lineHeight: 1.5, marginBottom: 24 }}>{message}</div>
       <div style={{ display: 'flex', gap: 10 }}>
-        <button onClick={onClose} style={{ flex: 1, padding: '12px', borderRadius: 12, background: T.surface, color: T.text2, border: `1px solid ${T.border}`, cursor: 'pointer', fontSize: 14, fontWeight: 600, fontFamily: T.font }}>{t('cancel')}</button>
-        <button onClick={onRetry} style={{ flex: 1, padding: '12px', borderRadius: 12, background: T.accentGrad, color: '#1a1208', border: 'none', cursor: 'pointer', fontSize: 14, fontWeight: 700, fontFamily: T.font }}>{t('retry')}</button>
+        <button onClick={onClose} style={{ flex: 1, padding: '12px', borderRadius: 12, background: T.surface, color: T.text2, border: `1px solid ${T.border}`, cursor: 'pointer', fontSize: T.fontSize.body, fontWeight: 600, fontFamily: T.font }}>{t('cancel')}</button>
+        <button onClick={onRetry} style={{ flex: 1, padding: '12px', borderRadius: 12, background: T.accentGrad, color: '#1a1208', border: 'none', cursor: 'pointer', fontSize: T.fontSize.body, fontWeight: 700, fontFamily: T.font }}>{t('retry')}</button>
       </div>
     </div>
   );
@@ -537,28 +545,45 @@ function ErrorView({ message, onClose, onRetry, t }: {
 // ─── Shared ───────────────────────────────────────────────────
 
 function SheetHeader({ title, onClose }: { title: string; onClose: () => void }) {
+  const { t } = useApp();
   return (
     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-      <div style={{ fontSize: 17, fontWeight: 700, color: T.text }}>{title}</div>
-      <button onClick={onClose} style={{
-        width: 30, height: 30, borderRadius: 999,
-        border: 'none', background: T.surface, color: T.text2,
-        cursor: 'pointer', fontSize: 16,
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        fontFamily: T.font,
-      }}>✕</button>
+      <div style={{ fontSize: T.fontSize.lead, fontWeight: 700, color: T.text }}>{title}</div>
+      <button
+        type="button"
+        aria-label={t('closeOverlay')}
+        onClick={onClose}
+        style={{
+          minWidth: 44,
+          minHeight: 44,
+          borderRadius: 999,
+          border: 'none',
+          background: T.surface,
+          color: T.text2,
+          cursor: 'pointer',
+          fontSize: T.fontSize.base,
+          display: 'inline-flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          fontFamily: T.font,
+          padding: 0,
+          boxSizing: 'border-box',
+        }}
+      >
+        <span aria-hidden>✕</span>
+      </button>
     </div>
   );
 }
 
 const labelStyle: React.CSSProperties = {
-  display: 'block', fontSize: 12, fontWeight: 600, color: T.text2,
+  display: 'block', fontSize: T.fontSize.caption, fontWeight: 600, color: T.text2,
   marginBottom: 6, textTransform: 'uppercase', letterSpacing: 0.5,
 };
 
 const inputStyle: React.CSSProperties = {
   width: '100%', padding: '10px 12px', borderRadius: 10,
   background: T.surface, border: `1px solid ${T.border}`,
-  color: T.text, fontSize: 14, fontFamily: T.font,
+  color: T.text, fontSize: T.fontSize.body, fontFamily: T.font,
   outline: 'none', boxSizing: 'border-box',
 };

@@ -1,170 +1,246 @@
 /* ──────────────────────────────────────────────────────────────
-   Mise Design System — Apple Liquid Glass
-   Light is the default; dark via [data-theme="dark"] or
-   prefers-color-scheme. Tokens here power both inline styles
-   (var(--mise-*)) and the shadcn theme bindings below.
+   Mise Design System — Warm Editorial Dark
+   Default: warm dark.  Light variant: editorial cream via
+   [data-theme="light"] or prefers-color-scheme: light.
+
+   Token layers
+   ────────────
+   Layer 1  --bg / --surface / --text / --primary …  (new shorthand)
+   Layer 2  --mise-*  (compat aliases → layer 1, keeps existing code working)
+   Layer 3  shadcn bindings (--background, --foreground …)
    ────────────────────────────────────────────────────────────── */
 
 @custom-variant dark (&:is([data-theme="dark"] *), &:is(.dark *));
 
+/* ════════════════════════════════════════════════════════════════
+   WARM DARK (default)
+   ════════════════════════════════════════════════════════════════ */
 :root {
-  color-scheme: light;
+  color-scheme: dark;
+
+  /* ── Backgrounds & surfaces ─────────────────────────────────── */
+  --bg:        #0c0a09;
+  --surface:   #16120f;   /* cards */
+  --surface-2: #1e1814;   /* raised / inputs */
+  --surface-3: #28201b;   /* pressed / tracks */
+
+  /* ── Borders ─────────────────────────────────────────────────── */
+  --border:        rgba(244, 237, 226, 0.07);
+  --border-strong: rgba(244, 237, 226, 0.14);
+
+  /* ── Text ────────────────────────────────────────────────────── */
+  --text:   #f4ede2;
+  --text-2: #b3a89a;
+  --text-3: #756c60;
+  --text-4: #4d4640;
+
+  /* ── Primary — overridden every minute by mealtime engine ───── */
+  /* Initial value is dinner-orange so first paint isn't blank.    */
+  --primary:       #c4a13a;      /* overridden at runtime           */
+  --primary-hover: #d0ae52;
+  --primary-dim:   rgba(196, 161, 58, 0.13);
+  --primary-glow:  rgba(196, 161, 58, 0.35);
+  --on-primary:    #1a0e07;      /* text on filled primary buttons  */
+
+  /* ── Semantic ────────────────────────────────────────────────── */
+  --success: #8fa97f;
+  --warning: #d4a73d;
+  --danger:  #c4654a;
+
+  /* ── Macro colours (nutrition bars/rings) ───────────────────── */
+  --protein: #d97d8f;
+  --carbs:   #7aa6c4;
+  --fat:     #8fa97f;
+
+  /* ── Typography ─────────────────────────────────────────────── */
+  --font-display: "Instrument Serif", Georgia, serif;
+  --font-sans:    "Geist", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-mono:    "Geist Mono", ui-monospace, "SF Mono", monospace;
+
+  /* ── Radii ───────────────────────────────────────────────────── */
+  --radius-card:      22px;
+  --radius-button:    16px;
+  --radius-chip:      999px;
+  --radius-segmented: 14px;
+  --radius-small:     10px;
+  --radius-pill:      999px;
+
+  /* ── Spacing ─────────────────────────────────────────────────── */
+  --space-xs:  4px;
+  --space-sm:  8px;
+  --space-md:  16px;
+  --space-lg:  24px;
+  --space-xl:  32px;
+  --space-2xl: 48px;
+  --space-3xl: 64px;
+
+  /* ── Shadows ─────────────────────────────────────────────────── */
+  --shadow-card:    0 1px 0 rgba(255,255,255,0.02) inset, 0 24px 60px rgba(0,0,0,0.40);
+  --shadow-btn-glow: 0 8px 24px var(--primary-glow);
+  --shadow-sm:  0 1px 3px rgba(0,0,0,0.30);
+  --shadow-md:  0 4px 12px rgba(0,0,0,0.30);
+  --shadow-lg:  0 8px 32px rgba(0,0,0,0.40);
+  --shadow-xl:  0 16px 48px rgba(0,0,0,0.50);
+
+  /* ── Animation easings ───────────────────────────────────────── */
+  --ease-mise:   cubic-bezier(0.2, 0.8, 0.2, 1);
+  --ease-apple:  cubic-bezier(0.25, 0.1, 0.25, 1);
+  --ease-smooth: cubic-bezier(0.4, 0.0, 0.2, 1);
+  --ease-bounce: cubic-bezier(0.68, -0.55, 0.265, 1.55);
+
+  /* ── Mise compat aliases (--mise-*) ─────────────────────────── */
+  /* All existing code references --mise-* — these forwards them   */
+  /* to the new shorthand tokens so nothing breaks.                */
+  --mise-background:       var(--bg);
+  --mise-surface:          var(--surface);
+  --mise-primary:          var(--primary);
+  --mise-primary-hover:    var(--primary-hover);
+  --mise-secondary:        var(--primary-hover);
+  --mise-secondary-hover:  var(--primary-hover);
+  --mise-text-primary:     var(--text);
+  --mise-text-secondary:   var(--text-2);
+  --mise-text-tertiary:    var(--text-3);
+  --mise-text-on-primary:  var(--on-primary);
+  --mise-glass-fill:       var(--surface);
+  --mise-glass-border:     var(--border);
+  --mise-glass-elevated:   var(--surface-2);
+  --mise-success:          var(--success);
+  --mise-warning:          var(--warning);
+  --mise-error:            var(--danger);
+  --mise-info:             #7aa6c4;
+  --mise-radius-card:      var(--radius-card);
+  --mise-radius-button:    var(--radius-button);
+  --mise-radius-input:     var(--radius-button);
+  --mise-radius-small:     var(--radius-small);
+  --mise-radius-pill:      var(--radius-pill);
+  --mise-space-xs:  var(--space-xs);
+  --mise-space-sm:  var(--space-sm);
+  --mise-space-md:  var(--space-md);
+  --mise-space-lg:  var(--space-lg);
+  --mise-space-xl:  var(--space-xl);
+  --mise-space-2xl: var(--space-2xl);
+  --mise-space-3xl: var(--space-3xl);
+  --mise-shadow-sm:    var(--shadow-sm);
+  --mise-shadow-md:    var(--shadow-md);
+  --mise-shadow-lg:    var(--shadow-lg);
+  --mise-shadow-xl:    var(--shadow-xl);
+  --mise-shadow-glass: var(--shadow-card);
+  --mise-font-display: var(--font-display);
+  --mise-font-text:    var(--font-sans);
+  --mise-ease-smooth:  var(--ease-smooth);
+  --mise-ease-bounce:  var(--ease-bounce);
+  --mise-ease-apple:   var(--ease-apple);
+
+  /* ── shadcn bindings ─────────────────────────────────────────── */
+  --background: var(--bg);
+  --foreground: var(--text);
+  --card:            var(--surface);
+  --card-foreground: var(--text);
+  --popover:         var(--surface-2);
+  --popover-foreground: var(--text);
+  --primary-shadcn:          var(--primary);
+  --primary-foreground:      var(--on-primary);
+  --secondary:               var(--surface-2);
+  --secondary-foreground:    var(--text-2);
+  --muted:           var(--surface-3);
+  --muted-foreground: var(--text-3);
+  --accent:          var(--primary-dim);
+  --accent-foreground: var(--primary);
+  --destructive:     var(--danger);
+  --destructive-foreground: #fff;
+  --border-shadcn:   var(--border);
+  --input:           var(--border);
+  --input-background: var(--surface-2);
+  --switch-background: var(--surface-3);
+  --ring:            var(--primary);
+  --radius:          0.875rem;
+
   --font-size: 16px;
-
-  /* ─── Mise palette (LIGHT) ─────────────────────────────── */
-  --mise-background: #FFFFFF;
-  --mise-surface: #F9F8FF;
-
-  --mise-primary: #7C3AED;
-  --mise-primary-hover: #6D28D9;
-  --mise-secondary: #C4B5FD;
-  --mise-secondary-hover: #A78BFA;
-
-  --mise-text-primary: #0F0F13;
-  --mise-text-secondary: #64748B;
-  --mise-text-tertiary: #94A3B8;
-  --mise-text-on-primary: #FFFFFF;
-
-  --mise-glass-fill: rgba(255, 255, 255, 0.7);
-  --mise-glass-border: rgba(255, 255, 255, 0.4);
-  --mise-glass-elevated: rgba(255, 255, 255, 0.85);
-
-  --mise-success: #10B981;
-  --mise-warning: #F59E0B;
-  --mise-error: #EF4444;
-  --mise-info: #3B82F6;
-
-  --mise-radius-card: 20px;
-  --mise-radius-button: 14px;
-  --mise-radius-input: 14px;
-  --mise-radius-small: 10px;
-  --mise-radius-pill: 100px;
-
-  --mise-space-xs: 4px;
-  --mise-space-sm: 8px;
-  --mise-space-md: 16px;
-  --mise-space-lg: 24px;
-  --mise-space-xl: 32px;
-  --mise-space-2xl: 48px;
-  --mise-space-3xl: 64px;
-
-  --mise-shadow-sm: 0px 1px 3px rgba(0, 0, 0, 0.06);
-  --mise-shadow-md: 0px 4px 12px rgba(0, 0, 0, 0.08);
-  --mise-shadow-lg: 0px 8px 32px rgba(0, 0, 0, 0.12);
-  --mise-shadow-xl: 0px 16px 48px rgba(0, 0, 0, 0.16);
-  --mise-shadow-glass: 0px 4px 24px rgba(0, 0, 0, 0.08);
-
-  --mise-font-display: "SF Pro Display", "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
-  --mise-font-text: "SF Pro Text", "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
-
-  --mise-ease-smooth: cubic-bezier(0.4, 0.0, 0.2, 1);
-  --mise-ease-bounce: cubic-bezier(0.68, -0.55, 0.265, 1.55);
-  --mise-ease-apple: cubic-bezier(0.25, 0.1, 0.25, 1);
-
-  /* ─── shadcn theme bindings (LIGHT) ────────────────────── */
-  --background: var(--mise-background);
-  --foreground: var(--mise-text-primary);
-  --card: rgba(255, 255, 255, 0.85);
-  --card-foreground: var(--mise-text-primary);
-  --popover: var(--mise-glass-elevated);
-  --popover-foreground: var(--mise-text-primary);
-  --primary: var(--mise-primary);
-  --primary-foreground: var(--mise-text-on-primary);
-  --secondary: var(--mise-secondary);
-  --secondary-foreground: var(--mise-text-primary);
-  --muted: #F1F0FA;
-  --muted-foreground: var(--mise-text-secondary);
-  --accent: rgba(124, 58, 237, 0.1);
-  --accent-foreground: var(--mise-primary);
-  --destructive: var(--mise-error);
-  --destructive-foreground: #FFFFFF;
-  --border: var(--mise-glass-border);
-  --input: var(--mise-glass-border);
-  --input-background: var(--mise-glass-fill);
-  --switch-background: #CBD5E1;
-  --ring: var(--mise-primary);
-  --radius: 0.875rem;
-
   --font-weight-normal: 400;
   --font-weight-medium: 500;
 }
 
-:root[data-theme="dark"] {
-  color-scheme: dark;
+/* ════════════════════════════════════════════════════════════════
+   EDITORIAL CREAM (light variant)
+   Activated by [data-theme="light"] on <html>.
+   ════════════════════════════════════════════════════════════════ */
+:root[data-theme="light"] {
+  color-scheme: light;
 
-  /* ─── Mise palette (DARK) ──────────────────────────────── */
-  --mise-background: #0F0F13;
-  --mise-surface: #1C1B23;
+  --bg:        #f7f3ec;
+  --surface:   #ffffff;
+  --surface-2: #f4efe5;
+  --surface-3: #ebe4d6;
 
-  --mise-primary: #7C3AED;
-  --mise-primary-hover: #8B5CF6;
-  --mise-secondary: #C4B5FD;
-  --mise-secondary-hover: #DDD6FE;
+  --border:        rgba(26, 20, 14, 0.07);
+  --border-strong: rgba(26, 20, 14, 0.14);
 
-  --mise-text-primary: #F8FAFC;
-  --mise-text-secondary: #CBD5E1;
-  --mise-text-tertiary: #94A3B8;
-  --mise-text-on-primary: #FFFFFF;
+  --text:   #1a140e;
+  --text-2: #5a5147;
+  --text-3: #8a8073;
+  --text-4: #b8ae9e;
 
-  --mise-glass-fill: rgba(28, 27, 35, 0.7);
-  --mise-glass-border: rgba(255, 255, 255, 0.1);
-  --mise-glass-elevated: rgba(28, 27, 35, 0.85);
+  /* Primary stays time-of-day driven — same vars, set by JS */
+  --on-primary: #f7f3ec;
 
-  --mise-success: #34D399;
-  --mise-warning: #FBBF24;
-  --mise-error: #F87171;
-  --mise-info: #60A5FA;
-
-  --mise-shadow-sm: 0px 1px 3px rgba(0, 0, 0, 0.3);
-  --mise-shadow-md: 0px 4px 12px rgba(0, 0, 0, 0.3);
-  --mise-shadow-lg: 0px 8px 32px rgba(0, 0, 0, 0.4);
-  --mise-shadow-xl: 0px 16px 48px rgba(0, 0, 0, 0.5);
-  --mise-shadow-glass: 0px 4px 24px rgba(0, 0, 0, 0.4);
-
-  /* shadcn bindings auto-update via the var() chain above,
-     except for these surface tones we override explicitly. */
-  --card: rgba(28, 27, 35, 0.85);
-  --muted: rgba(255, 255, 255, 0.04);
-  --accent: rgba(124, 58, 237, 0.18);
-  --switch-background: #475569;
+  --shadow-card: 0 1px 0 rgba(255,255,255,0.80) inset, 0 8px 32px rgba(0,0,0,0.08);
+  --shadow-sm:  0 1px 3px rgba(0,0,0,0.06);
+  --shadow-md:  0 4px 12px rgba(0,0,0,0.08);
+  --shadow-lg:  0 8px 32px rgba(0,0,0,0.12);
+  --shadow-xl:  0 16px 48px rgba(0,0,0,0.16);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
-    color-scheme: dark;
+/* ════════════════════════════════════════════════════════════════
+   SLATE DARK tone
+   ════════════════════════════════════════════════════════════════ */
+:root[data-tone="slate-dark"] {
+  --bg:        #0a0e10;
+  --surface:   #0f1518;
+  --surface-2: #161e22;
+  --surface-3: #1f292e;
+  --border:        rgba(224, 232, 240, 0.07);
+  --border-strong: rgba(224, 232, 240, 0.14);
+}
 
-    --mise-background: #0F0F13;
-    --mise-surface: #1C1B23;
+/* ════════════════════════════════════════════════════════════════
+   ESPRESSO tone
+   ════════════════════════════════════════════════════════════════ */
+:root[data-tone="espresso"] {
+  --bg:        #100806;
+  --surface:   #1a0e0a;
+  --surface-2: #241410;
+  --surface-3: #2e1c16;
+}
 
-    --mise-primary-hover: #8B5CF6;
-    --mise-secondary-hover: #DDD6FE;
-
-    --mise-text-primary: #F8FAFC;
-    --mise-text-secondary: #CBD5E1;
-    --mise-text-tertiary: #94A3B8;
-
-    --mise-glass-fill: rgba(28, 27, 35, 0.7);
-    --mise-glass-border: rgba(255, 255, 255, 0.1);
-    --mise-glass-elevated: rgba(28, 27, 35, 0.85);
-
-    --mise-success: #34D399;
-    --mise-warning: #FBBF24;
-    --mise-error: #F87171;
-    --mise-info: #60A5FA;
-
-    --mise-shadow-sm: 0px 1px 3px rgba(0, 0, 0, 0.3);
-    --mise-shadow-md: 0px 4px 12px rgba(0, 0, 0, 0.3);
-    --mise-shadow-lg: 0px 8px 32px rgba(0, 0, 0, 0.4);
-    --mise-shadow-xl: 0px 16px 48px rgba(0, 0, 0, 0.5);
-    --mise-shadow-glass: 0px 4px 24px rgba(0, 0, 0, 0.4);
-
-    --card: rgba(28, 27, 35, 0.85);
-    --muted: rgba(255, 255, 255, 0.04);
-    --accent: rgba(124, 58, 237, 0.18);
-    --switch-background: #475569;
+/* ════════════════════════════════════════════════════════════════
+   System-preference: when OS is in light mode and no explicit
+   data-theme is set, apply editorial cream automatically.
+   ════════════════════════════════════════════════════════════════ */
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) {
+    color-scheme: light;
+    --bg:        #f7f3ec;
+    --surface:   #ffffff;
+    --surface-2: #f4efe5;
+    --surface-3: #ebe4d6;
+    --border:        rgba(26, 20, 14, 0.07);
+    --border-strong: rgba(26, 20, 14, 0.14);
+    --text:   #1a140e;
+    --text-2: #5a5147;
+    --text-3: #8a8073;
+    --text-4: #b8ae9e;
+    --on-primary: #f7f3ec;
+    --shadow-card: 0 1px 0 rgba(255,255,255,0.80) inset, 0 8px 32px rgba(0,0,0,0.08);
+    --shadow-sm:  0 1px 3px rgba(0,0,0,0.06);
+    --shadow-md:  0 4px 12px rgba(0,0,0,0.08);
+    --shadow-lg:  0 8px 32px rgba(0,0,0,0.12);
+    --shadow-xl:  0 16px 48px rgba(0,0,0,0.16);
   }
 }
 
+/* ════════════════════════════════════════════════════════════════
+   Tailwind @theme bridge
+   ════════════════════════════════════════════════════════════════ */
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -193,6 +269,9 @@
   --radius-xl: calc(var(--radius) + 4px);
 }
 
+/* ════════════════════════════════════════════════════════════════
+   Base layer
+   ════════════════════════════════════════════════════════════════ */
 @layer base {
   * {
     border-color: var(--border);
@@ -203,45 +282,73 @@
   }
 
   body {
-    background: var(--mise-background);
-    color: var(--mise-text-primary);
-    font-family: var(--mise-font-text);
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-sans);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
 
-  h1, h2, h3, h4, h5, h6 {
-    font-family: var(--mise-font-display);
+  h1, h2, h3 {
+    font-family: var(--font-display);
+    font-weight: 400;          /* Instrument Serif looks best at regular weight */
+    color: var(--text);
+    letter-spacing: -0.01em;
+    line-height: 1.04;
+  }
+
+  h4, h5, h6 {
+    font-family: var(--font-sans);
     font-weight: 600;
-    color: var(--mise-text-primary);
+    color: var(--text);
     letter-spacing: -0.01em;
   }
 
-  /* Mise glass card primitives — usable as classes directly. */
+  /* Mono numerics — apply to calorie/macro figures */
+  .num {
+    font-family: var(--font-mono);
+    font-feature-settings: "tnum";
+  }
+
+  /* ── Card primitives ──────────────────────────────────────── */
+  .mise-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-card);
+    box-shadow: var(--shadow-card);
+  }
+
+  /* Legacy glass classes — preserved so existing JSX still renders.
+     Now maps to solid warm-dark surface instead of frosted glass. */
   .mise-glass {
-    background: var(--mise-glass-fill);
-    backdrop-filter: blur(20px) saturate(180%);
-    -webkit-backdrop-filter: blur(20px) saturate(180%);
-    border: 1px solid var(--mise-glass-border);
-    border-radius: var(--mise-radius-card);
-    box-shadow: var(--mise-shadow-glass);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-card);
+    box-shadow: var(--shadow-card);
   }
 
   .mise-glass-elevated {
-    background: var(--mise-glass-elevated);
-    backdrop-filter: blur(40px) saturate(180%);
-    -webkit-backdrop-filter: blur(40px) saturate(180%);
-    border: 1px solid var(--mise-glass-border);
-    border-radius: var(--mise-radius-card);
-    box-shadow: var(--mise-shadow-lg);
+    background: var(--surface-2);
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius-card);
+    box-shadow: var(--shadow-lg);
   }
 
   .mise-glass-subtle {
-    background: color-mix(in srgb, var(--mise-glass-fill) 70%, transparent);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    border: 1px solid var(--mise-glass-border);
-    border-radius: var(--mise-radius-small);
-    box-shadow: var(--mise-shadow-sm);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-small);
+    box-shadow: var(--shadow-sm);
+  }
+
+  /* ── Primary color transition (mealtime crossfade) ───────── */
+  /* Applied globally so any element using var(--primary) will
+     animate smoothly when the mealtime engine updates the token. */
+  :root {
+    transition:
+      --primary 1200ms ease,
+      --primary-hover 1200ms ease,
+      --primary-dim 1200ms ease,
+      --primary-glow 1200ms ease;
   }
 }

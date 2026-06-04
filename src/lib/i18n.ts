@@ -20,6 +20,10 @@ const EN = {
   done: 'Done',
   loading: 'Loading…',
   retry: 'Retry',
+  undo: 'Undo',
+  ingredientRemoved: 'Ingredient removed.',
+  dateToday: 'Today',
+  dateYesterday: 'Yesterday',
 
   // Home
   welcomeBack: 'Welcome back',
@@ -31,7 +35,7 @@ const EN = {
   oneUsingToday: '1 ingredient expires today',
   nUsingToday: '{n} ingredients expire today',
   generateRecipe: 'Generate recipe',
-  threeOptionsNote: 'Three options · ~30 seconds',
+  threeOptionsNote: 'One recipe · ~30 seconds',
   cookFromPantry: 'Cook from what I have',
   nIngredientsInPantry: '{n} ingredients in your pantry',
   emptyPantryHint: 'Add ingredients to start cooking',
@@ -109,8 +113,9 @@ const EN = {
   mealFestive: 'Festive',
   mealFestiveSub: 'For sharing',
   generating: 'Generating recipes…',
-  generatingHint: 'Asking Claude for three ideas',
-  generateMore: 'Generate 3 more',
+  generatingHint: 'Asking Claude for one recipe — may take 30–60s',
+  generatingHintFast: 'Usually ~15–25 seconds with Haiku',
+  generateMore: 'Generate another',
   dishIdeaLabel: 'What do you want to make?',
   dishIdeaPlaceholder: 'e.g. creamy mushroom pasta, dak galbi…',
   dishIdeaHint: 'Claude will suggest three twists on this dish using your pantry wherever possible.',
@@ -132,6 +137,7 @@ const EN = {
   missingHint: 'everything else is in your pantry.',
   ingredientsLabel: 'Ingredients',
   stepsLabel: 'Steps',
+  viewIngredients: 'Ingredients',
   noRecipesYet: 'No recipes yet',
   noRecipesHint: 'Your first creation will appear here. The pantry awaits.',
   noFavoritesYet: 'No favorites yet',
@@ -148,10 +154,27 @@ const EN = {
   validating: 'Validating…',
   testKey: 'Test key',
   model: 'AI model',
-  modelHint: 'Sonnet is recommended.',
+  modelHint: 'Used for Best-mode generation and substitutions. Fast mode always uses Haiku.',
+  recipeSpeed: 'Recipe generation',
+  recipeSpeedHint: 'Fast returns 2 shorter recipes with Haiku (~15–25s). Best uses your chosen model and 3 full recipes (~30–60s).',
+  recipeSpeedFast: 'Fast',
+  recipeSpeedBest: 'Best',
   getApiKey: 'Get a key from console.anthropic.com',
   resetAll: 'Reset all data',
   resetConfirm: 'This will delete your pantry, profile, recipes, and settings. Are you sure?',
+  exportData: 'Export data',
+  exportDataHint: 'Save your pantry, recipes and profile as a JSON file (API key excluded).',
+  importData: 'Import data',
+  importDataHint: 'Restore from a previously exported file. Replaces current data.',
+  importConfirm: 'Importing will replace your current pantry, recipes, profile and settings (the API key is kept). Continue?',
+  importSuccess: 'Data imported.',
+  importFailed: 'Import failed: {reason}',
+
+  // Developer / BYOK
+  developerSection: 'Developer',
+  byokToggle: 'Use my own API key',
+  byokToggleHint: 'Off: AI calls go through the shared server (3 free generations/day). On: your key is used directly with no daily cap.',
+  rateLimitHit: "You've used today's 3 free generations. Try again tomorrow, or enable your own API key in Settings \u2192 Developer.",
 
   // Camera import
   addFromCamera: 'Add from camera',
@@ -191,6 +214,13 @@ const EN = {
   homeGreetingEvening: 'Good evening',
   homeSubtitleWhatsCooking: 'What are we cooking today?',
   pantryCardNeedMoreHint: 'Add ingredients to get started',
+  itemsInPantry: 'items in pantry',
+  itemsShort: 'items',
+  fromPantry: 'From pantry',
+  useItBefore: 'Use it before it goes',
+  seeAll: 'See all',
+  todaysNutrition: "Today's nutrition",
+  fullBreakdown: 'Full breakdown',
 
   // Pantry
   pantrySearchNoMatch: 'No ingredients match "{q}".',
@@ -204,12 +234,16 @@ const EN = {
   dishSubstitutionTitle: 'Substitutions',
   dishSaveHistory: 'Save to history',
   dishAddFavorites: 'Add to favorites',
+  starRecipe: 'Add recipe to favorites',
+  unstarRecipe: 'Remove recipe from favorites',
   dishShoppingAllSet: 'Nothing to buy — your pantry looks ready for this dish.',
   chefTipsLabel: 'Chef tips',
   substitutionsLoading: 'Asking Claude…',
   recipeDotLegend: 'Green: already in pantry · Grey: shopping list',
 
   expiryOptionalHint: 'Expiry date (optional)',
+  closeOverlay: 'Close',
+  toggleImportIngredient: 'Toggle including this ingredient in import',
 
   // Errors
   errorTitle: 'Something went wrong',
@@ -217,6 +251,37 @@ const EN = {
   errorRate: 'Anthropic rate limit hit. Try again in a moment.',
   errorNetwork: 'Network error. Check your connection.',
   errorParse: 'Claude returned an unexpected response. Try again.',
+
+  // Home — recently cooked strip
+  recentlyCooked: 'Recently cooked',
+  // Pantry stats + filter chips
+  pantryFresh: 'Fresh',
+  pantryExpiring: 'Expiring',
+  pantryCategories: 'Categories',
+  pantryAllFilter: 'All',
+  // History — cookbook header + search
+  cookbookLabel: 'Cookbook',
+  dishesMade: '{n} dishes made',
+  searchRecipes: 'Search recipes…',
+  // Generate — time slider + dietary chips
+  maxTimeLabel: 'Max time',
+  minutesSuffix: 'minutes',
+  dietaryLabel: 'Dietary',
+
+  // Cook mode
+  cookMode: 'Cook Mode',
+  startCooking: 'Start Cooking',
+  exitCook: 'Exit',
+  markDoneNext: 'Mark done & next',
+  stepOf: 'Step {current} of {total}',
+  timerStart: 'Start',
+  timerPause: 'Pause',
+  timerResume: 'Resume',
+  timerDone: 'Done!',
+  cookComplete: 'All done!',
+  cookCompleteHint: "You've completed all the steps. Enjoy your meal!",
+  voiceHint: 'Say "next" to advance',
+  nowCooking: 'Now cooking',
 } as const;
 
 type Keys = keyof typeof EN;
@@ -235,6 +300,10 @@ const EL: Record<Keys, string> = {
   done: 'Έτοιμο',
   loading: 'Φόρτωση…',
   retry: 'Δοκιμή ξανά',
+  undo: 'Αναίρεση',
+  ingredientRemoved: 'Το υλικό αφαιρέθηκε.',
+  dateToday: 'Σήμερα',
+  dateYesterday: 'Χθες',
 
   welcomeBack: 'Καλώς ήρθες ξανά',
   youHave: 'Έχεις',
@@ -245,7 +314,7 @@ const EL: Record<Keys, string> = {
   oneUsingToday: '1 υλικό λήγει σήμερα',
   nUsingToday: '{n} υλικά λήγουν σήμερα',
   generateRecipe: 'Δημιουργία συνταγής',
-  threeOptionsNote: 'Τρεις προτάσεις · ~30 δευτ.',
+  threeOptionsNote: 'Μία πρόταση · ~30 δευτ.',
   cookFromPantry: 'Μαγείρεψε με ό,τι έχω',
   nIngredientsInPantry: '{n} υλικά στο ντουλάπι σου',
   emptyPantryHint: 'Πρόσθεσε υλικά για να ξεκινήσεις',
@@ -318,8 +387,9 @@ const EL: Record<Keys, string> = {
   mealFestive: 'Γιορτινό',
   mealFestiveSub: 'Για παρέα',
   generating: 'Δημιουργία συνταγών…',
-  generatingHint: 'Ζητώ τρεις ιδέες από τον Claude',
-  generateMore: 'Άλλες 3 προτάσεις',
+  generatingHint: 'Ζητώ μία συνταγή από τον Claude — μπορεί να πάρει 30–60 δευτ.',
+  generatingHintFast: 'Συνήθως ~15–25 δευτερόλεπτα με Haiku',
+  generateMore: 'Άλλη συνταγή',
   dishIdeaLabel: 'Τι θες να φτιάξεις;',
   dishIdeaPlaceholder: 'π.χ. μακαρόνια με μανιτάρια σε κρεμώδη σάλτσα…',
   dishIdeaHint: 'Ο Claude θα προτείνει τρεις παραλλαγές που ταιριάζουν σε αυτό, με ό,τι έχεις στο ντουλάπι όπου γίνεται.',
@@ -339,6 +409,7 @@ const EL: Record<Keys, string> = {
   missingHint: 'τα υπόλοιπα είναι στο ντουλάπι σου.',
   ingredientsLabel: 'Υλικά',
   stepsLabel: 'Βήματα',
+  viewIngredients: 'Υλικά',
   noRecipesYet: 'Καμία συνταγή ακόμα',
   noRecipesHint: 'Η πρώτη σου δημιουργία θα εμφανιστεί εδώ. Το ντουλάπι περιμένει.',
   noFavoritesYet: 'Καμία αγαπημένη ακόμα',
@@ -354,10 +425,27 @@ const EL: Record<Keys, string> = {
   validating: 'Επαλήθευση…',
   testKey: 'Δοκιμή κλειδιού',
   model: 'Μοντέλο AI',
-  modelHint: 'Συνιστάται το Sonnet.',
+  modelHint: 'Για λειτουργία Best και υποκατάστατα. Η λειτουργία Fast χρησιμοποιεί πάντα Haiku.',
+  recipeSpeed: 'Δημιουργία συνταγών',
+  recipeSpeedHint: 'Fast: 2 σύντομες συνταγές με Haiku (~15–25 δευτ.). Best: το επιλεγμένο μοντέλο και 3 πλήρεις συνταγές (~30–60 δευτ.).',
+  recipeSpeedFast: 'Fast',
+  recipeSpeedBest: 'Best',
   getApiKey: 'Πάρε κλειδί από το console.anthropic.com',
   resetAll: 'Διαγραφή όλων',
   resetConfirm: 'Θα διαγραφούν ντουλάπι, προφίλ, συνταγές και ρυθμίσεις. Σίγουρα;',
+  exportData: 'Εξαγωγή δεδομένων',
+  exportDataHint: 'Αποθήκευση ντουλαπιού, συνταγών και προφίλ ως αρχείο JSON (χωρίς το κλειδί API).',
+  importData: 'Εισαγωγή δεδομένων',
+  importDataHint: 'Επαναφορά από προηγούμενο αρχείο εξαγωγής. Αντικαθιστά τα τρέχοντα δεδομένα.',
+  importConfirm: 'Η εισαγωγή θα αντικαταστήσει το ντουλάπι, τις συνταγές, το προφίλ και τις ρυθμίσεις σου (το κλειδί API διατηρείται). Συνέχεια;',
+  importSuccess: 'Τα δεδομένα εισήχθησαν.',
+  importFailed: 'Αποτυχία εισαγωγής: {reason}',
+
+  // Developer / BYOK
+  developerSection: 'Προγραμματιστής',
+  byokToggle: 'Χρήση του δικού μου API key',
+  byokToggleHint: 'Κλειστό: οι κλήσεις AI γίνονται μέσω κοινόχρηστου διακομιστή (3 δωρεάν/ημέρα). Ανοιχτό: το κλειδί σου χρησιμοποιείται απευθείας, χωρίς ημερήσιο όριο.',
+  rateLimitHit: 'Χρησιμοποίησες τις 3 δωρεάν δημιουργίες σήμερα. Δοκίμασε αύριο ή ενεργοποίησε το δικό σου API key στις Ρυθμίσεις → Προγραμματιστής.',
 
   // Camera import
   addFromCamera: 'Προσθήκη από κάμερα',
@@ -396,6 +484,13 @@ const EL: Record<Keys, string> = {
   homeGreetingEvening: 'Καλό βράδυ',
   homeSubtitleWhatsCooking: 'Τι μαγειρεύουμε σήμερα;',
   pantryCardNeedMoreHint: 'Πρόσθεσε υλικά για να ξεκινήσεις',
+  itemsInPantry: 'αντικείμενα στο ψυγείο',
+  itemsShort: 'αντικείμενα',
+  fromPantry: 'Από το ψυγείο',
+  useItBefore: 'Χρησιμοποίησέ το γρήγορα',
+  seeAll: 'Όλα',
+  todaysNutrition: 'Διατροφή σήμερα',
+  fullBreakdown: 'Πλήρης ανάλυση',
 
   pantrySearchNoMatch: 'Δεν υπάρχουν υλικά που να ταιριάζουν με «{q}».',
   pantrySearchClear: 'Καθαρισμός αναζήτησης',
@@ -407,18 +502,53 @@ const EL: Record<Keys, string> = {
   dishSubstitutionTitle: 'Αντικαταστάσεις',
   dishSaveHistory: 'Αποθήκευση στο ιστορικό',
   dishAddFavorites: 'Προσθήκη στα αγαπημένα',
+  starRecipe: 'Προσθήκη συνταγής στα αγαπημένα',
+  unstarRecipe: 'Αφαίρεση συνταγής από τα αγαπημένα',
   dishShoppingAllSet: 'Δεν χρειάζονται αγορές — φαίνεται ότι τα έχεις όλα.',
   chefTipsLabel: 'Συμβουλές σεφ',
   substitutionsLoading: 'Ρωτάμε τον Claude…',
   recipeDotLegend: 'Πράσινο: στο ντουλάπι · Γκρι: αγορά',
 
   expiryOptionalHint: 'Ημερ. λήξης (προαιρετικό)',
+  closeOverlay: 'Κλείσιμο',
+  toggleImportIngredient: 'Εναλλαγή συμπερίληψης αυτού του υλικού στην εισαγωγή',
 
   errorTitle: 'Κάτι πήγε στραβά',
   errorNoKey: 'Όρισε πρώτα το API κλειδί στις Ρυθμίσεις.',
   errorRate: 'Όριο ρυθμού Anthropic. Δοκίμασε σε λίγο.',
   errorNetwork: 'Πρόβλημα δικτύου. Έλεγξε τη σύνδεση.',
   errorParse: 'Ο Claude επέστρεψε απρόσμενη απάντηση. Δοκίμασε ξανά.',
+
+  // Home — recently cooked strip
+  recentlyCooked: 'Πρόσφατα μαγειρεμένα',
+  // Pantry stats + filter chips
+  pantryFresh: 'Φρέσκα',
+  pantryExpiring: 'Λήγουν',
+  pantryCategories: 'Κατηγορίες',
+  pantryAllFilter: 'Όλα',
+  // History — cookbook header + search
+  cookbookLabel: 'Βιβλίο Συνταγών',
+  dishesMade: '{n} πιάτα φτιαγμένα',
+  searchRecipes: 'Αναζήτηση συνταγών…',
+  // Generate — time slider + dietary chips
+  maxTimeLabel: 'Μέγιστος χρόνος',
+  minutesSuffix: 'λεπτά',
+  dietaryLabel: 'Διατροφή',
+
+  // Cook mode
+  cookMode: 'Λειτουργία Μαγειρέματος',
+  startCooking: 'Ξεκίνα το μαγείρεμα',
+  exitCook: 'Έξοδος',
+  markDoneNext: 'Έτοιμο & επόμενο',
+  stepOf: 'Βήμα {current} από {total}',
+  timerStart: 'Έναρξη',
+  timerPause: 'Παύση',
+  timerResume: 'Συνέχεια',
+  timerDone: 'Τέλος!',
+  cookComplete: 'Όλα έτοιμα!',
+  cookCompleteHint: 'Ολοκλήρωσες όλα τα βήματα. Καλή όρεξη!',
+  voiceHint: 'Πες "επόμενο" για να προχωρήσεις',
+  nowCooking: 'Μαγειρεύεις τώρα',
 };
 
 const ES: Record<Keys, string> = {
@@ -435,6 +565,10 @@ const ES: Record<Keys, string> = {
   done: 'Listo',
   loading: 'Cargando…',
   retry: 'Reintentar',
+  undo: 'Deshacer',
+  ingredientRemoved: 'Ingrediente eliminado.',
+  dateToday: 'Hoy',
+  dateYesterday: 'Ayer',
 
   welcomeBack: 'Bienvenido de nuevo',
   youHave: 'Tienes',
@@ -445,7 +579,7 @@ const ES: Record<Keys, string> = {
   oneUsingToday: '1 ingrediente caduca hoy',
   nUsingToday: '{n} ingredientes caducan hoy',
   generateRecipe: 'Generar receta',
-  threeOptionsNote: 'Tres opciones · ~30 segundos',
+  threeOptionsNote: 'Una receta · ~30 segundos',
   cookFromPantry: 'Cocina con lo que tengo',
   nIngredientsInPantry: '{n} ingredientes en tu despensa',
   emptyPantryHint: 'Añade ingredientes para empezar',
@@ -518,8 +652,9 @@ const ES: Record<Keys, string> = {
   mealFestive: 'Festiva',
   mealFestiveSub: 'Para compartir',
   generating: 'Generando recetas…',
-  generatingHint: 'Pidiendo tres ideas a Claude',
-  generateMore: 'Generar 3 más',
+  generatingHint: 'Pidiendo una receta a Claude — puede tardar 30–60 s',
+  generatingHintFast: 'Suele tardar ~15–25 segundos con Haiku',
+  generateMore: 'Generar otra',
   dishIdeaLabel: '¿Qué quieres preparar?',
   dishIdeaPlaceholder: 'p. ej. pasta cremosa con setas…',
   dishIdeaHint: 'Claude propondrá tres variaciones alrededor de esto usando tu despensa cuando sea posible.',
@@ -539,6 +674,7 @@ const ES: Record<Keys, string> = {
   missingHint: 'el resto está en tu despensa.',
   ingredientsLabel: 'Ingredientes',
   stepsLabel: 'Pasos',
+  viewIngredients: 'Ingredientes',
   noRecipesYet: 'Aún no hay recetas',
   noRecipesHint: 'Tu primera creación aparecerá aquí. La despensa te espera.',
   noFavoritesYet: 'Aún no hay favoritos',
@@ -554,10 +690,27 @@ const ES: Record<Keys, string> = {
   validating: 'Validando…',
   testKey: 'Probar clave',
   model: 'Modelo de IA',
-  modelHint: 'Se recomienda Sonnet.',
+  modelHint: 'Para modo Best y sustituciones. El modo Fast siempre usa Haiku.',
+  recipeSpeed: 'Generación de recetas',
+  recipeSpeedHint: 'Fast: 2 recetas cortas con Haiku (~15–25 s). Best: tu modelo elegido y 3 recetas completas (~30–60 s).',
+  recipeSpeedFast: 'Rápido',
+  recipeSpeedBest: 'Mejor',
   getApiKey: 'Obtén una clave en console.anthropic.com',
   resetAll: 'Restablecer todos los datos',
   resetConfirm: 'Esto eliminará tu despensa, perfil, recetas y ajustes. ¿Estás seguro?',
+  exportData: 'Exportar datos',
+  exportDataHint: 'Guarda tu despensa, recetas y perfil como un archivo JSON (la clave API no se incluye).',
+  importData: 'Importar datos',
+  importDataHint: 'Restaurar desde un archivo exportado anteriormente. Reemplaza los datos actuales.',
+  importConfirm: 'La importación reemplazará tu despensa, recetas, perfil y ajustes actuales (la clave API se conserva). ¿Continuar?',
+  importSuccess: 'Datos importados.',
+  importFailed: 'Importación fallida: {reason}',
+
+  // Developer / BYOK
+  developerSection: 'Desarrollador',
+  byokToggle: 'Usar mi propia clave API',
+  byokToggleHint: 'Desactivado: las llamadas de IA van por el servidor compartido (3 generaciones gratis/día). Activado: tu clave se usa directamente, sin límite diario.',
+  rateLimitHit: 'Has usado las 3 generaciones gratuitas de hoy. Inténtalo mañana o activa tu propia clave API en Ajustes → Desarrollador.',
 
   addFromCamera: 'Añadir desde cámara',
   scanBarcode: 'Escanear código de barras',
@@ -573,61 +726,101 @@ const ES: Record<Keys, string> = {
   importNItems: 'Importar {n} elementos',
   selectAll: 'Seleccionar todo',
   deselectAll: 'Deseleccionar todo',
+
   confirmIngredient: 'Confirmar ingrediente',
   addToPantry: 'Añadir a la despensa',
   cameraPermissionDenied: 'Acceso a la cámara denegado. Permite la cámara en los ajustes del navegador.',
   cameraError: 'Error de cámara. Intenta subir una foto.',
   nothingDetected: 'No se detectó nada. Prueba con una foto más clara.',
 
-  // Feed
   recipeOfDay: 'Receta del Día',
   viewRecipe: 'Ver receta completa',
   foodFact: 'Dato Curioso',
   inSeason: 'De Temporada',
   refreshFeed: 'Actualizar',
-  loadingFeed: 'Cargando…',
-  noNetworkFeed: 'Sin conexión — contenido en caché',
+  loadingFeed: 'Cargando feed…',
+  noNetworkFeed: 'Sin conexión — mostrando contenido guardado',
   tapToGenerate: 'Toca para generar',
-  seasonLabel: 'Qué está en temporada',
+  seasonLabel: 'De temporada',
 
   homeGreetingMorning: 'Buenos días',
   homeGreetingAfternoon: 'Buenas tardes',
   homeGreetingEvening: 'Buenas noches',
   homeSubtitleWhatsCooking: '¿Qué cocinamos hoy?',
   pantryCardNeedMoreHint: 'Añade ingredientes para empezar',
+  itemsInPantry: 'artículos en la despensa',
+  itemsShort: 'artículos',
+  fromPantry: 'De la despensa',
+  useItBefore: 'Úsalo antes de que caduque',
+  seeAll: 'Ver todo',
+  todaysNutrition: 'Nutrición de hoy',
+  fullBreakdown: 'Desglose completo',
 
-  pantrySearchNoMatch: 'Ningún ingrediente coincide con «{q}».',
+  pantrySearchNoMatch: 'Ningún ingrediente coincide con "{q}".',
   pantrySearchClear: 'Borrar búsqueda',
   pantryEditSheetTitle: 'Editar ingrediente',
 
   dishGenerate: 'Generar',
-  dishShoppingList: 'Lista de compras',
-  dishCanSubstitute: '¿Puedo sustituir?',
-  dishSubstitutionTitle: 'Sustitutos',
+  dishShoppingList: 'Lista de compra',
+  dishCanSubstitute: '¿Puedo sustituirlo?',
+  dishSubstitutionTitle: 'Sustituciones',
   dishSaveHistory: 'Guardar en historial',
   dishAddFavorites: 'Añadir a favoritos',
-  dishShoppingAllSet: 'Nada que comprar — parece que tu despensa lo cubre todo.',
+  starRecipe: 'Añadir receta a favoritos',
+  unstarRecipe: 'Quitar receta de favoritos',
+  dishShoppingAllSet: 'No hay que comprar nada — tu despensa parece estar lista.',
   chefTipsLabel: 'Consejos del chef',
   substitutionsLoading: 'Preguntando a Claude…',
-  recipeDotLegend: 'Verde: en despensa · Gris: comprar',
+  recipeDotLegend: 'Verde: ya en la despensa · Gris: lista de compra',
 
   expiryOptionalHint: 'Fecha de caducidad (opcional)',
+  closeOverlay: 'Cerrar',
+  toggleImportIngredient: 'Alternar inclusión de este ingrediente',
 
   errorTitle: 'Algo salió mal',
-  errorNoKey: 'Primero configura tu clave API en Ajustes.',
-  errorRate: 'Límite de velocidad de Anthropic alcanzado. Inténtalo de nuevo en un momento.',
+  errorNoKey: 'Configura tu clave API en Ajustes primero.',
+  errorRate: 'Límite de Anthropic alcanzado. Inténtalo en un momento.',
   errorNetwork: 'Error de red. Comprueba tu conexión.',
   errorParse: 'Claude devolvió una respuesta inesperada. Inténtalo de nuevo.',
+
+  // Home — recently cooked strip
+  recentlyCooked: 'Cocinado recientemente',
+  // Pantry stats + filter chips
+  pantryFresh: 'Fresco',
+  pantryExpiring: 'Por caducar',
+  pantryCategories: 'Categorías',
+  pantryAllFilter: 'Todo',
+  // History — cookbook header + search
+  cookbookLabel: 'Recetario',
+  dishesMade: '{n} platos preparados',
+  searchRecipes: 'Buscar recetas…',
+  // Generate — time slider + dietary chips
+  maxTimeLabel: 'Tiempo máx.',
+  minutesSuffix: 'minutos',
+  dietaryLabel: 'Dieta',
+
+  cookMode: 'Modo cocina',
+  startCooking: 'Empezar a cocinar',
+  exitCook: 'Salir',
+  markDoneNext: 'Listo y siguiente',
+  stepOf: 'Paso {current} de {total}',
+  timerStart: 'Iniciar',
+  timerPause: 'Pausar',
+  timerResume: 'Reanudar',
+  timerDone: '¡Listo!',
+  cookComplete: '¡Todo listo!',
+  cookCompleteHint: 'Has completado todos los pasos. ¡Que aproveche!',
+  voiceHint: 'Di "siguiente" para avanzar',
+  nowCooking: 'Cocinando ahora',
 };
 
-const STRINGS = { EN, EL, ES } as const;
-
 export function t(lang: Language, key: Keys, vars?: Record<string, string | number>): string {
-  let s: string = STRINGS[lang][key];
+  const map: Record<Keys, string> = lang === 'EL' ? EL : lang === 'ES' ? ES : EN;
+  let str = (map[key] ?? (EN as Record<Keys, string>)[key] ?? key) as string;
   if (vars) {
     for (const [k, v] of Object.entries(vars)) {
-      s = s.replace(`{${k}}`, String(v));
+      str = str.replace(`{${k}}`, String(v));
     }
   }
-  return s;
+  return str;
 }

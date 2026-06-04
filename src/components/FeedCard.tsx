@@ -5,6 +5,7 @@
 import React, { useState } from 'react';
 import { T } from '../tokens';
 import type { MealOfDay, FoodFact, SeasonalPick } from '../lib/feed';
+import { prefersReducedMotion } from '../lib/motion';
 
 // ─── Generic shell ────────────────────────────────────────────────────────
 
@@ -25,11 +26,12 @@ export function FeedCard({
   children,
   index = 0,
 }: FeedCardProps) {
+  const reduceMotion = prefersReducedMotion();
   return (
     <div
-      className="fade-up"
+      className={reduceMotion ? undefined : 'fade-up'}
       style={{
-        animationDelay: `${index * 60}ms`,
+        ...(!reduceMotion ? { animationDelay: `${index * 60}ms` } : {}),
         background: 'var(--mise-glass-fill)',
         backdropFilter: 'blur(20px) saturate(180%)',
         WebkitBackdropFilter: 'blur(20px) saturate(180%)',
@@ -46,7 +48,7 @@ export function FeedCard({
         padding: '12px 16px 0',
       }}>
         <span style={{
-          fontSize: 10, fontWeight: 700, letterSpacing: 0.8,
+          fontSize: T.fontSize.meta, fontWeight: 700, letterSpacing: 0.8,
           textTransform: 'uppercase', color: badgeColor,
         }}>
           {badge}
@@ -62,7 +64,7 @@ export function FeedCard({
               color: T.muted, lineHeight: 1,
               display: 'flex', alignItems: 'center',
               opacity: refreshing ? 0.4 : 1,
-              transition: 'opacity 0.15s',
+              ...(reduceMotion ? { transition: 'none' } : { transition: 'opacity 0.15s' }),
             }}
           >
             <RefreshIcon size={14} spinning={refreshing} />
@@ -77,11 +79,12 @@ export function FeedCard({
 // ─── Skeleton placeholder (while network call is in-flight) ───────────────
 
 export function SkeletonCard({ index = 0 }: { index?: number }) {
+  const reduceMotion = prefersReducedMotion();
   return (
     <div
-      className="fade-up"
+      className={reduceMotion ? undefined : 'fade-up'}
       style={{
-        animationDelay: `${index * 60}ms`,
+        ...(!reduceMotion ? { animationDelay: `${index * 60}ms` } : {}),
         background: 'var(--mise-glass-fill)',
         backdropFilter: 'blur(20px) saturate(180%)',
         WebkitBackdropFilter: 'blur(20px) saturate(180%)',
@@ -133,7 +136,7 @@ export function RecipeOfDayCard({
       <FeedCard badge={badge} badgeColor={T.accent} onRefresh={onRefresh} refreshing={refreshing} index={index}>
         <div style={{
           padding: '18px 0', textAlign: 'center',
-          color: T.muted, fontSize: 13,
+          color: T.muted, fontSize: T.fontSize.small,
         }}>
           Could not load recipe · tap refresh to try again
         </div>
@@ -160,7 +163,7 @@ export function RecipeOfDayCard({
 
       {/* Name */}
       <div style={{
-        fontSize: 17, fontWeight: 700, color: T.text,
+        fontSize: T.fontSize.lead, fontWeight: 700, color: T.text,
         letterSpacing: -0.4, lineHeight: 1.25, marginBottom: 8,
       }}>
         {meal.name}
@@ -186,7 +189,7 @@ export function RecipeOfDayCard({
             padding: '9px 12px',
             background: T.accentTint, border: `1px solid ${T.borderAcc}`,
             borderRadius: 10, color: T.accent,
-            fontSize: 13, fontWeight: 600,
+            fontSize: T.fontSize.small, fontWeight: 600,
             textDecoration: 'none',
             display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5,
           }}
@@ -228,13 +231,13 @@ export function FactCard({ fact, badge, index = 0 }: FactCardProps) {
     <FeedCard badge={badge} badgeColor={T.success} index={index}>
       <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
         <div style={{
-          fontSize: 28, lineHeight: 1, flexShrink: 0,
+          fontSize: T.fontSize.display, lineHeight: 1, flexShrink: 0,
           marginTop: 2,
         }}>
           {fact.icon}
         </div>
         <div style={{
-          fontSize: 14, lineHeight: 1.55, color: T.text,
+          fontSize: T.fontSize.body, lineHeight: 1.55, color: T.text,
           fontStyle: 'italic',
           letterSpacing: 0.1,
         }}>
@@ -257,18 +260,19 @@ interface SeasonalCardProps {
 
 export function SeasonalCard({ season, picks, badge, seasonLabel, index = 0 }: SeasonalCardProps) {
   const [selected, setSelected] = useState<number | null>(null);
+  const reduceMotion = prefersReducedMotion();
 
   return (
     <FeedCard badge={badge} badgeColor={T.warning} index={index}>
       <div style={{
-        fontSize: 13, color: T.text2, marginBottom: 10,
+        fontSize: T.fontSize.small, color: T.text2, marginBottom: 10,
         display: 'flex', alignItems: 'center', gap: 6,
       }}>
         <span>{seasonLabel}</span>
         <span style={{
           padding: '2px 8px', borderRadius: 999,
           background: T.warnTint, border: `1px solid ${T.warnBord}`,
-          color: T.warning, fontSize: 11, fontWeight: 600,
+          color: T.warning, fontSize: T.fontSize.tiny, fontWeight: 600,
         }}>
           {season}
         </span>
@@ -294,12 +298,14 @@ export function SeasonalCard({ season, picks, badge, seasonLabel, index = 0 }: S
               border: `1px solid ${selected === i ? T.warnBord : T.border}`,
               borderRadius: 999,
               color: selected === i ? T.warning : T.text2,
-              fontSize: 13, fontWeight: 500,
+              fontSize: T.fontSize.small, fontWeight: 500,
               cursor: 'pointer', fontFamily: T.font,
-              transition: 'background 0.15s, border-color 0.15s, color 0.15s',
+              ...(reduceMotion ? { transition: 'none' } : {
+                transition: 'background 0.15s, border-color 0.15s, color 0.15s',
+              }),
             }}
           >
-            <span style={{ fontSize: 15 }}>{pick.emoji}</span>
+            <span style={{ fontSize: T.fontSize.bodyLg }}>{pick.emoji}</span>
             {pick.name}
           </button>
         ))}
@@ -308,13 +314,13 @@ export function SeasonalCard({ season, picks, badge, seasonLabel, index = 0 }: S
       {/* Expandable note */}
       {selected !== null && picks[selected] && (
         <div
-          className="fade-up"
+          className={reduceMotion ? undefined : 'fade-up'}
           style={{
             marginTop: 10,
             padding: '9px 12px',
             background: T.warnTint, border: `1px solid ${T.warnBord}`,
             borderRadius: 10,
-            fontSize: 12.5, color: T.text2, lineHeight: 1.45,
+            fontSize: T.fontSize.captionLg, color: T.text2, lineHeight: 1.45,
           }}
         >
           <strong style={{ color: T.warning }}>{picks[selected].emoji} {picks[selected].name}</strong>
@@ -334,7 +340,7 @@ function Chip({ label }: { label: string }) {
       padding: '3px 9px',
       background: T.surfaceHi, border: `1px solid ${T.border}`,
       borderRadius: 999, color: T.text2,
-      fontSize: 11, fontWeight: 500,
+      fontSize: T.fontSize.tiny, fontWeight: 500,
     }}>
       {label}
     </span>

@@ -7,6 +7,7 @@ import {
   DrawerTitle,
 } from './ui/drawer';
 import { useApp } from '../lib/app-state';
+import { T } from '../tokens';
 import type { Category, Ingredient } from '../lib/types';
 
 const CATS: Category[] = ['produce', 'protein', 'dairy', 'grains', 'pantry', 'other'];
@@ -32,7 +33,7 @@ export function PantryIngredientDrawer({
     setCategory(item.category);
     setExpiresOn(item.expiresOn ?? '');
     setAmount(item.amount ?? '');
-  }, [item?.id]);
+  }, [item]);
 
   const canSave = name.trim().length > 0;
 
@@ -71,7 +72,7 @@ export function PantryIngredientDrawer({
       >
         <DrawerHeader>
           <DrawerTitle style={{
-            fontSize: 18,
+            fontSize: T.fontSize.title,
             fontWeight: 600,
             color: 'var(--mise-text-primary)',
             fontFamily: 'var(--mise-font-display)',
@@ -83,7 +84,7 @@ export function PantryIngredientDrawer({
         <div style={{ overflowY: 'auto', flex: 1, padding: '0 16px 8px', minHeight: 0 }}>
           <label style={{
             display: 'block',
-            fontSize: 11,
+            fontSize: T.fontSize.tiny,
             fontWeight: 600,
             color: 'var(--mise-text-tertiary)',
             letterSpacing: 0.6,
@@ -103,7 +104,7 @@ export function PantryIngredientDrawer({
               border: '1px solid var(--mise-glass-border)',
               background: 'var(--mise-glass-fill)',
               color: 'var(--mise-text-primary)',
-              fontSize: 16,
+              fontSize: T.fontSize.base,
               fontFamily: 'var(--mise-font-text)',
               boxSizing: 'border-box',
               marginBottom: 18,
@@ -112,7 +113,7 @@ export function PantryIngredientDrawer({
 
           <div style={{ marginBottom: 18 }}>
             <div style={{
-              fontSize: 11,
+              fontSize: T.fontSize.tiny,
               fontWeight: 600,
               color: 'var(--mise-text-tertiary)',
               letterSpacing: 0.6,
@@ -134,7 +135,7 @@ export function PantryIngredientDrawer({
                     background: category === c ? 'rgba(124, 58, 237, 0.14)' : 'var(--mise-glass-fill)',
                     border: `1px solid ${category === c ? 'var(--mise-primary)' : 'var(--mise-glass-border)'}`,
                     color: category === c ? 'var(--mise-primary)' : 'var(--mise-text-secondary)',
-                    fontSize: 13,
+                    fontSize: T.fontSize.small,
                     fontWeight: 600,
                     cursor: 'pointer',
                     fontFamily: 'var(--mise-font-text)',
@@ -148,7 +149,7 @@ export function PantryIngredientDrawer({
 
           <div style={{ marginBottom: 18 }}>
             <div style={{
-              fontSize: 11,
+              fontSize: T.fontSize.tiny,
               fontWeight: 600,
               color: 'var(--mise-text-tertiary)',
               letterSpacing: 0.6,
@@ -168,7 +169,7 @@ export function PantryIngredientDrawer({
                 border: '1px solid var(--mise-glass-border)',
                 background: 'var(--mise-glass-fill)',
                 color: 'var(--mise-text-primary)',
-                fontSize: 16,
+                fontSize: T.fontSize.base,
                 fontFamily: 'var(--mise-font-text)',
                 boxSizing: 'border-box',
               }}
@@ -177,7 +178,7 @@ export function PantryIngredientDrawer({
 
           <div>
             <div style={{
-              fontSize: 11,
+              fontSize: T.fontSize.tiny,
               fontWeight: 600,
               color: 'var(--mise-text-tertiary)',
               letterSpacing: 0.6,
@@ -197,7 +198,7 @@ export function PantryIngredientDrawer({
                 border: '1px solid var(--mise-glass-border)',
                 background: 'var(--mise-glass-fill)',
                 color: 'var(--mise-text-primary)',
-                fontSize: 16,
+                fontSize: T.fontSize.base,
                 fontFamily: 'var(--mise-font-text)',
                 boxSizing: 'border-box',
               }}
@@ -218,7 +219,7 @@ export function PantryIngredientDrawer({
               background: 'var(--mise-glass-fill)',
               color: 'var(--mise-text-primary)',
               cursor: 'pointer',
-              fontSize: 15,
+              fontSize: T.fontSize.bodyLg,
               fontWeight: 600,
               fontFamily: 'var(--mise-font-text)',
             }}
@@ -238,7 +239,7 @@ export function PantryIngredientDrawer({
               background: !canSave ? 'var(--mise-text-tertiary)' : 'var(--mise-primary)',
               color: '#FFFFFF',
               cursor: canSave ? 'pointer' : 'not-allowed',
-              fontSize: 15,
+              fontSize: T.fontSize.bodyLg,
               fontWeight: 600,
               fontFamily: 'var(--mise-font-text)',
             }}
